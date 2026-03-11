@@ -12,11 +12,11 @@ React Native mobile application built with Expo for the Telco Self-Care White-La
 
 ### Prerequisites
 
-| Tool | Version |
-|------|---------|
-| Node.js | ≥18.x |
-| npm | ≥9.x |
-| Expo CLI | Latest |
+| Tool     | Version |
+| -------- | ------- |
+| Node.js  | ≥18.x   |
+| npm      | ≥9.x    |
+| Expo CLI | Latest  |
 
 ### Installation
 
@@ -79,6 +79,7 @@ Shared design tokens are available in:
 `../platform-config/design-tokens/`
 
 Import tokens in your app:
+
 ```typescript
 // Using tokens directly
 import tokens from '../platform-config/design-tokens/tokens.json';
@@ -87,11 +88,13 @@ import tokens from '../platform-config/design-tokens/tokens.json';
 ## Troubleshooting
 
 ### Metro bundler issues
+
 ```bash
 npx expo start --clear
 ```
 
 ### Android build errors
+
 ```bash
 # Clean and rebuild
 cd android

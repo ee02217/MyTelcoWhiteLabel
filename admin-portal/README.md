@@ -12,10 +12,10 @@ Admin management portal built with Vite + React + TypeScript for the Telco Self-
 
 ### Prerequisites
 
-| Tool | Version |
-|------|---------|
-| Node.js | ≥18.x |
-| npm | ≥9.x |
+| Tool    | Version |
+| ------- | ------- |
+| Node.js | ≥18.x   |
+| npm     | ≥9.x    |
 
 ### Installation
 
@@ -70,6 +70,7 @@ This portal consumes shared design tokens from:
 `../platform-config/design-tokens/`
 
 Tokens are imported in two ways:
+
 1. **CSS Variables:** `index.css` imports `tokens.css` for CSS custom properties
 2. **JSON:** Direct import of `tokens.json` for programmatic access
 

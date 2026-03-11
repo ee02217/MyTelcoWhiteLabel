@@ -12,10 +12,10 @@ Spring Boot backend service template for the Telco Self-Care White-Label Platfor
 
 ### Prerequisites
 
-| Tool | Version |
-|------|---------|
-| Java JDK | ≥21 |
-| Maven | ≥3.8 |
+| Tool     | Version |
+| -------- | ------- |
+| Java JDK | ≥21     |
+| Maven    | ≥3.8    |
 
 ### Installation & Build
 
@@ -82,18 +82,19 @@ backend-service/
 
 The service includes Spring Boot Actuator with the following endpoints:
 
-| Endpoint | Path | Description |
-|----------|------|-------------|
-| Health | `/actuator/health` | Overall health status |
-| Liveness | `/actuator/health/liveness` | Kubernetes liveness probe |
-| Readiness | `/actuator/health/readiness` | Kubernetes readiness probe |
-| Info | `/actuator/info` | Application information |
-| Metrics | `/actuator/metrics` | Application metrics |
-| Prometheus | `/actuator/prometheus` | Prometheus metrics export |
+| Endpoint   | Path                         | Description                |
+| ---------- | ---------------------------- | -------------------------- |
+| Health     | `/actuator/health`           | Overall health status      |
+| Liveness   | `/actuator/health/liveness`  | Kubernetes liveness probe  |
+| Readiness  | `/actuator/health/readiness` | Kubernetes readiness probe |
+| Info       | `/actuator/info`             | Application information    |
+| Metrics    | `/actuator/metrics`          | Application metrics        |
+| Prometheus | `/actuator/prometheus`       | Prometheus metrics export  |
 
 ## Creating a New Service from Template
 
 1. **Copy the template:**
+
    ```bash
    cp -r backend-services backend-my-service
    ```
@@ -120,14 +121,15 @@ The service includes Spring Boot Actuator with the following endpoints:
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SERVER_PORT` | HTTP port | 8080 |
-| `SPRING_PROFILES_ACTIVE` | Spring profile | dev |
+| Variable                 | Description    | Default |
+| ------------------------ | -------------- | ------- |
+| `SERVER_PORT`            | HTTP port      | 8080    |
+| `SPRING_PROFILES_ACTIVE` | Spring profile | dev     |
 
 ### Application Properties
 
 Key properties in `application.yml`:
+
 - `server.port` - HTTP listener port
 - `spring.application.name` - Application name
 - `management.endpoints.web.exposure.include` - Exposed actuator endpoints
@@ -136,10 +138,10 @@ Key properties in `application.yml`:
 
 Sample endpoints (replace with actual business logic):
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/v1/health` | Service health check |
-| GET | `/api/v1/info` | Service information |
+| Method | Path             | Description          |
+| ------ | ---------------- | -------------------- |
+| GET    | `/api/v1/health` | Service health check |
+| GET    | `/api/v1/info`   | Service information  |
 
 ## Next Steps
 

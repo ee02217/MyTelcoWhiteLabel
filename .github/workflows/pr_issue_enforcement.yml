@@ -17,15 +17,15 @@ jobs:
           script: |
             const prBody = context.payload.pull_request.body || '';
             const prTitle = context.payload.pull_request.title || '';
-            
+
             // Check for issue reference patterns: Closes #123 or Related to #123
             const issueRegex = /(Closes|Related to)\s+#\d+/i;
-            
+
             if (!issueRegex.test(prBody) && !issueRegex.test(prTitle)) {
               core.setFailed(
                 '❌ PR must reference an issue. ' +
                 'Please add "Closes #<issue_number>" or "Related to #<issue_number>" to the PR description.'
               );
             }
-            
+
             console.log('✅ PR contains valid issue reference');

@@ -3,21 +3,21 @@ replicaCount: 1
 image:
   repository: mytelco/bff-service
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: 'latest'
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: ''
+fullnameOverride: ''
 
 serviceAccount:
   create: true
   annotations: {}
-  name: ""
+  name: ''
 
 podAnnotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/port: "8081"
-  prometheus.io/path: "/actuator/prometheus"
+  prometheus.io/scrape: 'true'
+  prometheus.io/port: '8081'
+  prometheus.io/path: '/actuator/prometheus'
 
 podSecurityContext:
   runAsNonRoot: true
@@ -38,7 +38,7 @@ service:
 
 ingress:
   enabled: false
-  className: ""
+  className: ''
   annotations: {}
   hosts:
     - host: bff-service.local
