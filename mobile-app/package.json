@@ -1,0 +1,32 @@
+{
+  "name": "mobile-app",
+  "version": "1.0.0",
+  "description": "Mobile application - React Native with Expo",
+  "private": true,
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "build": "expo export",
+    "build:android": "expo run:android",
+    "build:ios": "expo run:ios",
+    "prebuild": "expo prebuild",
+    "test": "echo 'No tests configured yet'"
+  },
+  "dependencies": {
+    "expo": "~52.0.0",
+    "react": "18.3.1",
+    "react-native": "0.76.6"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~18.3.12",
+    "@types/react-native": "^0.73.0",
+    "typescript": "~5.3.3",
+    "eslint": "^8.57.0",
+    "eslint-config-expo": "~7.1.2"
+  }
+}
