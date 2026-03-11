@@ -1,0 +1,68 @@
+---
+name: 🤖 Agent Task
+about: Task template for autonomous coding agents
+title: "[TYPE][SCOPE] Task description"
+labels: "type:task, status:pending"
+assignees: ''
+
+---
+
+## Problem
+What problem does this task solve? Why does it need to be done?
+
+<!-- Describe the issue or pain point that motivates this work -->
+
+## Goal
+What is the desired outcome of this task?
+
+<!-- One clear statement of what success looks like -->
+
+## Scope
+What is included in this task?
+
+- [ ] 
+- [ ] 
+
+## Out of Scope
+What is explicitly NOT included in this task?
+
+- [ ] 
+- [ ] 
+
+## Affected Modules
+Which parts of the codebase are affected?
+
+<!-- List modules, packages, or components -->
+
+## Technical Notes
+Any technical constraints, dependencies, or considerations?
+
+## Acceptance Criteria
+- [ ] 
+- [ ] 
+
+## Test Plan
+How will this be tested?
+
+<!-- Include test scenarios, manual verification steps -->
+
+## Suggested Implementation Steps
+1. 
+2. 
+3. 
+
+## Definition of Done
+- [ ] Code changes implemented
+- [ ] Tests added/updated and passing
+- [ ] Documentation updated if needed
+- [ ] PR opened and linked to this issue
+- [ ] All acceptance criteria met
+
+---
+
+### Agent Instructions
+When working on this task:
+1. Before coding: Post a start comment with your plan and affected components
+2. During work: Post progress updates with branch and commit references
+3. When ready: Open PR with body containing "Closes #{{ this issue number }}" or "Related to #{{ this issue number }}"
+4. Comment on this issue with implementation summary, PR link, and files changed
