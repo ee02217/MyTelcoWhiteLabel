@@ -20,9 +20,8 @@ jobs:
         with:
           script: |
             const { repo, owner } = context.repo;
-            const github = context.github;
-            
-            // Collect issue references from commits and PR
+
+            // github is available as a global in v7
             const issueRefs = new Set();
             
             // Get commit messages from push
