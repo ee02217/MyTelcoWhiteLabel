@@ -35,3 +35,11 @@ coverage/
 CODEOWNERS
 .prettierignore
 .husky/
+
+# Helm templates - use helm lint instead
+**/helm/
+**/templates/
+
+# GitHub templates - avoid formatting issues
+.github/ISSUE_TEMPLATE/
+.github/PULL_REQUEST_TEMPLATE.md
