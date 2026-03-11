@@ -6,20 +6,20 @@ Welcome to the Telco Self-Care White-Label Platform! This guide will help you ge
 
 ### Required Tools
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Node.js | ≥18.x | JavaScript runtime |
-| npm | ≥9.x | Package manager |
-| Git | ≥2.30 | Version control |
-| Docker | ≥20.x | Container runtime (for local services) |
+| Tool    | Version | Purpose                                |
+| ------- | ------- | -------------------------------------- |
+| Node.js | ≥18.x   | JavaScript runtime                     |
+| npm     | ≥9.x    | Package manager                        |
+| Git     | ≥2.30   | Version control                        |
+| Docker  | ≥20.x   | Container runtime (for local services) |
 
 ### Optional Tools
 
-| Tool | Purpose |
-|------|---------|
-| Java JDK | ≥17 | For Java backend modules |
-| Maven | ≥3.8 | For Java module builds |
-| Terraform | ≥1.0 | For infrastructure as code |
+| Tool      | Purpose |
+| --------- | ------- | -------------------------- |
+| Java JDK  | ≥17     | For Java backend modules   |
+| Maven     | ≥3.8    | For Java module builds     |
+| Terraform | ≥1.0    | For infrastructure as code |
 
 ## Quick Start (30 minutes)
 
@@ -107,6 +107,7 @@ MyTelcoWhiteLabel/
 ### How It Works
 
 The `scripts/run-changed.mjs` script:
+
 1. Compares the current branch against a base ref (default: `origin/main`)
 2. Detects which top-level modules have changes
 3. Runs the requested command (lint/test/build) on each changed module
@@ -114,10 +115,10 @@ The `scripts/run-changed.mjs` script:
 
 ### Command Mapping
 
-| Root Command | Node.js Module | Java Module |
-|--------------|----------------|-------------|
-| `lint:changed` | `npm run lint` | `mvn verify -DskipTests` |
-| `test:changed` | `npm run test` | `mvn verify -DskipTests` |
+| Root Command    | Node.js Module  | Java Module               |
+| --------------- | --------------- | ------------------------- |
+| `lint:changed`  | `npm run lint`  | `mvn verify -DskipTests`  |
+| `test:changed`  | `npm run test`  | `mvn verify -DskipTests`  |
 | `build:changed` | `npm run build` | `mvn package -DskipTests` |
 
 ### Examples
@@ -158,9 +159,11 @@ cd web-portal && npm run lint
 Brief description of the module's purpose.
 
 ## Structure
+
 - Key directories and their contents
 
 ## Available Commands
+
 - `npm run lint` - Lint code
 - `npm run test` - Run tests
 - `npm run build` - Build the module
@@ -179,6 +182,7 @@ npm run start
 ```
 
 Quick commands:
+
 - `npm run start` - Start Expo dev server
 - `npm run android` - Run on Android
 - `npm run ios` - Run on iOS
@@ -191,6 +195,7 @@ See [mobile-app/README.md](../mobile-app/README.md) for details.
 Both portals share design tokens from `platform-config/design-tokens/`.
 
 **Web Portal:**
+
 ```bash
 cd web-portal
 npm install
@@ -198,6 +203,7 @@ npm run dev
 ```
 
 **Admin Portal:**
+
 ```bash
 cd admin-portal
 npm install
@@ -205,6 +211,7 @@ npm run dev
 ```
 
 Quick commands:
+
 - `npm run dev` - Start Vite dev server
 - `npm run build` - Build for production
 - `npm run typecheck` - Type check with TypeScript
@@ -214,6 +221,7 @@ See respective READMEs for details.
 ### Backend Services (Spring Boot + Java 21)
 
 **Backend Service:**
+
 ```bash
 cd backend-services
 mvn clean package
@@ -221,6 +229,7 @@ mvn spring-boot:run
 ```
 
 **BFF Service:**
+
 ```bash
 cd bff
 mvn clean package
@@ -228,6 +237,7 @@ mvn spring-boot:run
 ```
 
 Quick commands:
+
 - `mvn clean package` - Build the application
 - `mvn spring-boot:run` - Run locally
 - `docker build` - Build Docker image
@@ -240,10 +250,12 @@ See respective READMEs for details.
 ### Design Tokens
 
 Shared design tokens in `platform-config/design-tokens/`:
+
 - `tokens.json` - JSON format for programmatic access
 - `tokens.css` - CSS custom properties
 
 Import in React apps:
+
 ```typescript
 import tokens from '@my-telco/design-tokens';
 // or
@@ -255,6 +267,7 @@ import './index.css'; // imports tokens.css
 ### "No changed modules detected"
 
 This happens when:
+
 - You're on the same commit as base ref
 - Changes are only in files not under a module directory
 
@@ -263,6 +276,7 @@ Use `--all` flag to run on all modules.
 ### "missing script" errors
 
 The module doesn't have the required script in package.json. Add scripts like:
+
 ```json
 {
   "scripts": {
@@ -276,6 +290,7 @@ The module doesn't have the required script in package.json. Add scripts like:
 ### Java module build failures
 
 Ensure Java 17+ and Maven are installed:
+
 ```bash
 java -version
 mvn -version

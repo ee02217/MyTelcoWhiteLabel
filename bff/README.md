@@ -10,17 +10,17 @@ Backend-for-Frontend (BFF) service template for the Telco Self-Care White-Label 
 
 ## Purpose
 
-The BFF pattern provides a dedicated backend service for each frontend application, 
+The BFF pattern provides a dedicated backend service for each frontend application,
 aggregating data from multiple backend services and providing a simplified API.
 
 ## Getting Started
 
 ### Prerequisites
 
-| Tool | Version |
-|------|---------|
-| Java JDK | ≥21 |
-| Maven | ≥3.8 |
+| Tool     | Version |
+| -------- | ------- |
+| Java JDK | ≥21     |
+| Maven    | ≥3.8    |
 
 ### Installation & Build
 
@@ -84,18 +84,19 @@ bff/
 
 The service includes Spring Boot Actuator with the following endpoints:
 
-| Endpoint | Path | Description |
-|----------|------|-------------|
-| Health | `/actuator/health` | Overall health status |
-| Liveness | `/actuator/health/liveness` | Kubernetes liveness probe |
-| Readiness | `/actuator/health/readiness` | Kubernetes readiness probe |
-| Info | `/actuator/info` | Application information |
-| Metrics | `/actuator/metrics` | Application metrics |
-| Prometheus | `/actuator/prometheus` | Prometheus metrics export |
+| Endpoint   | Path                         | Description                |
+| ---------- | ---------------------------- | -------------------------- |
+| Health     | `/actuator/health`           | Overall health status      |
+| Liveness   | `/actuator/health/liveness`  | Kubernetes liveness probe  |
+| Readiness  | `/actuator/health/readiness` | Kubernetes readiness probe |
+| Info       | `/actuator/info`             | Application information    |
+| Metrics    | `/actuator/metrics`          | Application metrics        |
+| Prometheus | `/actuator/prometheus`       | Prometheus metrics export  |
 
 ## Creating a New BFF from Template
 
 1. **Copy the template:**
+
    ```bash
    cp -r bff bff-my-feature
    ```
@@ -126,14 +127,15 @@ The service includes Spring Boot Actuator with the following endpoints:
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SERVER_PORT` | HTTP port | 8081 |
-| `SPRING_PROFILES_ACTIVE` | Spring profile | dev |
+| Variable                 | Description    | Default |
+| ------------------------ | -------------- | ------- |
+| `SERVER_PORT`            | HTTP port      | 8081    |
+| `SPRING_PROFILES_ACTIVE` | Spring profile | dev     |
 
 ### Application Properties
 
 Key properties in `application.yml`:
+
 - `server.port` - HTTP listener port (default: 8081)
 - `spring.application.name` - Application name
 - `bff.backend-services.base-url` - Backend services URL
@@ -143,11 +145,11 @@ Key properties in `application.yml`:
 
 Sample endpoints:
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/v1/health` | Service health check |
-| GET | `/api/v1/info` | Service information |
-| GET | `/api/v1/dashboard` | Aggregated dashboard data |
+| Method | Path                | Description               |
+| ------ | ------------------- | ------------------------- |
+| GET    | `/api/v1/health`    | Service health check      |
+| GET    | `/api/v1/info`      | Service information       |
+| GET    | `/api/v1/dashboard` | Aggregated dashboard data |
 
 ## BFF Pattern Implementation
 
@@ -156,9 +158,9 @@ The BFF uses Spring WebFlux for reactive programming:
 ```java
 @Service
 public class MyBffService {
-    
+
     private final WebClient webClient;
-    
+
     public Mono<DashboardData> getDashboard() {
         return Mono.zip(
             userService.getUserData(),

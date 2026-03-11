@@ -9,11 +9,12 @@ export default function App() {
           <Text style={styles.title}>MyTelco</Text>
           <Text style={styles.subtitle}>White-Label Mobile App</Text>
         </View>
-        
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Getting Started</Text>
           <Text style={styles.text}>
-            This is a base React Native + Expo template for the Telco Self-Care White-Label Platform.
+            This is a base React Native + Expo template for the Telco Self-Care White-Label
+            Platform.
           </Text>
         </View>
 

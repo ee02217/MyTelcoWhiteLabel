@@ -23,7 +23,7 @@ jobs:
 
             // github is available as a global in v7
             const issueRefs = new Set();
-            
+
             // Get commit messages from push
             if (context.eventName === 'push') {
               for (const commit of context.payload.commits) {
@@ -33,7 +33,7 @@ jobs:
                 }
               }
             }
-            
+
             // Get issue reference from PR title/body
             if (context.eventName === 'pull_request') {
               const pr = context.payload.pull_request;
@@ -43,7 +43,7 @@ jobs:
                 matches.forEach(m => issueRefs.add(parseInt(m.replace('#', ''))));
               }
             }
-            
+
             // Post comments to each referenced issue
             for (const issueNumber of issueRefs) {
               try {
@@ -92,7 +92,7 @@ jobs:
                 console.error(`Failed to comment on issue #${issueNumber}:`, error.message);
               }
             }
-            
+
             if (issueRefs.size === 0) {
               console.log('No issue references found in commit/PR');
             } else {

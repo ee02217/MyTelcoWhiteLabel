@@ -12,7 +12,8 @@ function App() {
         <section style={styles.section}>
           <h2 style={styles.sectionTitle}>Getting Started</h2>
           <p style={styles.text}>
-            This is a base Vite + React + TypeScript template for the Telco Self-Care White-Label Platform.
+            This is a base Vite + React + TypeScript template for the Telco Self-Care White-Label
+            Platform.
           </p>
         </section>
 
@@ -21,17 +22,19 @@ function App() {
           <p style={styles.text}>
             This app uses shared design tokens from <code>platform-config/design-tokens/</code>
           </p>
-          
+
           <div style={styles.tokenGrid}>
             <div style={styles.tokenCard}>
               <h3 style={styles.tokenTitle}>Primary Color</h3>
               <div style={styles.tokenPreview}>
-                <div style={{ 
-                  backgroundColor: tokens.color.primary[500], 
-                  width: '100%', 
-                  height: '60px', 
-                  borderRadius: '8px' 
-                }} />
+                <div
+                  style={{
+                    backgroundColor: tokens.color.primary[500],
+                    width: '100%',
+                    height: '60px',
+                    borderRadius: '8px',
+                  }}
+                />
               </div>
               <code style={styles.tokenValue}>{tokens.color.primary[500]}</code>
             </div>
@@ -39,12 +42,14 @@ function App() {
             <div style={styles.tokenCard}>
               <h3 style={styles.tokenTitle}>Secondary Color</h3>
               <div style={styles.tokenPreview}>
-                <div style={{ 
-                  backgroundColor: tokens.color.secondary[500], 
-                  width: '100%', 
-                  height: '60px', 
-                  borderRadius: '8px' 
-                }} />
+                <div
+                  style={{
+                    backgroundColor: tokens.color.secondary[500],
+                    width: '100%',
+                    height: '60px',
+                    borderRadius: '8px',
+                  }}
+                />
               </div>
               <code style={styles.tokenValue}>{tokens.color.secondary[500]}</code>
             </div>
@@ -57,13 +62,15 @@ function App() {
             <div style={styles.tokenCard}>
               <h3 style={styles.tokenTitle}>Shadow</h3>
               <div style={styles.tokenPreview}>
-                <div style={{ 
-                  boxShadow: tokens.shadow.md, 
-                  width: '100%', 
-                  height: '60px', 
-                  backgroundColor: 'white',
-                  borderRadius: '8px' 
-                }} />
+                <div
+                  style={{
+                    boxShadow: tokens.shadow.md,
+                    width: '100%',
+                    height: '60px',
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                  }}
+                />
               </div>
               <code style={styles.tokenValue}>shadow-md</code>
             </div>

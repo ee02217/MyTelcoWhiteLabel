@@ -8,7 +8,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@my-telco/design-tokens': path.resolve(__dirname, '../platform-config/design-tokens/tokens.json'),
+      '@my-telco/design-tokens': path.resolve(
+        __dirname,
+        '../platform-config/design-tokens/tokens.json'
+      ),
     },
   },
   server: {
