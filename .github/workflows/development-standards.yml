@@ -1,0 +1,64 @@
+name: Development Standards
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  node-standards:
+    name: Node.js Linting & Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Prettier formatting
+        run: npm run lint:all --if-present || npx prettier --check .
+
+      - name: Check ESLint
+        run: npm run lint:all --if-present || npx eslint . --ext .js,.jsx,.ts,.tsx
+
+  java-standards:
+    name: Java Code Style
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+
+      - name: Check backend-services code style
+        working-directory: backend-services
+        run: mvn checkstyle:check -q || true
+
+      - name: Check bff code style
+        working-directory: bff
+        run: mvn checkstyle:check -q || true
+
+      - name: Fail if style violations found
+        run: |
+          if grep -q "Checkstyle violation" backend-services/target/*.xml 2>/dev/null || \
+             grep -q "Checkstyle violation" bff/target/*.xml 2>/dev/null; then
+            echo "Code style violations detected. Check Maven output for details."
+            exit 1
+          fi

@@ -1,0 +1,27 @@
+# Code Owners
+# This file defines who owns what parts of the codebase.
+# More info: https://help.github.com/articles/about-code-owners/
+
+# Default owner for everything
+* @richard-hendricks
+
+# Backend services
+/backend-services/ @richard-hendricks
+
+# BFF services
+/bff/ @richard-hendricks
+
+# Frontend applications
+/web-portal/ @richard-hendricks
+/admin-portal/ @richard-hendricks
+/mobile-app/ @richard-hendricks
+
+# Infrastructure
+/infra/ @richard-hendricks
+/integration-layer/ @richard-hendricks
+
+# Documentation
+/docs/ @richard-hendricks
+
+# CI/CD
+/.github/workflows/ @richard-hendricks
