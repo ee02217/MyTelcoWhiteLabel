@@ -1,0 +1,31 @@
+name: PR Issue Enforcement
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  enforce-issue-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR for issue reference
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const prTitle = context.payload.pull_request.title || '';
+            
+            // Check for issue reference patterns: Closes #123 or Related to #123
+            const issueRegex = /(Closes|Related to)\s+#\d+/i;
+            
+            if (!issueRegex.test(prBody) && !issueRegex.test(prTitle)) {
+              core.setFailed(
+                '❌ PR must reference an issue. ' +
+                'Please add "Closes #<issue_number>" or "Related to #<issue_number>" to the PR description.'
+              );
+            }
+            
+            console.log('✅ PR contains valid issue reference');
