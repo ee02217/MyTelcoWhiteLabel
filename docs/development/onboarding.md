@@ -166,6 +166,90 @@ Brief description of the module's purpose.
 - `npm run build` - Build the module
 ```
 
+## Base Templates (Issue #20)
+
+This repository includes base templates for quick project bootstrapping:
+
+### Mobile App (React Native + Expo)
+
+```bash
+cd mobile-app
+npm install
+npm run start
+```
+
+Quick commands:
+- `npm run start` - Start Expo dev server
+- `npm run android` - Run on Android
+- `npm run ios` - Run on iOS
+- `npm run typecheck` - Type check with TypeScript
+
+See [mobile-app/README.md](../mobile-app/README.md) for details.
+
+### Web Portal & Admin Portal (Vite + React + TypeScript)
+
+Both portals share design tokens from `platform-config/design-tokens/`.
+
+**Web Portal:**
+```bash
+cd web-portal
+npm install
+npm run dev
+```
+
+**Admin Portal:**
+```bash
+cd admin-portal
+npm install
+npm run dev
+```
+
+Quick commands:
+- `npm run dev` - Start Vite dev server
+- `npm run build` - Build for production
+- `npm run typecheck` - Type check with TypeScript
+
+See respective READMEs for details.
+
+### Backend Services (Spring Boot + Java 21)
+
+**Backend Service:**
+```bash
+cd backend-services
+mvn clean package
+mvn spring-boot:run
+```
+
+**BFF Service:**
+```bash
+cd bff
+mvn clean package
+mvn spring-boot:run
+```
+
+Quick commands:
+- `mvn clean package` - Build the application
+- `mvn spring-boot:run` - Run locally
+- `docker build` - Build Docker image
+- `helm install` - Deploy to Kubernetes
+
+Health endpoint: `/actuator/health`
+
+See respective READMEs for details.
+
+### Design Tokens
+
+Shared design tokens in `platform-config/design-tokens/`:
+- `tokens.json` - JSON format for programmatic access
+- `tokens.css` - CSS custom properties
+
+Import in React apps:
+```typescript
+import tokens from '@my-telco/design-tokens';
+// or
+import './index.css'; // imports tokens.css
+```
+
 ## Troubleshooting
 
 ### "No changed modules detected"

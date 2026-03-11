@@ -1,0 +1,10 @@
+apiVersion: v2
+name: bff-service
+description: Backend-for-Frontend service for Telco Self-Care White-Label Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0-SNAPSHOT"
+keywords:
+  - telco
+  - bff
+  - spring-boot

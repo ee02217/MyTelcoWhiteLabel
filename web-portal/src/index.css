@@ -1,0 +1,25 @@
+/* Import shared design tokens */
+@import '../../platform-config/design-tokens/tokens.css';
+
+/* Base styles */
+:root {
+  font-family: var(--font-family-sans);
+  line-height: 1.5;
+  font-weight: var(--font-weight-normal);
+  color: var(--color-neutral-900);
+  background-color: var(--color-neutral-50);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}

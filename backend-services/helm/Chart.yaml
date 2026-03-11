@@ -1,0 +1,10 @@
+apiVersion: v2
+name: backend-service
+description: Core backend service for Telco Self-Care White-Label Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0-SNAPSHOT"
+keywords:
+  - telco
+  - backend
+  - spring-boot

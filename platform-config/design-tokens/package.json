@@ -1,0 +1,21 @@
+{
+  "name": "@my-telco/design-tokens",
+  "version": "1.0.0",
+  "description": "Shared design tokens for MyTelco White-Label Platform",
+  "main": "dist/tokens.json",
+  "module": "dist/tokens.esm.js",
+  "types": "dist/tokens.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "echo 'Design tokens built'",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "design-tokens",
+    "theme",
+    "telco"
+  ],
+  "license": "UNLICENSED"
+}
