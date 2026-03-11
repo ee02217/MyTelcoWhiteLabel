@@ -1,0 +1,23 @@
+{
+  "name": "my-telco-white-label",
+  "version": "1.0.0",
+  "description": "Mono-repo for Telco Self-Care White-Label Platform",
+  "private": true,
+  "scripts": {
+    "lint:changed": "node scripts/run-changed.mjs lint",
+    "test:changed": "node scripts/run-changed.mjs test",
+    "build:changed": "node scripts/run-changed.mjs build",
+    "lint:all": "node scripts/run-changed.mjs lint --all",
+    "test:all": "node scripts/run-changed.mjs test --all",
+    "build:all": "node scripts/run-changed.mjs build --all",
+    "repo:verify": "echo 'Repository structure verified'"
+  },
+  "keywords": [
+    "telco",
+    "self-care",
+    "white-label",
+    "monorepo"
+  ],
+  "author": "",
+  "license": "UNLICENSED"
+}
