@@ -2,6 +2,7 @@ package com.mytelco.customerbff.service;
 
 import com.mytelco.customerbff.model.*;
 import com.mytelco.customerbff.provider.BillingProvider;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -59,6 +60,10 @@ public class BillingExplorerService {
             ),
             current.invoice()
         );
+    }
+
+    public Resource getInvoicePdf(String invoiceId) {
+        return billingProvider.getInvoicePdf(invoiceId);
     }
 
     List<BillCategoryGroup> groupByCategory(List<BillLineItem> lineItems) {

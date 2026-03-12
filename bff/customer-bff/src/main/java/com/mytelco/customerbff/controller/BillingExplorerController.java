@@ -1,8 +1,9 @@
 package com.mytelco.customerbff.controller;
 
 import com.mytelco.customerbff.model.BillExplorerResponse;
-import com.mytelco.customerbff.provider.BillingProvider;
 import com.mytelco.customerbff.service.BillingExplorerService;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,11 +27,11 @@ import java.time.YearMonth;
 public class BillingExplorerController {
 
     private final BillingExplorerService billingExplorerService;
-    private final BillingProvider billingProvider;
+    private final MeterRegistry meterRegistry;
 
-    public BillingExplorerController(BillingExplorerService billingExplorerService, BillingProvider billingProvider) {
+    public BillingExplorerController(BillingExplorerService billingExplorerService, MeterRegistry meterRegistry) {
         this.billingExplorerService = billingExplorerService;
-        this.billingProvider = billingProvider;
+        this.meterRegistry = meterRegistry;
     }
 
     @GetMapping("/explorer")
@@ -46,7 +47,15 @@ public class BillingExplorerController {
         @Parameter(description = "Billing period in format YYYY-MM", example = "2026-03")
         @RequestParam String period
     ) {
-        BillExplorerResponse response = billingExplorerService.getBillExplorer("12345", YearMonth.parse(period));
+        Timer timer = Timer.builder("customer.billing.explorer.endpoint")
+            .description("Endpoint time for customer bill explorer")
+            .publishPercentiles(0.50, 0.95, 0.99)
+            .register(meterRegistry);
+
+        BillExplorerResponse response = timer.record(
+            () -> billingExplorerService.getBillExplorer("12345", YearMonth.parse(period))
+        );
+
         return ResponseEntity.ok(response);
     }
 
@@ -57,7 +66,7 @@ public class BillingExplorerController {
         @ApiResponse(responseCode = "404", description = "Invoice not found")
     })
     public ResponseEntity<Resource> downloadInvoice(@PathVariable String invoiceId) {
-        Resource pdf = billingProvider.getInvoicePdf(invoiceId);
+        Resource pdf = billingExplorerService.getInvoicePdf(invoiceId);
         return ResponseEntity.ok()
             .contentType(MediaType.APPLICATION_PDF)
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + invoiceId + ".pdf\"")

@@ -2,8 +2,9 @@ package com.mytelco.customerbff;
 
 import com.mytelco.customerbff.controller.BillingExplorerController;
 import com.mytelco.customerbff.model.*;
-import com.mytelco.customerbff.provider.BillingProvider;
 import com.mytelco.customerbff.service.BillingExplorerService;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -11,6 +12,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BillingExplorerController.class)
+@Import(BillingExplorerControllerTest.TestMeterRegistryConfig.class)
 class BillingExplorerControllerTest {
 
     @Autowired
@@ -35,8 +40,6 @@ class BillingExplorerControllerTest {
     @MockBean
     private BillingExplorerService billingExplorerService;
 
-    @MockBean
-    private BillingProvider billingProvider;
 
     @Test
     @WithMockUser(roles = "CUSTOMER")
@@ -79,11 +82,19 @@ class BillingExplorerControllerTest {
     @Test
     @WithMockUser(roles = "CUSTOMER")
     void downloadInvoice_shouldReturnPdfHeaders() throws Exception {
-        when(billingProvider.getInvoicePdf("INV-202603-12345")).thenReturn(new ByteArrayResource("pdf".getBytes()));
+        when(billingExplorerService.getInvoicePdf("INV-202603-12345")).thenReturn(new ByteArrayResource("pdf".getBytes()));
 
         mockMvc.perform(get("/api/v1/customer/billing/invoice/INV-202603-12345/download"))
             .andExpect(status().isOk())
             .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE))
             .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"INV-202603-12345.pdf\""));
+    }
+
+    @TestConfiguration
+    static class TestMeterRegistryConfig {
+        @Bean
+        MeterRegistry meterRegistry() {
+            return new SimpleMeterRegistry();
+        }
     }
 }
