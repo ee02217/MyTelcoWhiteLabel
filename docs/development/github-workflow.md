@@ -115,6 +115,21 @@ Refs #42
 
 This enables the issue activity logger to track work progress.
 
+## CI/CD Pipelines
+
+This repository uses GitHub Actions for CI/CD:
+
+- **CI Pipeline**: `.github/workflows/ci-pr.yml` - Runs on PRs to main
+- **CD Pipeline**: `.github/workflows/cd-environment-promotion.yml` - Handles environment promotion
+
+### CD Environment Promotion
+
+See [CD Environment Promotion](./cd-environment-promotion.md) for detailed documentation on:
+- Environment promotion flow (dev → staging → production)
+- Manual approval mechanism for production
+- Rollback test procedure
+- Required secrets and variables
+
 ## Workflow Summary
 
 ```
