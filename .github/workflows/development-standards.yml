@@ -5,6 +5,22 @@ on:
     branches: [main, develop]
 
 jobs:
+  design-standards:
+    name: Design System Standards
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check design token contrast ratios
+        run: |
+          node scripts/check-design-contrast.mjs
+
   node-standards:
     name: Node.js Linting & Formatting
     runs-on: ubuntu-latest

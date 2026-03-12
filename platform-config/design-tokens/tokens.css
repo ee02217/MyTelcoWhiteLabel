@@ -27,7 +27,7 @@
   --color-secondary-900: #1e3a8a;
 
   /* Semantic Colors */
-  --color-success-500: #22c55e;
+  --color-success-500: #16a34a;
   --color-warning-500: #f59e0b;
   --color-error-500: #ef4444;
 
@@ -104,4 +104,31 @@
   --z-index-modal: 1050;
   --z-index-popover: 1060;
   --z-index-tooltip: 1070;
+
+  /* Motion - Duration */
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 300ms;
+  --motion-duration-slow: 500ms;
+  --motion-duration-slower: 700ms;
+  --motion-duration-slowest: 1000ms;
+
+  /* Motion - Easing */
+  --motion-easing-linear: linear;
+  --motion-easing-ease: ease;
+  --motion-easing-ease-in: ease-in;
+  --motion-easing-ease-out: ease-out;
+  --motion-easing-ease-in-out: ease-in-out;
+
+  /* Semantic Colors */
+  --color-text-primary: #18181b;
+  --color-text-secondary: #52525b;
+  --color-text-disabled: #a1a1aa;
+  --color-text-inverse: #fafafa;
+
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f4f4f5;
+  --color-background-tertiary: #e4e4e7;
+
+  --color-border-default: #e4e4e7;
+  --color-border-focus: #0073e6;
 }

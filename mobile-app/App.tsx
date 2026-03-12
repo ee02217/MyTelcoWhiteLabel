@@ -1,45 +1,54 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from 'react-native';
+import { StyleSheet, View, SafeAreaView, ScrollView } from 'react-native';
+import { Button, Card, Typography } from './src/design-system';
 
 export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>MyTelco</Text>
-          <Text style={styles.subtitle}>White-Label Mobile App</Text>
+          <Typography variant="h1" color="primary">
+            MyTelco
+          </Typography>
+          <Typography variant="body" color="secondary">
+            White-Label Mobile App
+          </Typography>
         </View>
 
+        {/* Design System Demo */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Getting Started</Text>
-          <Text style={styles.text}>
-            This is a base React Native + Expo template for the Telco Self-Care White-Label
-            Platform.
-          </Text>
-        </View>
+          <Typography variant="h3" color="primary">
+            Design System Components
+          </Typography>
+          <Typography variant="small" color="secondary" style={{ marginTop: 8 }}>
+            Mobile app uses shared design system from src/design-system/
+          </Typography>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Start</Text>
-          <View style={styles.codeBlock}>
-            <Text style={styles.code}># Install dependencies</Text>
-            <Text style={styles.code}>npm install</Text>
-            <Text style={styles.code}>{''}</Text>
-            <Text style={styles.code}># Start development server</Text>
-            <Text style={styles.code}>npm run start</Text>
-            <Text style={styles.code}>{''}</Text>
-            <Text style={styles.code}># Run on Android</Text>
-            <Text style={styles.code}>npm run android</Text>
-            <Text style={styles.code}>{''}</Text>
-            <Text style={styles.code}># Run on iOS</Text>
-            <Text style={styles.code}>npm run ios</Text>
-          </View>
-        </View>
+          <Card padding="md" shadow="md" style={{ marginTop: 16 }}>
+            <Typography variant="h4" color="primary">
+              Button Variants
+            </Typography>
+            <View style={{ marginTop: 12, gap: 8 }}>
+              <Button variant="primary" size="md" title="Primary" />
+              <Button variant="secondary" size="md" title="Secondary" />
+              <Button variant="outline" size="md" title="Outline" />
+              <Button variant="ghost" size="md" title="Ghost" />
+            </View>
+          </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Design Tokens</Text>
-          <Text style={styles.text}>
-            Shared design tokens are available in platform-config/design-tokens/
-          </Text>
+          <Card padding="md" shadow="sm" style={{ marginTop: 16 }}>
+            <Typography variant="h4" color="primary">
+              Typography Scale
+            </Typography>
+            <View style={{ marginTop: 8 }}>
+              <Typography variant="h1">Heading 1</Typography>
+              <Typography variant="h2">Heading 2</Typography>
+              <Typography variant="h3">Heading 3</Typography>
+              <Typography variant="body">Body text</Typography>
+              <Typography variant="small">Small text</Typography>
+              <Typography variant="caption">Caption</Typography>
+            </View>
+          </Card>
         </View>
 
         <StatusBar style="auto" />
