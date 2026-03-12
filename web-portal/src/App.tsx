@@ -29,6 +29,28 @@ type CheckoutResponse = {
   idempotencyKey: string;
 };
 
+type PaymentHistoryItem = {
+  paymentId: string;
+  paymentDate: string;
+  amount: number;
+  currency: string;
+  methodSummary: string;
+  status: 'SUCCESS' | 'FAILED';
+  referenceId: string;
+};
+
+type PaymentHistoryResponse = {
+  months: number;
+  payments: PaymentHistoryItem[];
+};
+
+type PaymentRetryResponse = {
+  paymentId: string;
+  status: string;
+  outcome: string;
+  idempotencyKey: string;
+};
+
 const fallbackOverview: AccountOverview = {
   plan: 'Unavailable (login required)',
   activeLineCount: 0,
@@ -43,6 +65,9 @@ function App() {
 
   const [paymentToken, setPaymentToken] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState('No payment attempt yet');
+
+  const [history, setHistory] = useState<PaymentHistoryItem[]>([]);
+  const [historyStatus, setHistoryStatus] = useState('History not loaded yet');
 
   const authedFetch = async (path: string, init: RequestInit = {}) => {
     if (!session?.accessToken) throw new Error('Not authenticated');
@@ -129,6 +154,53 @@ function App() {
     }
   };
 
+  const loadPaymentHistory = async () => {
+    setError(null);
+    try {
+      const response = await authedFetch('/api/v1/customer/payments/history?months=12');
+      const payload = (await response.json()) as PaymentHistoryResponse;
+      setHistory(payload.payments);
+      setHistoryStatus(`Loaded ${payload.payments.length} payments from ${payload.months} months`);
+    } catch (err) {
+      setHistoryStatus('Failed to load payment history');
+      setError(err instanceof Error ? err.message : 'Failed to load payment history');
+    }
+  };
+
+  const downloadReceipt = async (paymentId: string) => {
+    setError(null);
+    try {
+      const response = await authedFetch(`/api/v1/customer/payments/receipt/${paymentId}/download`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `receipt-${paymentId}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setHistoryStatus(`Receipt downloaded for ${paymentId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Receipt download failed');
+    }
+  };
+
+  const retryFailedPayment = async (paymentId: string) => {
+    setError(null);
+    try {
+      const response = await authedFetch(`/api/v1/customer/payments/${paymentId}/retry`, {
+        method: 'POST',
+        headers: { 'Idempotency-Key': `web-retry-${paymentId}` },
+      });
+      const payload = (await response.json()) as PaymentRetryResponse;
+      setHistoryStatus(`${payload.status}: ${payload.outcome}`);
+      await loadPaymentHistory();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Retry failed');
+    }
+  };
+
   useEffect(() => {
     completeLoginIfCallback()
       .then((newSession) => {
@@ -143,8 +215,10 @@ function App() {
   useEffect(() => {
     if (session) {
       loadOverview().catch(() => undefined);
+      loadPaymentHistory().catch(() => undefined);
     } else {
       setOverview(null);
+      setHistory([]);
     }
   }, [session]);
 
@@ -240,6 +314,44 @@ function App() {
               Checkout failure
             </Button>
           </div>
+        </Card>
+
+        <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+          <Typography variant="h4">Payment history (Issue #36)</Typography>
+          <Typography variant="small" color="secondary">
+            {historyStatus}
+          </Typography>
+          <Button size="sm" onClick={() => loadPaymentHistory().catch(() => undefined)}>
+            Refresh 12-month history
+          </Button>
+          {history.map((item) => (
+            <div key={item.paymentId} style={{ marginTop: 12 }}>
+              <Typography variant="body">
+                {new Date(item.paymentDate).toLocaleDateString()} — {item.methodSummary} —{' '}
+                {item.status} —{' '}
+                {new Intl.NumberFormat('en-GB', {
+                  style: 'currency',
+                  currency: item.currency,
+                }).format(item.amount)}
+              </Typography>
+              <div style={styles.row}>
+                <Button
+                  size="sm"
+                  onClick={() => downloadReceipt(item.paymentId).catch(() => undefined)}
+                >
+                  Download receipt
+                </Button>
+                {item.status === 'FAILED' && (
+                  <Button
+                    size="sm"
+                    onClick={() => retryFailedPayment(item.paymentId).catch(() => undefined)}
+                  >
+                    Retry failed payment
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
         </Card>
 
         {error && <p style={styles.warning}>{error}</p>}
