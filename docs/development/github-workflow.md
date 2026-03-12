@@ -141,6 +141,15 @@ See [Container/Orchestration Baseline](./container-orchestration-baseline.md) fo
 - Resource requests and limits
 - Deployment examples
 
+### API Versioning
+
+See [API Versioning Policy](./api-versioning-policy.md) for:
+
+- URL versioning strategy (/api/v1)
+- Backward compatibility guidelines
+- Deprecation policy and timelines
+- Kong gateway integration details
+
 ## Workflow Summary
 
 ```
