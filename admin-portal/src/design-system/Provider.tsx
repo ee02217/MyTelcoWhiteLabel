@@ -1,9 +1,9 @@
 import React, { createContext, useContext } from 'react';
-import '../../../../platform-config/design-system/tokens.css';
+import '../../../platform-config/design-system/tokens.css';
 
 interface DesignSystemContextValue {
   tokens: {
-    color: typeof import('../../../../platform-config/design-system/tokens').tokens.color;
+    color: typeof import('../../../platform-config/design-system/tokens').tokens.color;
   };
 }
 

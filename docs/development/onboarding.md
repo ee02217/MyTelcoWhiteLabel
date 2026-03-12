@@ -73,6 +73,8 @@ npm run lint:changed -- --base HEAD~5
 
 ### 5. Start Development
 
+For integrated local stack validation, see [Local Docker integration environment](./local-docker-integration.md).
+
 Once you've identified which module you need to work on:
 
 ```bash

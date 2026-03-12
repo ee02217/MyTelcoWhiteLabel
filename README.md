@@ -10,6 +10,7 @@ This is the main repository for the Telco Self-Care White-Label Platform, suppor
 
 - **[Developer Onboarding](./docs/development/onboarding.md)** - Get started in under 60 minutes
 - **[GitHub Workflow](./docs/development/github-workflow.md)** - Development workflow guide
+- **[Local Docker Integration](./docs/development/local-docker-integration.md)** - End-to-end local stack setup
 - **[Usage Threshold Alerts](./docs/development/usage-threshold-alerts.md)** - F-05.3 threshold model, dedup, and notification flow
 
 ## Module Structure
