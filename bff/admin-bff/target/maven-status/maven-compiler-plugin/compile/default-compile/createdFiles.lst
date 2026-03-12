@@ -1,0 +1,10 @@
+com/mytelco/adminbff/controller/AdminDashboardController.class
+com/mytelco/adminbff/model/AdminDashboardResponse.class
+com/mytelco/adminbff/AdminBffApplication.class
+com/mytelco/adminbff/provider/TenantProvider.class
+com/mytelco/adminbff/provider/OpsProvider.class
+com/mytelco/adminbff/model/OpsSummary.class
+com/mytelco/adminbff/model/OfferSummary.class
+com/mytelco/adminbff/provider/OfferProvider.class
+com/mytelco/adminbff/model/TenantSummary.class
+com/mytelco/adminbff/service/AdminAggregationService.class

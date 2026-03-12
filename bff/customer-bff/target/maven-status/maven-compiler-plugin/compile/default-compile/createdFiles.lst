@@ -1,0 +1,10 @@
+com/mytelco/customerbff/CustomerBffApplication.class
+com/mytelco/customerbff/provider/BillingProvider.class
+com/mytelco/customerbff/model/UsageSummary.class
+com/mytelco/customerbff/provider/AccountProvider.class
+com/mytelco/customerbff/controller/CustomerDashboardController.class
+com/mytelco/customerbff/model/CustomerDashboardResponse.class
+com/mytelco/customerbff/provider/UsageProvider.class
+com/mytelco/customerbff/model/BillingSummary.class
+com/mytelco/customerbff/model/AccountSummary.class
+com/mytelco/customerbff/service/CustomerAggregationService.class
