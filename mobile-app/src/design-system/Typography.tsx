@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TextStyle } from 'react-native';
-import { rnTokens } from '../../../../platform-config/design-system/tokens';
+import { rnTokens } from '../../../platform-config/design-system/tokens';
 
 type TypographyVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'small' | 'caption';
 type TypographyColor = 'primary' | 'secondary' | 'disabled' | 'inverse';

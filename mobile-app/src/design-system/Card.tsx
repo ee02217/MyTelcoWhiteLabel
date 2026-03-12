@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle } from 'react-native';
-import { rnTokens } from '../../../../platform-config/design-system/tokens';
+import { rnTokens } from '../../../platform-config/design-system/tokens';
 
 type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 type CardShadow = 'none' | 'sm' | 'md' | 'lg';

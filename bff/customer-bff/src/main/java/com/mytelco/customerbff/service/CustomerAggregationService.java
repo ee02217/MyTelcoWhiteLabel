@@ -9,7 +9,6 @@ import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Service that aggregates data from multiple providers for the customer dashboard.
@@ -22,6 +21,7 @@ public class CustomerAggregationService {
     private final UsageProvider usageProvider;
     private final BillingProvider billingProvider;
     private final Timer dashboardTimer;
+    private final Timer accountOverviewTimer;
 
     public CustomerAggregationService(
             AccountProvider accountProvider,
@@ -31,10 +31,15 @@ public class CustomerAggregationService {
         this.accountProvider = accountProvider;
         this.usageProvider = usageProvider;
         this.billingProvider = billingProvider;
-        
+
         // Timer for tracking dashboard aggregation performance
         this.dashboardTimer = Timer.builder("customer.dashboard.aggregation")
             .description("Time taken to aggregate customer dashboard data")
+            .publishPercentiles(0.50, 0.95, 0.99)
+            .register(meterRegistry);
+
+        this.accountOverviewTimer = Timer.builder("customer.account.overview.aggregation")
+            .description("Time taken to aggregate account overview data")
             .publishPercentiles(0.50, 0.95, 0.99)
             .register(meterRegistry);
     }
@@ -45,7 +50,6 @@ public class CustomerAggregationService {
      */
     public CustomerDashboardResponse getDashboard(String customerId) {
         return dashboardTimer.record(() -> {
-            // Fetch all data in parallel (simulated - actual implementation would use CompletableFuture)
             AccountSummary accountSummary = accountProvider.getAccountSummary(customerId);
             UsageSummary usageSummary = usageProvider.getUsageSummary(customerId);
             BillingSummary billingSummary = billingProvider.getBillingSummary(customerId);
@@ -57,5 +61,12 @@ public class CustomerAggregationService {
                 Instant.now()
             );
         });
+    }
+
+    /**
+     * Returns account overview data for account dashboard surfaces.
+     */
+    public AccountOverviewResponse getAccountOverview(String customerId) {
+        return accountOverviewTimer.record(() -> accountProvider.getAccountOverview(customerId));
     }
 }
