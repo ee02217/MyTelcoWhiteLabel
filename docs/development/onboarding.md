@@ -299,6 +299,8 @@ For bill explorer implementation and contracts (F-06.1), read `docs/development/
 
 For threshold-based alerting (F-05.3), read `docs/development/usage-threshold-alerts.md`.
 
+For payment journey implementation and API contract (F-06.2), read `docs/development/payment-journey.md`.
+
 ### Operator Feature Flags & Journeys
 
 For white-label runtime toggles and journey flows, read:
