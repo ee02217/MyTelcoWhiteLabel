@@ -6,10 +6,10 @@ Backend-for-Frontend (BFF) services for the Telco Self-Care White-Label Platform
 
 This directory contains multiple BFF services, each dedicated to a specific frontend:
 
-| BFF Service | Port | Purpose |
-|-------------|------|---------|
+| BFF Service    | Port | Purpose                          |
+| -------------- | ---- | -------------------------------- |
 | `customer-bff` | 8081 | Customer-facing self-care portal |
-| `admin-bff` | 8082 | Admin management portal |
+| `admin-bff`    | 8082 | Admin management portal          |
 
 ## Tech Stack
 
@@ -25,6 +25,7 @@ This directory contains multiple BFF services, each dedicated to a specific fron
 **Purpose:** Aggregates data for the customer self-care portal.
 
 **Endpoints:**
+
 - `GET /api/v1/customer/dashboard` - Aggregated customer dashboard (account, usage, billing)
 - `GET /api/v1/customer/{customerId}/dashboard` - Customer-specific dashboard
 
@@ -35,6 +36,7 @@ This directory contains multiple BFF services, each dedicated to a specific fron
 **Purpose:** Aggregates data for the admin management portal.
 
 **Endpoints:**
+
 - `GET /api/v1/admin/dashboard` - Aggregated admin dashboard (tenant, offers, operations)
 - `GET /api/v1/admin/{tenantId}/dashboard` - Tenant-specific dashboard
 
@@ -176,17 +178,18 @@ bff/
 
 All BFF services include Spring Boot Actuator:
 
-| Endpoint | Path | Description |
-|----------|------|-------------|
-| Health | `/actuator/health` | Overall health status |
-| Liveness | `/actuator/health/liveness` | K8s liveness probe |
-| Readiness | `/actuator/health/readiness` | K8s readiness probe |
-| Metrics | `/actuator/metrics` | Application metrics |
-| Prometheus | `/actuator/prometheus` | Prometheus export |
+| Endpoint   | Path                         | Description           |
+| ---------- | ---------------------------- | --------------------- |
+| Health     | `/actuator/health`           | Overall health status |
+| Liveness   | `/actuator/health/liveness`  | K8s liveness probe    |
+| Readiness  | `/actuator/health/readiness` | K8s readiness probe   |
+| Metrics    | `/actuator/metrics`          | Application metrics   |
+| Prometheus | `/actuator/prometheus`       | Prometheus export     |
 
 ### Performance Metrics
 
 BFF aggregation endpoints expose timing metrics:
+
 - `customer.dashboard.aggregation` - Customer dashboard timing
 - `admin.dashboard.aggregation` - Admin dashboard timing
 
@@ -198,10 +201,10 @@ See [docs/development/bff-performance-baseline.md](../../docs/development/bff-pe
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SERVER_PORT` | HTTP port | 8081/8082 |
-| `SPRING_PROFILES_ACTIVE` | Spring profile | dev |
+| Variable                 | Description    | Default   |
+| ------------------------ | -------------- | --------- |
+| `SERVER_PORT`            | HTTP port      | 8081/8082 |
+| `SPRING_PROFILES_ACTIVE` | Spring profile | dev       |
 
 ### Customer BFF Properties
 
@@ -223,13 +226,13 @@ public class CustomerAggregationService {
     private final AccountProvider accountProvider;
     private final UsageProvider usageProvider;
     private final BillingProvider billingProvider;
-    
+
     public CustomerDashboardResponse getDashboard(String customerId) {
         // Fetch from providers (parallelize in production)
         AccountSummary account = accountProvider.getAccountSummary(customerId);
         UsageSummary usage = usageProvider.getUsageSummary(customerId);
         BillingSummary billing = billingProvider.getBillingSummary(customerId);
-        
+
         return new CustomerDashboardResponse(account, usage, billing, Instant.now());
     }
 }
