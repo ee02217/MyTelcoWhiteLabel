@@ -28,14 +28,14 @@ This is the main repository for the Telco Self-Care White-Label Platform, suppor
 
 This repository includes base templates for quick project bootstrapping. See [Developer Onboarding](./docs/development/onboarding.md#base-templates-issue-20) for details.
 
-| Template                         | Tech Stack                | Key Files                                 |
-| -------------------------------- | ------------------------- | ----------------------------------------- |
-| `mobile-app/`                    | React Native + Expo       | package.json, App.tsx, app.json           |
-| `web-portal/`                    | Vite + React + TypeScript | package.json, vite.config.ts, src/App.tsx |
-| `admin-portal/`                  | Vite + React + TypeScript | package.json, vite.config.ts, src/App.tsx |
-| `backend-services/`              | Spring Boot + Java 21     | pom.xml, Dockerfile, helm/                |
-| `bff/`                           | Spring Boot + WebFlux     | pom.xml, Dockerfile, helm/                |
-| `platform-config/design-tokens/` | Shared tokens             | tokens.json, tokens.css                   |
+| Template                         | Tech Stack                  | Key Files                                 |
+| -------------------------------- | --------------------------- | ----------------------------------------- |
+| `mobile-app/`                    | React Native + Expo         | package.json, App.tsx, app.json           |
+| `web-portal/`                    | Vite + React + TypeScript   | package.json, vite.config.ts, src/App.tsx |
+| `admin-portal/`                  | Vite + React + TypeScript   | package.json, vite.config.ts, src/App.tsx |
+| `backend-services/`              | Spring Boot + Java 21       | pom.xml, Dockerfile, helm/                |
+| `bff/`                           | Spring Boot + WebFlux       | pom.xml, Dockerfile, helm/                |
+| `platform-config/design-system/` | Shared design system tokens | tokens.json, tokens.css, tokens.ts        |
 
 ## Commands
 

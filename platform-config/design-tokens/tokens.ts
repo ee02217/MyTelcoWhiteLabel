@@ -1,0 +1,173 @@
+/**
+ * Design Tokens - TypeScript Exports
+ * Generated from tokens.json - do not edit manually
+ */
+
+export const tokens = {
+  color: {
+    primary: {
+      50: '#e6f2ff',
+      100: '#b3d9ff',
+      200: '#80bfff',
+      300: '#4da6ff',
+      400: '#1a8cff',
+      500: '#0073e6',
+      600: '#005ab3',
+      700: '#004080',
+      800: '#00264d',
+      900: '#000d1a',
+    },
+    secondary: {
+      50: '#f0f9ff',
+      100: '#dbeafe',
+      200: '#bfdbfe',
+      300: '#93c5fd',
+      400: '#60a5fa',
+      500: '#3b82f6',
+      600: '#2563eb',
+      700: '#1d4ed8',
+      800: '#1e40af',
+      900: '#1e3a8a',
+    },
+    success: {
+      500: '#16a34a',
+    },
+    warning: {
+      500: '#f59e0b',
+    },
+    error: {
+      500: '#ef4444',
+    },
+    neutral: {
+      50: '#fafafa',
+      100: '#f4f4f5',
+      200: '#e4e4e7',
+      300: '#d4d4d8',
+      400: '#a1a1aa',
+      500: '#71717a',
+      600: '#52525b',
+      700: '#3f3f46',
+      800: '#27272a',
+      900: '#18181b',
+    },
+  },
+  font: {
+    family: {
+      sans: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      mono: '"Fira Code", "Monaco", "Consolas", monospace',
+    },
+    size: {
+      xs: '0.75rem',
+      sm: '0.875rem',
+      base: '1rem',
+      lg: '1.125rem',
+      xl: '1.25rem',
+      '2xl': '1.5rem',
+      '3xl': '1.875rem',
+      '4xl': '2.25rem',
+    },
+    weight: {
+      normal: '400',
+      medium: '500',
+      semibold: '600',
+      bold: '700',
+    },
+  },
+  spacing: {
+    0: '0',
+    1: '0.25rem',
+    2: '0.5rem',
+    3: '0.75rem',
+    4: '1rem',
+    5: '1.25rem',
+    6: '1.5rem',
+    8: '2rem',
+    10: '2.5rem',
+    12: '3rem',
+    16: '4rem',
+  },
+  borderRadius: {
+    none: '0',
+    sm: '0.25rem',
+    default: '0.375rem',
+    md: '0.5rem',
+    lg: '0.75rem',
+    xl: '1rem',
+    full: '9999px',
+  },
+  shadow: {
+    sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+    default: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+    md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+    lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+    xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+  },
+  zIndex: {
+    0: 0,
+    10: 10,
+    20: 20,
+    30: 30,
+    40: 40,
+    50: 50,
+    dropdown: 1000,
+    sticky: 1020,
+    fixed: 1030,
+    modalBackdrop: 1040,
+    modal: 1050,
+    popover: 1060,
+    tooltip: 1070,
+  },
+  motion: {
+    duration: {
+      fast: 150,
+      normal: 300,
+      slow: 500,
+      slower: 700,
+      slowest: 1000,
+    },
+    easing: {
+      linear: 'linear',
+      ease: 'ease',
+      easeIn: 'ease-in',
+      easeOut: 'ease-out',
+      easeInOut: 'ease-in-out',
+    },
+  },
+  semantic: {
+    text: {
+      primary: '#18181b',
+      secondary: '#52525b',
+      disabled: '#a1a1aa',
+      inverse: '#fafafa',
+    },
+    background: {
+      primary: '#ffffff',
+      secondary: '#f4f4f5',
+      tertiary: '#e4e4e7',
+    },
+    border: {
+      default: '#e4e4e7',
+      focus: '#0073e6',
+    },
+  },
+};
+
+// Type exports for token categories
+export type ColorTokens = typeof tokens.color;
+export type FontTokens = typeof tokens.font;
+export type SpacingTokens = typeof tokens.spacing;
+export type BorderRadiusTokens = typeof tokens.borderRadius;
+export type ShadowTokens = typeof tokens.shadow;
+export type ZIndexTokens = typeof tokens.zIndex;
+export type MotionTokens = typeof tokens.motion;
+export type SemanticTokens = typeof tokens.semantic;
+
+// Convenience exports
+export const colors = tokens.color;
+export const fonts = tokens.font;
+export const spacing = tokens.spacing;
+export const borderRadius = tokens.borderRadius;
+export const shadows = tokens.shadow;
+export const zIndex = tokens.zIndex;
+export const motion = tokens.motion;
+export const semantic = tokens.semantic;

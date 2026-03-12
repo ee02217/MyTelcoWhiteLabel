@@ -1,45 +1,35 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Card, Typography } from './src/design-system';
+import { rnTokens } from '../platform-config/design-system/tokens';
 
 export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>MyTelco</Text>
-          <Text style={styles.subtitle}>White-Label Mobile App</Text>
+          <Typography variant="h1" color="primary">
+            MyTelco
+          </Typography>
+          <Typography variant="body" color="secondary">
+            White-Label Mobile App
+          </Typography>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Getting Started</Text>
-          <Text style={styles.text}>
-            This is a base React Native + Expo template for the Telco Self-Care White-Label
-            Platform.
-          </Text>
-        </View>
+          <Typography variant="h3">Mobile Design System Demo</Typography>
+          <Typography variant="small" color="secondary" style={{ marginTop: 8 }}>
+            Shared React Native primitives consuming platform-config/design-system/tokens.ts
+          </Typography>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Start</Text>
-          <View style={styles.codeBlock}>
-            <Text style={styles.code}># Install dependencies</Text>
-            <Text style={styles.code}>npm install</Text>
-            <Text style={styles.code}>{''}</Text>
-            <Text style={styles.code}># Start development server</Text>
-            <Text style={styles.code}>npm run start</Text>
-            <Text style={styles.code}>{''}</Text>
-            <Text style={styles.code}># Run on Android</Text>
-            <Text style={styles.code}>npm run android</Text>
-            <Text style={styles.code}>{''}</Text>
-            <Text style={styles.code}># Run on iOS</Text>
-            <Text style={styles.code}>npm run ios</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Design Tokens</Text>
-          <Text style={styles.text}>
-            Shared design tokens are available in platform-config/design-tokens/
-          </Text>
+          <Card padding="md" shadow="md" style={{ marginTop: 16 }}>
+            <Typography variant="h4">Button Variants</Typography>
+            <View style={{ marginTop: 12, gap: 8 }}>
+              <Button variant="primary" size="md" title="Primary action" />
+              <Button variant="secondary" size="md" title="Secondary action" />
+              <Button variant="outline" size="md" title="Outline action" />
+            </View>
+          </Card>
         </View>
 
         <StatusBar style="auto" />
@@ -51,48 +41,16 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafafa',
+    backgroundColor: rnTokens.colors.semantic.background.primary,
   },
   content: {
-    padding: 24,
+    padding: rnTokens.spacingPx[6],
   },
   header: {
-    marginBottom: 32,
+    marginBottom: rnTokens.spacingPx[8],
     alignItems: 'center',
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#0073e6',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#71717a',
-    marginTop: 4,
-  },
   section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#18181b',
-    marginBottom: 8,
-  },
-  text: {
-    fontSize: 14,
-    color: '#52525b',
-    lineHeight: 20,
-  },
-  codeBlock: {
-    backgroundColor: '#27272a',
-    borderRadius: 8,
-    padding: 16,
-  },
-  code: {
-    fontFamily: 'monospace',
-    fontSize: 13,
-    color: '#f4f4f5',
-    lineHeight: 20,
+    marginBottom: rnTokens.spacingPx[6],
   },
 });

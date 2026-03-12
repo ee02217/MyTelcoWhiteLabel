@@ -192,7 +192,7 @@ See [mobile-app/README.md](../mobile-app/README.md) for details.
 
 ### Web Portal & Admin Portal (Vite + React + TypeScript)
 
-Both portals share design tokens from `platform-config/design-tokens/`.
+Both portals share design tokens from `platform-config/design-system/`.
 
 **Web Portal:**
 
@@ -274,20 +274,15 @@ Health endpoint: `/actuator/health`
 
 See respective READMEs for details.
 
-### Design Tokens
+### Design System Tokens
 
-Shared design tokens in `platform-config/design-tokens/`:
+Shared design tokens live in `platform-config/design-system/`:
 
-- `tokens.json` - JSON format for programmatic access
-- `tokens.css` - CSS custom properties
+- `tokens.json` - canonical token source
+- `tokens.css` - CSS variables for web/admin
+- `tokens.ts` - typed exports for TypeScript and React Native
 
-Import in React apps:
-
-```typescript
-import tokens from '@my-telco/design-tokens';
-// or
-import './index.css'; // imports tokens.css
-```
+Read `docs/development/design-system.md` for component usage conventions and run `node scripts/check-design-contrast.mjs` before opening PRs.
 
 ## Troubleshooting
 

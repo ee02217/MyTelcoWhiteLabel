@@ -1,86 +1,132 @@
-import tokens from '../../platform-config/design-tokens/tokens.json';
+import tokens from '../../platform-config/design-system/tokens.json';
+import { Button, Card, Typography, DesignSystemProvider } from './design-system';
 
 function App() {
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>MyTelco</h1>
-        <p style={styles.subtitle}>Customer Web Portal</p>
-      </header>
+    <DesignSystemProvider>
+      <div style={styles.container}>
+        <header style={styles.header}>
+          <h1 style={styles.title}>MyTelco</h1>
+          <p style={styles.subtitle}>Customer Web Portal</p>
+        </header>
 
-      <main style={styles.main}>
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>Getting Started</h2>
-          <p style={styles.text}>
-            This is a base Vite + React + TypeScript template for the Telco Self-Care White-Label
-            Platform.
-          </p>
-        </section>
+        <main style={styles.main}>
+          {/* Design System Demo */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Design System Components</h2>
+            <p style={styles.text}>
+              This app uses shared design system components from <code>src/design-system/</code>
+            </p>
 
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>Design Tokens</h2>
-          <p style={styles.text}>
-            This app uses shared design tokens from <code>platform-config/design-tokens/</code>
-          </p>
+            <div style={{ display: 'flex', gap: '16px', marginTop: '16px', flexWrap: 'wrap' }}>
+              <Card padding="md" shadow="md">
+                <Typography variant="h4" color="primary">
+                  Button Variants
+                </Typography>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                  <Button variant="primary" size="md">
+                    Primary
+                  </Button>
+                  <Button variant="secondary" size="md">
+                    Secondary
+                  </Button>
+                  <Button variant="outline" size="md">
+                    Outline
+                  </Button>
+                  <Button variant="ghost" size="md">
+                    Ghost
+                  </Button>
+                </div>
+              </Card>
 
-          <div style={styles.tokenGrid}>
-            <div style={styles.tokenCard}>
-              <h3 style={styles.tokenTitle}>Primary Color</h3>
-              <div style={styles.tokenPreview}>
-                <div
-                  style={{
-                    backgroundColor: tokens.color.primary[500],
-                    width: '100%',
-                    height: '60px',
-                    borderRadius: '8px',
-                  }}
-                />
+              <Card padding="md" shadow="md">
+                <Typography variant="h4" color="primary">
+                  Typography Scale
+                </Typography>
+                <div style={{ marginTop: '12px' }}>
+                  <Typography variant="h1">Heading 1</Typography>
+                  <Typography variant="h2">Heading 2</Typography>
+                  <Typography variant="h3">Heading 3</Typography>
+                  <Typography variant="body">Body text</Typography>
+                  <Typography variant="small">Small text</Typography>
+                  <Typography variant="caption">Caption</Typography>
+                </div>
+              </Card>
+            </div>
+          </section>
+
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Getting Started</h2>
+            <p style={styles.text}>
+              This is a base Vite + React + TypeScript template for the Telco Self-Care White-Label
+              Platform.
+            </p>
+          </section>
+
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Design Tokens</h2>
+            <p style={styles.text}>
+              This app uses shared design tokens from <code>platform-config/design-system/</code>
+            </p>
+
+            <div style={styles.tokenGrid}>
+              <div style={styles.tokenCard}>
+                <h3 style={styles.tokenTitle}>Primary Color</h3>
+                <div style={styles.tokenPreview}>
+                  <div
+                    style={{
+                      backgroundColor: tokens.color.primary[500],
+                      width: '100%',
+                      height: '60px',
+                      borderRadius: '8px',
+                    }}
+                  />
+                </div>
+                <code style={styles.tokenValue}>{tokens.color.primary[500]}</code>
               </div>
-              <code style={styles.tokenValue}>{tokens.color.primary[500]}</code>
-            </div>
 
-            <div style={styles.tokenCard}>
-              <h3 style={styles.tokenTitle}>Secondary Color</h3>
-              <div style={styles.tokenPreview}>
-                <div
-                  style={{
-                    backgroundColor: tokens.color.secondary[500],
-                    width: '100%',
-                    height: '60px',
-                    borderRadius: '8px',
-                  }}
-                />
+              <div style={styles.tokenCard}>
+                <h3 style={styles.tokenTitle}>Secondary Color</h3>
+                <div style={styles.tokenPreview}>
+                  <div
+                    style={{
+                      backgroundColor: tokens.color.secondary[500],
+                      width: '100%',
+                      height: '60px',
+                      borderRadius: '8px',
+                    }}
+                  />
+                </div>
+                <code style={styles.tokenValue}>{tokens.color.secondary[500]}</code>
               </div>
-              <code style={styles.tokenValue}>{tokens.color.secondary[500]}</code>
-            </div>
 
-            <div style={styles.tokenCard}>
-              <h3 style={styles.tokenTitle}>Font Family</h3>
-              <p style={styles.tokenValue}>{tokens.font.family.sans}</p>
-            </div>
-
-            <div style={styles.tokenCard}>
-              <h3 style={styles.tokenTitle}>Shadow</h3>
-              <div style={styles.tokenPreview}>
-                <div
-                  style={{
-                    boxShadow: tokens.shadow.md,
-                    width: '100%',
-                    height: '60px',
-                    backgroundColor: 'white',
-                    borderRadius: '8px',
-                  }}
-                />
+              <div style={styles.tokenCard}>
+                <h3 style={styles.tokenTitle}>Font Family</h3>
+                <p style={styles.tokenValue}>{tokens.typography.family.sans}</p>
               </div>
-              <code style={styles.tokenValue}>shadow-md</code>
-            </div>
-          </div>
-        </section>
 
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>Quick Start Commands</h2>
-          <pre style={styles.codeBlock}>
-            <code>{`# Install dependencies
+              <div style={styles.tokenCard}>
+                <h3 style={styles.tokenTitle}>Shadow</h3>
+                <div style={styles.tokenPreview}>
+                  <div
+                    style={{
+                      boxShadow: tokens.shadow.md,
+                      width: '100%',
+                      height: '60px',
+                      backgroundColor: 'white',
+                      borderRadius: '8px',
+                    }}
+                  />
+                </div>
+                <code style={styles.tokenValue}>shadow-md</code>
+              </div>
+            </div>
+          </section>
+
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Quick Start Commands</h2>
+            <pre style={styles.codeBlock}>
+              <code>{`# Install dependencies
 npm install
 
 # Start development server
@@ -94,10 +140,11 @@ npm run lint
 
 # Build for production
 npm run build`}</code>
-          </pre>
-        </section>
-      </main>
-    </div>
+            </pre>
+          </section>
+        </main>
+      </div>
+    </DesignSystemProvider>
   );
 }
 

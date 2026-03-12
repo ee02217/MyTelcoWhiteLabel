@@ -1,5 +1,5 @@
 /* Import shared design tokens */
-@import '../../platform-config/design-tokens/tokens.css';
+@import '../../platform-config/design-system/tokens.css';
 
 /* Base styles */
 :root {
