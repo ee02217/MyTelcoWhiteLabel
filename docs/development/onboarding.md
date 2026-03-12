@@ -228,13 +228,40 @@ mvn clean package
 mvn spring-boot:run
 ```
 
-**BFF Service:**
+### BFF Services (Customer BFF & Admin BFF)
+
+**Customer BFF:**
 
 ```bash
-cd bff
+cd bff/customer-bff
 mvn clean package
 mvn spring-boot:run
 ```
+
+Service runs on port 8081. Dashboard endpoint: `http://localhost:8081/api/v1/customer/dashboard`
+
+**Admin BFF:**
+
+```bash
+cd bff/admin-bff
+mvn clean package
+mvn spring-boot:run
+```
+
+Service runs on port 8082. Dashboard endpoint: `http://localhost:8082/api/v1/admin/dashboard`
+
+Quick commands:
+
+- `mvn clean package` - Build the application
+- `mvn spring-boot:run` - Run locally
+- `mvn test` - Run unit tests
+- `docker build` - Build Docker image
+- `helm install` - Deploy to Kubernetes
+
+Health endpoints: `/actuator/health`
+API Docs: `/swagger-ui.html`
+
+See [bff/README.md](../../bff/README.md) for details.
 
 Quick commands:
 

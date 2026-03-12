@@ -1,0 +1,10 @@
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel/bff/customer-bff/src/main/java/com/mytelco/customerbff/CustomerBffApplication.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel/bff/customer-bff/src/main/java/com/mytelco/customerbff/controller/CustomerDashboardController.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel/bff/customer-bff/src/main/java/com/mytelco/customerbff/model/AccountSummary.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel/bff/customer-bff/src/main/java/com/mytelco/customerbff/model/BillingSummary.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel/bff/customer-bff/src/main/java/com/mytelco/customerbff/model/CustomerDashboardResponse.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel/bff/customer-bff/src/main/java/com/mytelco/customerbff/model/UsageSummary.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel/bff/customer-bff/src/main/java/com/mytelco/customerbff/provider/AccountProvider.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel/bff/customer-bff/src/main/java/com/mytelco/customerbff/provider/BillingProvider.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel/bff/customer-bff/src/main/java/com/mytelco/customerbff/provider/UsageProvider.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/CustomerAggregationService.java
