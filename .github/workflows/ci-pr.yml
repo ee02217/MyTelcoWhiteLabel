@@ -106,8 +106,10 @@ jobs:
     name: Validate Branding Configs
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.pull_request.changed_files, 'platform-config/operators/') ||
-      contains(github.event.pull_request.changed_files, 'scripts/validate-branding-config.mjs')
+      github.event_name == 'pull_request' && (
+        contains(github.event.pull_request.changed_files, 'platform-config/operators/') ||
+        contains(github.event.pull_request.changed_files, 'scripts/validate-branding-config.mjs')
+      )
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -170,7 +172,7 @@ jobs:
   build-docker:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    needs: [lint, test-node, test-java-backend, test-java-bff, sca-scan, branding-validate]
+    needs: [lint, test-node, test-java-backend, test-java-bff, sca-scan]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
