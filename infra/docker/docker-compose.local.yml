@@ -1,0 +1,173 @@
+name: mytelco-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mytelco-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mytelco}
+      POSTGRES_USER: ${POSTGRES_USER:-mytelco}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mytelco}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres-local-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-mytelco} -d ${POSTGRES_DB:-mytelco}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - mytelco-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    container_name: mytelco-keycloak
+    command: ['start-dev', '--import-realm']
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: 'true'
+      KC_DB: dev-file
+    ports:
+      - '${KEYCLOAK_PORT:-8080}:8080'
+    volumes:
+      - ../keycloak/realm-export/telco-dev-realm.json:/opt/keycloak/data/import/telco-dev-realm.json:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "exec 3<>/dev/tcp/127.0.0.1/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep '200' >/dev/null",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 8
+      start_period: 60s
+    networks:
+      - mytelco-network
+
+  kong:
+    image: kong:3.4
+    container_name: mytelco-kong
+    environment:
+      KONG_DATABASE: 'off'
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
+      KONG_DNS_ORDER: LAST,A,SRV
+      KONG_LOG_LEVEL: info
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+    ports:
+      - '${KONG_PROXY_PORT:-8000}:8000'
+      - '${KONG_ADMIN_PORT:-8001}:8001'
+      - '${KONG_PROXY_TLS_PORT:-8443}:8443'
+      - '${KONG_ADMIN_TLS_PORT:-8444}:8444'
+    volumes:
+      - ../kong/kong.yml:/usr/local/kong/declarative/kong.yml:ro
+    healthcheck:
+      test: ['CMD', 'kong', 'health']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - mytelco-network
+
+  customer-bff:
+    build:
+      context: ../../bff/customer-bff
+    container_name: mytelco-customer-bff
+    environment:
+      SERVER_PORT: 8081
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+    ports:
+      - '${CUSTOMER_BFF_PORT:-8081}:8081'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      kong:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8081/actuator/health || exit 1']
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+    networks:
+      - mytelco-network
+
+  admin-bff:
+    build:
+      context: ../../bff/admin-bff
+    container_name: mytelco-admin-bff
+    environment:
+      SERVER_PORT: 8082
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+    ports:
+      - '${ADMIN_BFF_PORT:-8082}:8082'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      kong:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8082/actuator/health || exit 1']
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+    networks:
+      - mytelco-network
+
+  web-portal:
+    build:
+      context: ../../web-portal
+    container_name: mytelco-web-portal
+    ports:
+      - '${WEB_PORTAL_PORT:-3000}:80'
+    depends_on:
+      customer-bff:
+        condition: service_started
+      kong:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost/ || exit 1']
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 15s
+    networks:
+      - mytelco-network
+
+  admin-portal:
+    build:
+      context: ../../admin-portal
+    container_name: mytelco-admin-portal
+    ports:
+      - '${ADMIN_PORTAL_PORT:-3001}:80'
+    depends_on:
+      admin-bff:
+        condition: service_started
+      kong:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost/ || exit 1']
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 15s
+    networks:
+      - mytelco-network
+
+networks:
+  mytelco-network:
+    driver: bridge
+
+volumes:
+  postgres-local-data:
