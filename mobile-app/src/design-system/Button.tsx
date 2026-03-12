@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity, TouchableOpacityProps, ViewStyle } from 'react-native';
-import { rnTokens } from '../../../../platform-config/design-system/tokens';
+import { rnTokens } from '../../../platform-config/design-system/tokens';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';

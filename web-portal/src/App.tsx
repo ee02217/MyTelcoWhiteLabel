@@ -1,147 +1,151 @@
+import { useEffect, useMemo, useState } from 'react';
 import tokens from '../../platform-config/design-system/tokens.json';
-import { Button, Card, Typography, DesignSystemProvider } from './design-system';
+import { Card, Typography, DesignSystemProvider } from './design-system';
+
+type ActiveLine = {
+  lineId: string;
+  msisdn: string;
+  nickname: string;
+  status: string;
+};
+
+type AccountOverview = {
+  plan: string;
+  activeLines: ActiveLine[];
+  activeLineCount: number;
+  nextBillDate: string;
+  outstandingAmount: number;
+  accountType: string;
+  lineStructure: 'SINGLE_LINE' | 'MULTI_LINE_READY';
+};
+
+const fallbackOverview: AccountOverview = {
+  plan: 'Premium Unlimited',
+  activeLines: [
+    { lineId: 'LINE-001', msisdn: '+351910000001', nickname: 'Primary', status: 'ACTIVE' },
+    { lineId: 'LINE-002', msisdn: '+351910000002', nickname: 'Family', status: 'ACTIVE' },
+  ],
+  activeLineCount: 2,
+  nextBillDate: '2026-03-20',
+  outstandingAmount: 24.99,
+  accountType: 'POSTPAID',
+  lineStructure: 'MULTI_LINE_READY',
+};
 
 function App() {
+  const [overview, setOverview] = useState<AccountOverview | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadOverview = async () => {
+      try {
+        const response = await fetch('/api/v1/customer/account-overview');
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const payload = (await response.json()) as AccountOverview;
+        if (mounted) {
+          setOverview(payload);
+        }
+      } catch (err) {
+        if (mounted) {
+          setOverview(fallbackOverview);
+          setError(
+            err instanceof Error
+              ? `${err.message}. Using local fallback while BFF wiring is in progress.`
+              : 'Unable to load account overview. Using local fallback while BFF wiring is in progress.'
+          );
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadOverview();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const formattedAmount = useMemo(
+    () =>
+      new Intl.NumberFormat('en-GB', {
+        style: 'currency',
+        currency: 'EUR',
+      }).format(overview?.outstandingAmount ?? 0),
+    [overview]
+  );
+
   return (
     <DesignSystemProvider>
       <div style={styles.container}>
         <header style={styles.header}>
-          <h1 style={styles.title}>MyTelco</h1>
-          <p style={styles.subtitle}>Customer Web Portal</p>
+          <h1 style={styles.title}>MyTelco Account Dashboard</h1>
+          <p style={styles.subtitle}>F-05.1 account overview</p>
         </header>
 
         <main style={styles.main}>
-          {/* Design System Demo */}
-          <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Design System Components</h2>
-            <p style={styles.text}>
-              This app uses shared design system components from <code>src/design-system/</code>
-            </p>
-
-            <div style={{ display: 'flex', gap: '16px', marginTop: '16px', flexWrap: 'wrap' }}>
+          {loading && <p style={styles.text}>Loading account overview…</p>}
+          {!loading && overview && (
+            <div style={styles.grid}>
               <Card padding="md" shadow="md">
                 <Typography variant="h4" color="primary">
-                  Button Variants
+                  Plan
                 </Typography>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-                  <Button variant="primary" size="md">
-                    Primary
-                  </Button>
-                  <Button variant="secondary" size="md">
-                    Secondary
-                  </Button>
-                  <Button variant="outline" size="md">
-                    Outline
-                  </Button>
-                  <Button variant="ghost" size="md">
-                    Ghost
-                  </Button>
-                </div>
+                <Typography variant="h3">{overview.plan}</Typography>
               </Card>
 
               <Card padding="md" shadow="md">
                 <Typography variant="h4" color="primary">
-                  Typography Scale
+                  Active lines
                 </Typography>
-                <div style={{ marginTop: '12px' }}>
-                  <Typography variant="h1">Heading 1</Typography>
-                  <Typography variant="h2">Heading 2</Typography>
-                  <Typography variant="h3">Heading 3</Typography>
-                  <Typography variant="body">Body text</Typography>
-                  <Typography variant="small">Small text</Typography>
-                  <Typography variant="caption">Caption</Typography>
-                </div>
+                <Typography variant="h3">{overview.activeLineCount}</Typography>
+                <Typography variant="small" color="secondary">
+                  {overview.lineStructure === 'MULTI_LINE_READY'
+                    ? 'Multi-line ready account'
+                    : 'Single-line account'}
+                </Typography>
+              </Card>
+
+              <Card padding="md" shadow="md">
+                <Typography variant="h4" color="primary">
+                  Next bill date
+                </Typography>
+                <Typography variant="h3">{overview.nextBillDate}</Typography>
+              </Card>
+
+              <Card padding="md" shadow="md">
+                <Typography variant="h4" color="primary">
+                  Outstanding amount
+                </Typography>
+                <Typography variant="h3">{formattedAmount}</Typography>
               </Card>
             </div>
-          </section>
+          )}
 
-          <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Getting Started</h2>
-            <p style={styles.text}>
-              This is a base Vite + React + TypeScript template for the Telco Self-Care White-Label
-              Platform.
-            </p>
-          </section>
+          {!loading && overview && (
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>Lines</h2>
+              {overview.activeLines.map((line) => (
+                <Card key={line.lineId} padding="sm" shadow="sm" style={{ marginBottom: 8 }}>
+                  <Typography variant="body">
+                    {line.nickname} · {line.msisdn}
+                  </Typography>
+                  <Typography variant="small" color="secondary">
+                    {line.status}
+                  </Typography>
+                </Card>
+              ))}
+            </section>
+          )}
 
-          <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Design Tokens</h2>
-            <p style={styles.text}>
-              This app uses shared design tokens from <code>platform-config/design-system/</code>
-            </p>
-
-            <div style={styles.tokenGrid}>
-              <div style={styles.tokenCard}>
-                <h3 style={styles.tokenTitle}>Primary Color</h3>
-                <div style={styles.tokenPreview}>
-                  <div
-                    style={{
-                      backgroundColor: tokens.color.primary[500],
-                      width: '100%',
-                      height: '60px',
-                      borderRadius: '8px',
-                    }}
-                  />
-                </div>
-                <code style={styles.tokenValue}>{tokens.color.primary[500]}</code>
-              </div>
-
-              <div style={styles.tokenCard}>
-                <h3 style={styles.tokenTitle}>Secondary Color</h3>
-                <div style={styles.tokenPreview}>
-                  <div
-                    style={{
-                      backgroundColor: tokens.color.secondary[500],
-                      width: '100%',
-                      height: '60px',
-                      borderRadius: '8px',
-                    }}
-                  />
-                </div>
-                <code style={styles.tokenValue}>{tokens.color.secondary[500]}</code>
-              </div>
-
-              <div style={styles.tokenCard}>
-                <h3 style={styles.tokenTitle}>Font Family</h3>
-                <p style={styles.tokenValue}>{tokens.typography.family.sans}</p>
-              </div>
-
-              <div style={styles.tokenCard}>
-                <h3 style={styles.tokenTitle}>Shadow</h3>
-                <div style={styles.tokenPreview}>
-                  <div
-                    style={{
-                      boxShadow: tokens.shadow.md,
-                      width: '100%',
-                      height: '60px',
-                      backgroundColor: 'white',
-                      borderRadius: '8px',
-                    }}
-                  />
-                </div>
-                <code style={styles.tokenValue}>shadow-md</code>
-              </div>
-            </div>
-          </section>
-
-          <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Quick Start Commands</h2>
-            <pre style={styles.codeBlock}>
-              <code>{`# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Type check
-npm run typecheck
-
-# Lint code
-npm run lint
-
-# Build for production
-npm run build`}</code>
-            </pre>
-          </section>
+          {error && <p style={styles.warning}>{error}</p>}
         </main>
       </div>
     </DesignSystemProvider>
@@ -149,75 +153,20 @@ npm run build`}</code>
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: '100vh',
-    padding: '24px',
-  },
-  header: {
-    textAlign: 'center',
-    marginBottom: '48px',
-    padding: '32px 0',
-  },
-  title: {
-    fontSize: '32px',
-    fontWeight: '700',
-    color: tokens.color.primary[500],
-  },
-  subtitle: {
-    fontSize: '16px',
-    color: tokens.color.neutral[500],
-    marginTop: '4px',
-  },
-  main: {
-    maxWidth: '800px',
-    margin: '0 auto',
-  },
-  section: {
-    marginBottom: '32px',
-  },
-  sectionTitle: {
-    fontSize: '20px',
-    fontWeight: '600',
-    color: tokens.color.neutral[800],
-    marginBottom: '12px',
-  },
-  text: {
-    fontSize: '14px',
-    color: tokens.color.neutral[600],
-    lineHeight: '1.6',
-  },
-  tokenGrid: {
+  container: { minHeight: '100vh', padding: '24px' },
+  header: { textAlign: 'center', marginBottom: '32px' },
+  title: { fontSize: '32px', fontWeight: '700', color: tokens.color.primary[500] },
+  subtitle: { fontSize: '16px', color: tokens.color.neutral[500], marginTop: '4px' },
+  main: { maxWidth: '920px', margin: '0 auto' },
+  text: { fontSize: '14px', color: tokens.color.neutral[500] },
+  grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '16px',
-    marginTop: '16px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '12px',
   },
-  tokenCard: {
-    padding: '16px',
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: tokens.shadow.sm,
-  },
-  tokenTitle: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: tokens.color.neutral[700],
-    marginBottom: '8px',
-  },
-  tokenPreview: {
-    marginBottom: '8px',
-  },
-  tokenValue: {
-    fontSize: '12px',
-    fontFamily: 'monospace',
-    color: tokens.color.neutral[500],
-  },
-  codeBlock: {
-    backgroundColor: tokens.color.neutral[800],
-    borderRadius: '8px',
-    padding: '16px',
-    overflow: 'auto',
-  },
+  section: { marginTop: '20px' },
+  sectionTitle: { fontSize: '20px', marginBottom: '12px', color: tokens.color.neutral[800] },
+  warning: { marginTop: '16px', color: tokens.color.warning[500], fontSize: '13px' },
 };
 
 export default App;

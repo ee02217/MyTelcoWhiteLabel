@@ -238,7 +238,14 @@ mvn clean package
 mvn spring-boot:run
 ```
 
-Service runs on port 8081. Dashboard endpoint: `http://localhost:8081/api/v1/customer/dashboard`
+Service runs on port 8081.
+
+Customer dashboard endpoints:
+
+- `http://localhost:8081/api/v1/customer/dashboard`
+- `http://localhost:8081/api/v1/customer/account-overview` (F-05.1 Account Dashboard)
+
+See [account-dashboard-performance.md](./account-dashboard-performance.md) for the p95 < 2.5s objective and measurement approach.
 
 **Admin BFF:**
 

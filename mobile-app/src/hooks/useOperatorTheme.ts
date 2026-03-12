@@ -153,6 +153,7 @@ export interface BrandingConfig {
   };
   version: string;
   lastUpdated: string;
+  cachedAt?: number;
 }
 
 export interface UseOperatorThemeResult {
