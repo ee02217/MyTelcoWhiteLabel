@@ -10,5 +10,6 @@ public record CustomerUsageResponse(
     String customerId,
     ServiceUsageBreakdown totals,
     List<LineUsageEntry> lines,
+    List<UsageThresholdCrossing> thresholdCrossings,
     DataFreshness dataFreshness
 ) {}

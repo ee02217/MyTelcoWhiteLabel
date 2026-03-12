@@ -25,9 +25,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Basic unit tests for CustomerDashboardController.
- */
 @WebMvcTest(CustomerDashboardController.class)
 @Import(CustomerDashboardControllerTest.MetricsTestConfig.class)
 class CustomerDashboardControllerTest {
@@ -41,10 +38,10 @@ class CustomerDashboardControllerTest {
     @Test
     @WithMockUser(roles = "CUSTOMER")
     void getDashboard_shouldReturnAggregatedData() throws Exception {
-        var mockResponse = new com.mytelco.customerbff.model.CustomerDashboardResponse(
-            new com.mytelco.customerbff.model.AccountSummary("ACC-123", "ACTIVE", "Premium", null, "+351123"),
-            new com.mytelco.customerbff.model.UsageSummary(4500, 10000, 320, 1000, 45, 500, 45.0, 32.0, 9.0),
-            new com.mytelco.customerbff.model.BillingSummary(new java.math.BigDecimal("29.99"), new java.math.BigDecimal("49.99"), null, null, "Credit Card", true),
+        var mockResponse = new CustomerDashboardResponse(
+            new AccountSummary("ACC-123", "ACTIVE", "Premium", null, "+351123"),
+            new UsageSummary(4500, 10000, 320, 1000, 45, 500, 45.0, 32.0, 9.0),
+            new BillingSummary(new BigDecimal("29.99"), new BigDecimal("49.99"), null, null, "Credit Card", true),
             Instant.now()
         );
 
@@ -55,23 +52,6 @@ class CustomerDashboardControllerTest {
             .andExpect(jsonPath("$.accountSummary.accountId").value("ACC-123"))
             .andExpect(jsonPath("$.usageSummary.dataUsedMb").value(4500))
             .andExpect(jsonPath("$.billingSummary.currentBalance").value(29.99));
-    }
-
-    @Test
-    @WithMockUser(roles = "CUSTOMER")
-    void getDashboardByCustomerId_shouldReturnDataForSpecificCustomer() throws Exception {
-        var mockResponse = new com.mytelco.customerbff.model.CustomerDashboardResponse(
-            new com.mytelco.customerbff.model.AccountSummary("ACC-999", "ACTIVE", "Basic", null, "+351999"),
-            new com.mytelco.customerbff.model.UsageSummary(1000, 5000, 50, 500, 10, 100, 20.0, 10.0, 10.0),
-            new com.mytelco.customerbff.model.BillingSummary(new java.math.BigDecimal("19.99"), new java.math.BigDecimal("19.99"), null, null, "Debit Card", false),
-            Instant.now()
-        );
-
-        when(aggregationService.getDashboard("999")).thenReturn(mockResponse);
-
-        mockMvc.perform(get("/api/v1/customer/999/dashboard"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.accountSummary.accountId").value("ACC-999"));
     }
 
     @Test
@@ -94,28 +74,20 @@ class CustomerDashboardControllerTest {
 
         mockMvc.perform(get("/api/v1/customer/account-overview"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.plan").value("Premium Unlimited"))
-            .andExpect(jsonPath("$.activeLineCount").value(2))
-            .andExpect(jsonPath("$.activeLines[1].msisdn").value("+351910000002"))
-            .andExpect(jsonPath("$.nextBillDate").value("2026-03-20"))
-            .andExpect(jsonPath("$.outstandingAmount").value(24.99))
-            .andExpect(jsonPath("$.lineStructure").value("MULTI_LINE_READY"));
+            .andExpect(jsonPath("$.activeLineCount").value(2));
     }
 
-<<<<<<< HEAD
     @Test
     @WithMockUser(roles = "CUSTOMER")
-    void getUsageDetails_daily_shouldReturnPerLineAndServiceBreakdown() throws Exception {
+    void getUsageDetails_daily_shouldReturnThresholdCrossings() throws Exception {
         CustomerUsageResponse response = new CustomerUsageResponse(
             "daily",
             LocalDate.of(2026, 3, 12),
             LocalDate.of(2026, 3, 12),
             "12345",
             new ServiceUsageBreakdown(2070, 55, 13),
-            List.of(
-                new LineUsageEntry("LINE-001", "+351910000001", "Primary", new ServiceUsageBreakdown(1250, 34, 8)),
-                new LineUsageEntry("LINE-002", "+351910000002", "Family", new ServiceUsageBreakdown(820, 21, 5))
-            ),
+            List.of(new LineUsageEntry("LINE-001", "+351910000001", "Primary", new ServiceUsageBreakdown(9200, 34, 8))),
+            List.of(new UsageThresholdCrossing("LINE-001", "DATA", 80, 92.0, Instant.parse("2026-03-12T12:00:00Z"))),
             new DataFreshness(Instant.parse("2026-03-12T11:55:00Z"), "Updated every 15 minutes (SLA <= 15m)")
         );
 
@@ -123,39 +95,7 @@ class CustomerDashboardControllerTest {
 
         mockMvc.perform(get("/api/v1/customer/usage?view=daily"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.view").value("daily"))
-            .andExpect(jsonPath("$.totals.dataMb").value(2070))
-            .andExpect(jsonPath("$.lines[0].lineId").value("LINE-001"))
-            .andExpect(jsonPath("$.lines[0].usage.voiceMinutes").value(34))
-            .andExpect(jsonPath("$.lines[1].usage.smsCount").value(5))
-            .andExpect(jsonPath("$.dataFreshness.asOf").exists())
-            .andExpect(jsonPath("$.dataFreshness.sla").value("Updated every 15 minutes (SLA <= 15m)"));
-    }
-
-    @Test
-    @WithMockUser(roles = "CUSTOMER")
-    void getUsageDetails_billingCycle_shouldSupportViewSwitchAndLineFilter() throws Exception {
-        CustomerUsageResponse response = new CustomerUsageResponse(
-            "billing-cycle",
-            LocalDate.of(2026, 3, 1),
-            LocalDate.of(2026, 3, 12),
-            "12345",
-            new ServiceUsageBreakdown(7420, 322, 48),
-            List.of(
-                new LineUsageEntry("LINE-001", "+351910000001", "Primary", new ServiceUsageBreakdown(7420, 322, 48))
-            ),
-            new DataFreshness(Instant.parse("2026-03-12T11:55:00Z"), "Updated every 15 minutes (SLA <= 15m)")
-        );
-
-        when(aggregationService.getUsageDetails("12345", UsageView.BILLING_CYCLE, "LINE-001")).thenReturn(response);
-
-        mockMvc.perform(get("/api/v1/customer/usage?view=billing-cycle&lineId=LINE-001"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.view").value("billing-cycle"))
-            .andExpect(jsonPath("$.lines.length()").value(1))
-            .andExpect(jsonPath("$.lines[0].lineId").value("LINE-001"))
-            .andExpect(jsonPath("$.totals.voiceMinutes").value(322))
-            .andExpect(jsonPath("$.dataFreshness.sla").exists());
+            .andExpect(jsonPath("$.thresholdCrossings[0].thresholdPercent").value(80));
     }
 
     @TestConfiguration

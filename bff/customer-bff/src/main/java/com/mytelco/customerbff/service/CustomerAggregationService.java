@@ -20,6 +20,7 @@ public class CustomerAggregationService {
     private final AccountProvider accountProvider;
     private final UsageProvider usageProvider;
     private final BillingProvider billingProvider;
+    private final UsageThresholdAlertService usageThresholdAlertService;
     private final Timer dashboardTimer;
     private final Timer accountOverviewTimer;
     private final Timer usageDetailsTimer;
@@ -28,10 +29,12 @@ public class CustomerAggregationService {
             AccountProvider accountProvider,
             UsageProvider usageProvider,
             BillingProvider billingProvider,
+            UsageThresholdAlertService usageThresholdAlertService,
             MeterRegistry meterRegistry) {
         this.accountProvider = accountProvider;
         this.usageProvider = usageProvider;
         this.billingProvider = billingProvider;
+        this.usageThresholdAlertService = usageThresholdAlertService;
 
         // Timer for tracking dashboard aggregation performance
         this.dashboardTimer = Timer.builder("customer.dashboard.aggregation")
@@ -77,6 +80,19 @@ public class CustomerAggregationService {
     }
 
     public CustomerUsageResponse getUsageDetails(String customerId, UsageView view, String lineId) {
-        return usageDetailsTimer.record(() -> usageProvider.getUsageDetails(customerId, view, lineId));
+        return usageDetailsTimer.record(() -> {
+            CustomerUsageResponse usage = usageProvider.getUsageDetails(customerId, view, lineId);
+            var crossings = usageThresholdAlertService.evaluateAndDispatch(customerId, usage);
+            return new CustomerUsageResponse(
+                usage.view(),
+                usage.periodStart(),
+                usage.periodEnd(),
+                usage.customerId(),
+                usage.totals(),
+                usage.lines(),
+                crossings,
+                usage.dataFreshness()
+            );
+        });
     }
 }

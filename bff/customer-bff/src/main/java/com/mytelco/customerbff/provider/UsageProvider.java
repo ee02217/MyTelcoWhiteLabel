@@ -63,6 +63,7 @@ public class UsageProvider {
             customerId,
             totals,
             filteredLines,
+            List.of(),
             new DataFreshness(Instant.now().minusSeconds(300), "Updated every 15 minutes (SLA <= 15m)")
         );
     }
