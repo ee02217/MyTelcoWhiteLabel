@@ -291,6 +291,8 @@ Shared design tokens live in `platform-config/design-system/`:
 
 Read `docs/development/design-system.md` for component usage conventions and run `node scripts/check-design-contrast.mjs` before opening PRs.
 
+For customer usage details implementation and API contract, also read `docs/development/usage-details.md`.
+
 ### Operator Feature Flags & Journeys
 
 For white-label runtime toggles and journey flows, read:

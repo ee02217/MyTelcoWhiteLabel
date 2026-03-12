@@ -2,6 +2,8 @@ package com.mytelco.customerbff.controller;
 
 import com.mytelco.customerbff.model.AccountOverviewResponse;
 import com.mytelco.customerbff.model.CustomerDashboardResponse;
+import com.mytelco.customerbff.model.CustomerUsageResponse;
+import com.mytelco.customerbff.model.UsageView;
 import com.mytelco.customerbff.service.CustomerAggregationService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -14,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -71,6 +74,35 @@ public class CustomerDashboardController {
             @Parameter(description = "Customer ID", required = true)
             @PathVariable String customerId) {
         CustomerDashboardResponse response = aggregationService.getDashboard(customerId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Usage details endpoint for F-05.2 usage screen.
+     */
+    @GetMapping("/usage")
+    @Operation(
+        summary = "Get customer usage details",
+        description = "Returns per-line and per-service usage for daily or billing-cycle views"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Usage details retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid query parameters"),
+        @ApiResponse(responseCode = "404", description = "Customer not found")
+    })
+    public ResponseEntity<CustomerUsageResponse> getUsageDetails(
+            @RequestParam(defaultValue = "daily") String view,
+            @RequestParam(required = false) String lineId) {
+        Timer timer = Timer.builder("customer.usage.details.endpoint")
+            .description("Endpoint time for customer usage details")
+            .publishPercentiles(0.50, 0.95, 0.99)
+            .register(meterRegistry);
+
+        UsageView usageView = UsageView.fromQuery(view);
+        CustomerUsageResponse response = timer.record(
+            () -> aggregationService.getUsageDetails("12345", usageView, lineId)
+        );
+
         return ResponseEntity.ok(response);
     }
 
