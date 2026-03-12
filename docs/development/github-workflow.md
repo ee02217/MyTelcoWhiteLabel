@@ -121,6 +121,7 @@ This repository uses GitHub Actions for CI/CD:
 
 - **Development Standards**: `.github/workflows/development-standards.yml` - formatting, lint, and design contrast checks
 - **CI Pipeline**: `.github/workflows/ci-pr.yml` - Runs on PRs to main
+- **Config Validation**: `.github/workflows/ci-pr.yml` includes `Validate Feature/Journey Configs` via `node scripts/validate-feature-flags-config.mjs`
 - **CD Pipeline**: `.github/workflows/cd-environment-promotion.yml` - Handles environment promotion
 
 ### CD Environment Promotion

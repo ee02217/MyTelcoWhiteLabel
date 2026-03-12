@@ -1,0 +1,31 @@
+{
+  "operatorId": "alpha-telecom",
+  "journeyId": "plan-change",
+  "version": 2,
+  "steps": [
+    {
+      "order": 1,
+      "id": "kyc-verification",
+      "type": "validation",
+      "condition": "subscriber.kyc == true"
+    },
+    {
+      "order": 2,
+      "id": "plan-selection",
+      "type": "selection",
+      "condition": "availablePlans.length > 0"
+    },
+    {
+      "order": 3,
+      "id": "contract-summary",
+      "type": "review",
+      "condition": "selectedPlan.commitmentMonths >= 0"
+    },
+    {
+      "order": 4,
+      "id": "confirm-change",
+      "type": "confirmation",
+      "condition": "acceptedTerms == true"
+    }
+  ]
+}

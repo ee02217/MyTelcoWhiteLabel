@@ -1,0 +1,28 @@
+{
+  "operatorId": "default",
+  "version": 1,
+  "updatedAt": "2026-03-12T00:00:00Z",
+  "channels": {
+    "web": {
+      "flags": {
+        "planChangeEnabled": true,
+        "addOnPurchaseEnabled": true,
+        "retentionBannerEnabled": false
+      }
+    },
+    "mobile": {
+      "flags": {
+        "planChangeEnabled": true,
+        "addOnPurchaseEnabled": false,
+        "retentionBannerEnabled": true
+      }
+    },
+    "admin": {
+      "flags": {
+        "planChangeEnabled": true,
+        "addOnPurchaseEnabled": true,
+        "retentionBannerEnabled": true
+      }
+    }
+  }
+}

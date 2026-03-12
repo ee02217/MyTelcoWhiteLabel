@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mytelco.local/schemas/feature-flags.schema.json",
+  "title": "Operator Feature Flags",
+  "type": "object",
+  "required": ["operatorId", "version", "updatedAt", "channels"],
+  "properties": {
+    "operatorId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "channels": {
+      "type": "object",
+      "required": ["web", "mobile", "admin"],
+      "properties": {
+        "web": { "$ref": "#/$defs/channelConfig" },
+        "mobile": { "$ref": "#/$defs/channelConfig" },
+        "admin": { "$ref": "#/$defs/channelConfig" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "channelConfig": {
+      "type": "object",
+      "required": ["flags"],
+      "properties": {
+        "flags": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
