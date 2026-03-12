@@ -59,6 +59,7 @@ services:
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
     ports:
       - '${KONG_PROXY_PORT:-8000}:8000'
       - '${KONG_ADMIN_PORT:-8001}:8001'
@@ -82,6 +83,8 @@ services:
     environment:
       SERVER_PORT: 8081
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+    volumes:
+      - ../../platform-config:/app/platform-config:ro
     ports:
       - '${CUSTOMER_BFF_PORT:-8081}:8081'
     depends_on:
@@ -107,6 +110,8 @@ services:
     environment:
       SERVER_PORT: 8082
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+    volumes:
+      - ../../platform-config:/app/platform-config:ro
     ports:
       - '${ADMIN_BFF_PORT:-8082}:8082'
     depends_on:
@@ -126,11 +131,12 @@ services:
       - mytelco-network
 
   web-portal:
-    build:
-      context: ../../web-portal
+    image: nginx:alpine
     container_name: mytelco-web-portal
     ports:
       - '${WEB_PORTAL_PORT:-3000}:80'
+    volumes:
+      - ./static/web-portal/index.html:/usr/share/nginx/html/index.html:ro
     depends_on:
       customer-bff:
         condition: service_started
@@ -146,11 +152,12 @@ services:
       - mytelco-network
 
   admin-portal:
-    build:
-      context: ../../admin-portal
+    image: nginx:alpine
     container_name: mytelco-admin-portal
     ports:
       - '${ADMIN_PORTAL_PORT:-3001}:80'
+    volumes:
+      - ./static/admin-portal/index.html:/usr/share/nginx/html/index.html:ro
     depends_on:
       admin-bff:
         condition: service_started
