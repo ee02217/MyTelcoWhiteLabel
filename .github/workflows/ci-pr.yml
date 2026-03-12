@@ -123,19 +123,27 @@ jobs:
       - name: Run npm audit
         run: npm audit --audit-level=moderate
 
-      - name: Run OWASP Dependency Check (Java)
+      - name: Run OWASP Dependency Check (Java - backend-services)
         if: |
           contains(github.event.pull_request.changed_files, 'backend-services/') ||
-          contains(github.event.pull_request.changed_files, 'bff/') ||
           contains(github.event.pull_request.changed_files, 'pom.xml')
-        working-directory: .
+        working-directory: backend-services
         run: |
           mvn org.owasp:dependency-check-maven:check \
             -DfailBuildOnCVSS=7 \
             -DassemblyAnalyzerEnabled=true \
-            -DenableExperimental=true \
-            -pl backend-services,bff \
-            -am || true
+            -DenableExperimental=true
+
+      - name: Run OWASP Dependency Check (Java - bff)
+        if: |
+          contains(github.event.pull_request.changed_files, 'bff/') ||
+          contains(github.event.pull_request.changed_files, 'pom.xml')
+        working-directory: bff
+        run: |
+          mvn org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=7 \
+            -DassemblyAnalyzerEnabled=true \
+            -DenableExperimental=true
 
   build-docker:
     name: Build Docker Images
