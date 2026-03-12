@@ -1,9 +1,7 @@
 package com.mytelco.customerbff;
 
 import com.mytelco.customerbff.controller.CustomerDashboardController;
-import com.mytelco.customerbff.model.AccountOverviewResponse;
-import com.mytelco.customerbff.model.ActiveLine;
-import com.mytelco.customerbff.model.LineStructure;
+import com.mytelco.customerbff.model.*;
 import com.mytelco.customerbff.service.CustomerAggregationService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -102,6 +100,62 @@ class CustomerDashboardControllerTest {
             .andExpect(jsonPath("$.nextBillDate").value("2026-03-20"))
             .andExpect(jsonPath("$.outstandingAmount").value(24.99))
             .andExpect(jsonPath("$.lineStructure").value("MULTI_LINE_READY"));
+    }
+
+<<<<<<< HEAD
+    @Test
+    @WithMockUser(roles = "CUSTOMER")
+    void getUsageDetails_daily_shouldReturnPerLineAndServiceBreakdown() throws Exception {
+        CustomerUsageResponse response = new CustomerUsageResponse(
+            "daily",
+            LocalDate.of(2026, 3, 12),
+            LocalDate.of(2026, 3, 12),
+            "12345",
+            new ServiceUsageBreakdown(2070, 55, 13),
+            List.of(
+                new LineUsageEntry("LINE-001", "+351910000001", "Primary", new ServiceUsageBreakdown(1250, 34, 8)),
+                new LineUsageEntry("LINE-002", "+351910000002", "Family", new ServiceUsageBreakdown(820, 21, 5))
+            ),
+            new DataFreshness(Instant.parse("2026-03-12T11:55:00Z"), "Updated every 15 minutes (SLA <= 15m)")
+        );
+
+        when(aggregationService.getUsageDetails("12345", UsageView.DAILY, null)).thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/customer/usage?view=daily"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.view").value("daily"))
+            .andExpect(jsonPath("$.totals.dataMb").value(2070))
+            .andExpect(jsonPath("$.lines[0].lineId").value("LINE-001"))
+            .andExpect(jsonPath("$.lines[0].usage.voiceMinutes").value(34))
+            .andExpect(jsonPath("$.lines[1].usage.smsCount").value(5))
+            .andExpect(jsonPath("$.dataFreshness.asOf").exists())
+            .andExpect(jsonPath("$.dataFreshness.sla").value("Updated every 15 minutes (SLA <= 15m)"));
+    }
+
+    @Test
+    @WithMockUser(roles = "CUSTOMER")
+    void getUsageDetails_billingCycle_shouldSupportViewSwitchAndLineFilter() throws Exception {
+        CustomerUsageResponse response = new CustomerUsageResponse(
+            "billing-cycle",
+            LocalDate.of(2026, 3, 1),
+            LocalDate.of(2026, 3, 12),
+            "12345",
+            new ServiceUsageBreakdown(7420, 322, 48),
+            List.of(
+                new LineUsageEntry("LINE-001", "+351910000001", "Primary", new ServiceUsageBreakdown(7420, 322, 48))
+            ),
+            new DataFreshness(Instant.parse("2026-03-12T11:55:00Z"), "Updated every 15 minutes (SLA <= 15m)")
+        );
+
+        when(aggregationService.getUsageDetails("12345", UsageView.BILLING_CYCLE, "LINE-001")).thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/customer/usage?view=billing-cycle&lineId=LINE-001"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.view").value("billing-cycle"))
+            .andExpect(jsonPath("$.lines.length()").value(1))
+            .andExpect(jsonPath("$.lines[0].lineId").value("LINE-001"))
+            .andExpect(jsonPath("$.totals.voiceMinutes").value(322))
+            .andExpect(jsonPath("$.dataFreshness.sla").exists());
     }
 
     @TestConfiguration

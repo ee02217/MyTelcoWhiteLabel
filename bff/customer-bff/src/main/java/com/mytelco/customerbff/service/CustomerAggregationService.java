@@ -22,6 +22,7 @@ public class CustomerAggregationService {
     private final BillingProvider billingProvider;
     private final Timer dashboardTimer;
     private final Timer accountOverviewTimer;
+    private final Timer usageDetailsTimer;
 
     public CustomerAggregationService(
             AccountProvider accountProvider,
@@ -40,6 +41,11 @@ public class CustomerAggregationService {
 
         this.accountOverviewTimer = Timer.builder("customer.account.overview.aggregation")
             .description("Time taken to aggregate account overview data")
+            .publishPercentiles(0.50, 0.95, 0.99)
+            .register(meterRegistry);
+
+        this.usageDetailsTimer = Timer.builder("customer.usage.details.aggregation")
+            .description("Time taken to aggregate customer usage details")
             .publishPercentiles(0.50, 0.95, 0.99)
             .register(meterRegistry);
     }
@@ -68,5 +74,9 @@ public class CustomerAggregationService {
      */
     public AccountOverviewResponse getAccountOverview(String customerId) {
         return accountOverviewTimer.record(() -> accountProvider.getAccountOverview(customerId));
+    }
+
+    public CustomerUsageResponse getUsageDetails(String customerId, UsageView view, String lineId) {
+        return usageDetailsTimer.record(() -> usageProvider.getUsageDetails(customerId, view, lineId));
     }
 }
