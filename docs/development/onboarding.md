@@ -293,6 +293,8 @@ Read `docs/development/design-system.md` for component usage conventions and run
 
 For customer usage details implementation and API contract, also read `docs/development/usage-details.md`.
 
+For bill explorer implementation and contracts (F-06.1), read `docs/development/bill-explorer.md`.
+
 For threshold-based alerting (F-05.3), read `docs/development/usage-threshold-alerts.md`.
 
 ### Operator Feature Flags & Journeys

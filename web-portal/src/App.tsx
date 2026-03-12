@@ -52,6 +52,22 @@ type AccountOverview = {
   lineStructure: 'SINGLE_LINE' | 'MULTI_LINE_READY';
 };
 
+type BillCategory = 'plan' | 'add-ons' | 'overages' | 'taxes';
+type BillLineItem = { itemId: string; description: string; amount: number; category: BillCategory };
+type BillCategoryGroup = { category: BillCategory; items: BillLineItem[]; total: number };
+type BillExplorer = {
+  period: string;
+  groupedLineItems: BillCategoryGroup[];
+  totalsByCategory: Record<BillCategory, number>;
+  grandTotal: number;
+  comparison: {
+    previous: { period: string; grandTotal: number };
+    deltaAbsolute: number;
+    deltaPercentage: number;
+  };
+  invoice: { invoiceId: string; fileName: string; downloadUrl: string };
+};
+
 const fallbackOverview: AccountOverview = {
   plan: 'Premium Unlimited',
   activeLines: [
@@ -70,30 +86,42 @@ function App() {
   const [usage, setUsage] = useState<UsageResponse | null>(null);
   const [thresholds, setThresholds] = useState<AlertThresholdConfig | null>(null);
   const [inbox, setInbox] = useState<AlertInboxItem[]>([]);
+  const [billExplorer, setBillExplorer] = useState<BillExplorer | null>(null);
   const [thresholdInput, setThresholdInput] = useState('80,100');
   const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
-    const [overviewRes, usageRes, thresholdRes, inboxRes] = await Promise.all([
+    const [overviewRes, usageRes, thresholdRes, inboxRes, billExplorerRes] = await Promise.all([
       fetch('/api/v1/customer/account-overview'),
       fetch('/api/v1/customer/usage?view=billing-cycle'),
       fetch('/api/v1/customer/alerts/thresholds'),
       fetch('/api/v1/customer/alerts/inbox'),
+      fetch('/api/v1/customer/billing/explorer?period=2026-03'),
     ]);
 
-    if (!overviewRes.ok || !usageRes.ok || !thresholdRes.ok || !inboxRes.ok) {
+    if (
+      !overviewRes.ok ||
+      !usageRes.ok ||
+      !thresholdRes.ok ||
+      !inboxRes.ok ||
+      !billExplorerRes.ok
+    ) {
       throw new Error('One or more API requests failed');
     }
 
-    const [overviewData, usageData, thresholdData, inboxData] = await Promise.all([
-      overviewRes.json(),
-      usageRes.json(),
-      thresholdRes.json(),
-      inboxRes.json(),
-    ]);
+    const [overviewData, usageData, thresholdData, inboxData, billExplorerData] = await Promise.all(
+      [
+        overviewRes.json(),
+        usageRes.json(),
+        thresholdRes.json(),
+        inboxRes.json(),
+        billExplorerRes.json(),
+      ]
+    );
 
     setOverview(overviewData as AccountOverview);
     setUsage(usageData as UsageResponse);
+    setBillExplorer(billExplorerData as BillExplorer);
     const thresholdPayload = thresholdData as AlertThresholdConfig;
     setThresholds(thresholdPayload);
     setThresholdInput(thresholdPayload.thresholds.join(','));
@@ -139,6 +167,15 @@ function App() {
     [overview]
   );
 
+  const formatMoney = (value: number) =>
+    new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'EUR' }).format(value);
+
+  const downloadInvoice = () => {
+    if (billExplorer?.invoice.downloadUrl) {
+      window.open(billExplorer.invoice.downloadUrl, '_blank');
+    }
+  };
+
   return (
     <DesignSystemProvider>
       <div style={styles.container}>
@@ -149,6 +186,57 @@ function App() {
             <Typography variant="body">Outstanding: {formattedAmount}</Typography>
             <Typography variant="body">Lines: {overview.activeLineCount}</Typography>
           </Card>
+        )}
+
+        {billExplorer && (
+          <>
+            <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+              <Typography variant="h4" color="primary">
+                Bill Explorer ({billExplorer.period})
+              </Typography>
+              {billExplorer.groupedLineItems.map((group) => (
+                <div key={group.category} style={{ marginTop: 8 }}>
+                  <Typography variant="body">
+                    {group.category.toUpperCase()}: {formatMoney(group.total)}
+                  </Typography>
+                  {group.items.map((item) => (
+                    <Typography key={item.itemId} variant="small" color="secondary">
+                      • {item.description}: {formatMoney(item.amount)}
+                    </Typography>
+                  ))}
+                </div>
+              ))}
+              <Typography variant="h4" style={{ marginTop: 8 }}>
+                Total: {formatMoney(billExplorer.grandTotal)}
+              </Typography>
+            </Card>
+
+            <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+              <Typography variant="h4" color="primary">
+                Period comparison
+              </Typography>
+              <Typography variant="body">
+                Previous ({billExplorer.comparison.previous.period}):{' '}
+                {formatMoney(billExplorer.comparison.previous.grandTotal)}
+              </Typography>
+              <Typography variant="body">
+                Delta: {formatMoney(billExplorer.comparison.deltaAbsolute)} (
+                {billExplorer.comparison.deltaPercentage.toFixed(2)}%)
+              </Typography>
+            </Card>
+
+            <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+              <Typography variant="h4" color="primary">
+                Invoice
+              </Typography>
+              <Typography variant="small" color="secondary">
+                {billExplorer.invoice.fileName}
+              </Typography>
+              <Button onClick={downloadInvoice} size="sm">
+                Download PDF invoice
+              </Button>
+            </Card>
+          </>
         )}
 
         <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
