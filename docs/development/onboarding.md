@@ -301,6 +301,8 @@ For threshold-based alerting (F-05.3), read `docs/development/usage-threshold-al
 
 For payment journey implementation and API contract (F-06.2), read `docs/development/payment-journey.md`.
 
+For payment history implementation and API contract (F-06.3), read `docs/development/payment-history.md`.
+
 ### Operator Feature Flags & Journeys
 
 For white-label runtime toggles and journey flows, read:

@@ -13,6 +13,7 @@ This is the main repository for the Telco Self-Care White-Label Platform, suppor
 - **[Local Docker Integration](./docs/development/local-docker-integration.md)** - End-to-end local stack setup
 - **[Usage Threshold Alerts](./docs/development/usage-threshold-alerts.md)** - F-05.3 threshold model, dedup, and notification flow
 - **[Payment Journey](./docs/development/payment-journey.md)** - F-06.2 payment method registration, tokenized checkout, idempotency
+- **[Payment History](./docs/development/payment-history.md)** - F-06.3 12-month history, receipt download/share, one-click retry
 
 ## Module Structure
 

@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AuthSession from 'expo-auth-session';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import * as WebBrowser from 'expo-web-browser';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
@@ -24,6 +26,22 @@ type CheckoutResponse = {
   message: string;
   idempotencyKey: string;
 };
+type PaymentHistoryItem = {
+  paymentId: string;
+  paymentDate: string;
+  amount: number;
+  currency: string;
+  methodSummary: string;
+  status: 'SUCCESS' | 'FAILED';
+  referenceId: string;
+};
+type PaymentHistoryResponse = { months: number; payments: PaymentHistoryItem[] };
+type PaymentRetryResponse = {
+  paymentId: string;
+  status: string;
+  outcome: string;
+  idempotencyKey: string;
+};
 
 const issuer = process.env.OIDC_ISSUER || 'http://localhost:8080/realms/mytelco-white-label';
 const clientId = process.env.OIDC_CLIENT_ID || 'mobile-app';
@@ -39,6 +57,8 @@ export default function App() {
   const [overview, setOverview] = useState<AccountOverview | null>(null);
   const [paymentToken, setPaymentToken] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState('No payment attempt yet');
+  const [history, setHistory] = useState<PaymentHistoryItem[]>([]);
+  const [historyStatus, setHistoryStatus] = useState('History not loaded yet');
 
   const discovery = useMemo(
     () => ({
@@ -92,6 +112,21 @@ export default function App() {
       })
       .catch(() => setStatus('Token exchange failed'));
   }, [response, request?.codeVerifier]);
+
+  const authedFetch = async (path: string, init: RequestInit = {}) => {
+    if (!tokens?.accessToken) {
+      throw new Error('No access token');
+    }
+    const res = await fetch(`${apiBase}${path}`, {
+      ...init,
+      headers: {
+        ...(init.headers || {}),
+        Authorization: `Bearer ${tokens.accessToken}`,
+      },
+    });
+    if (!res.ok) throw new Error(`API failed (${res.status})`);
+    return res;
+  };
 
   const callProtected = async () => {
     if (!tokens?.accessToken) {
@@ -179,6 +214,62 @@ export default function App() {
     setPaymentStatus(`${payload.status}: ${payload.message} (${payload.transactionId})`);
   };
 
+  const loadPaymentHistory = async () => {
+    try {
+      const res = await authedFetch('/api/v1/customer/payments/history?months=12');
+      const payload = (await res.json()) as PaymentHistoryResponse;
+      setHistory(payload.payments);
+      setHistoryStatus(`Loaded ${payload.payments.length} payments from ${payload.months} months`);
+    } catch (err) {
+      setHistoryStatus(err instanceof Error ? err.message : 'Failed to load payment history');
+    }
+  };
+
+  const shareReceipt = async (paymentId: string) => {
+    try {
+      if (!tokens?.accessToken) {
+        setHistoryStatus('Login required');
+        return;
+      }
+      const fileUri = `${FileSystem.cacheDirectory}receipt-${paymentId}.pdf`;
+      await FileSystem.downloadAsync(
+        `${apiBase}/api/v1/customer/payments/receipt/${paymentId}/download`,
+        fileUri,
+        { headers: { Authorization: `Bearer ${tokens.accessToken}` } }
+      );
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri);
+        setHistoryStatus(`Receipt shared for ${paymentId}`);
+      } else {
+        setHistoryStatus('Sharing unavailable on this device');
+      }
+    } catch (err) {
+      setHistoryStatus(err instanceof Error ? err.message : 'Receipt share failed');
+    }
+  };
+
+  const retryFailedPayment = async (paymentId: string) => {
+    try {
+      const res = await authedFetch(`/api/v1/customer/payments/${paymentId}/retry`, {
+        method: 'POST',
+        headers: { 'Idempotency-Key': `mobile-retry-${paymentId}` },
+      });
+      const payload = (await res.json()) as PaymentRetryResponse;
+      setHistoryStatus(`${payload.status}: ${payload.outcome}`);
+      await loadPaymentHistory();
+    } catch (err) {
+      setHistoryStatus(err instanceof Error ? err.message : 'Retry failed');
+    }
+  };
+
+  useEffect(() => {
+    if (tokens?.accessToken) {
+      loadPaymentHistory().catch(() => undefined);
+    } else {
+      setHistory([]);
+    }
+  }, [tokens?.accessToken]);
+
   const refresh = async () => {
     if (!tokens?.refreshToken) {
       setStatus('No refresh token available');
@@ -210,6 +301,7 @@ export default function App() {
     setTokens(null);
     setOverview(null);
     setPaymentToken(null);
+    setHistory([]);
     setStatus('Session cleared locally');
     await WebBrowser.openBrowserAsync(
       `${discovery.endSessionEndpoint}?client_id=${encodeURIComponent(clientId)}${idTokenHint}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`
@@ -277,6 +369,36 @@ export default function App() {
           />
         </Card>
 
+        <Card padding="md" shadow="md" style={styles.card}>
+          <Typography variant="h4">Payment history (Issue #36)</Typography>
+          <Typography variant="small" color="secondary">
+            {historyStatus}
+          </Typography>
+          <Button title="Refresh 12-month history" onPress={() => loadPaymentHistory()} />
+          {history.map((item) => (
+            <Card key={item.paymentId} padding="sm" shadow="sm" style={styles.innerCard}>
+              <Typography variant="body">
+                {new Date(item.paymentDate).toLocaleDateString()} — {item.methodSummary}
+              </Typography>
+              <Typography variant="small" color="secondary">
+                {item.status} — {item.currency} {item.amount.toFixed(2)}
+              </Typography>
+              <Button
+                title="Download/Share receipt"
+                onPress={() => shareReceipt(item.paymentId)}
+                style={styles.buttonSpacing}
+              />
+              {item.status === 'FAILED' && (
+                <Button
+                  title="Retry failed payment"
+                  onPress={() => retryFailedPayment(item.paymentId)}
+                  style={styles.buttonSpacing}
+                />
+              )}
+            </Card>
+          ))}
+        </Card>
+
         <StatusBar style="auto" />
       </ScrollView>
     </SafeAreaView>
@@ -287,5 +409,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: rnTokens.colors.semantic.background.primary },
   content: { padding: rnTokens.spacingPx[6] },
   card: { marginTop: rnTokens.spacingPx[4] },
+  innerCard: { marginTop: rnTokens.spacingPx[2] },
   buttonSpacing: { marginTop: rnTokens.spacingPx[2] },
 });
