@@ -102,6 +102,30 @@ jobs:
         working-directory: bff
         run: mvn clean verify -DskipTests=false
 
+  branding-validate:
+    name: Validate Branding Configs
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.pull_request.changed_files, 'platform-config/operators/') ||
+      contains(github.event.pull_request.changed_files, 'scripts/validate-branding-config.mjs')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate branding configurations
+        run: node scripts/validate-branding-config.mjs
+
   sca-scan:
     name: SCA Scan
     runs-on: ubuntu-latest
@@ -146,7 +170,7 @@ jobs:
   build-docker:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    needs: [lint, test-node, test-java-backend, test-java-bff, sca-scan]
+    needs: [lint, test-node, test-java-backend, test-java-bff, sca-scan, branding-validate]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
