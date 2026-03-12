@@ -1,0 +1,26 @@
+# Kubernetes Kustomize base configuration
+# This file aggregates all service manifests for baseline deployment
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Common labels across all resources
+commonLabels:
+  platform: mytelco-white-label
+  managed-by: kustomize
+
+# Namespace for all resources
+namespace: mytelco
+
+resources:
+  # Backend services
+  - backend-services/deployment.yaml
+  - backend-services/service.yaml
+  # BFF (Backend-for-Frontend)
+  - bff/deployment.yaml
+  - bff/service.yaml
+  # Web Portal (customer-facing)
+  - web-portal/deployment.yaml
+  - web-portal/service.yaml
+  # Admin Portal (operator-facing)
+  - admin-portal/deployment.yaml
+  - admin-portal/service.yaml

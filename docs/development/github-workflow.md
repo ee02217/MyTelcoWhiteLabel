@@ -131,6 +131,16 @@ See [CD Environment Promotion](./cd-environment-promotion.md) for detailed docum
 - Rollback test procedure
 - Required secrets and variables
 
+### Container & Kubernetes
+
+See [Container/Orchestration Baseline](./container-orchestration-baseline.md) for:
+
+- Docker image build commands
+- Kubernetes deployment manifests
+- Health probe configuration
+- Resource requests and limits
+- Deployment examples
+
 ## Workflow Summary
 
 ```
