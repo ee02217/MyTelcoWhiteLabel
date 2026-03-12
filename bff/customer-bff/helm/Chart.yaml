@@ -1,0 +1,6 @@
+apiVersion: v2
+name: customer-bff
+description: Customer BFF Helm chart for Telco Self-Care White-Label Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
