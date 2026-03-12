@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, Card, Typography } from './src/design-system';
+import { Card, Typography } from './src/design-system';
 import { rnTokens } from '../platform-config/design-system/tokens';
 
 type ActiveLine = { lineId: string; msisdn: string; nickname: string; status: string };
@@ -118,10 +118,10 @@ export default function App() {
     };
   }, [view, lineId]);
 
-  const formattedAmount = useMemo(
-    () => `€${(overview?.outstandingAmount ?? 0).toFixed(2)}`,
-    [overview]
-  );
+  const formattedAmount = useMemo(() => {
+    const amount = overview?.outstandingAmount ?? 0;
+    return `€${amount.toFixed(2)}`;
+  }, [overview]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -220,6 +220,46 @@ export default function App() {
                 </Typography>
               </Card>
             ))}
+
+            <Card padding="md" shadow="md" style={styles.card}>
+              <Typography variant="small" color="secondary">
+                Active Lines
+              </Typography>
+              <Typography variant="h3">{overview.activeLineCount}</Typography>
+              <Typography variant="small" color="secondary">
+                {overview.lineStructure === 'MULTI_LINE_READY'
+                  ? 'Multi-line ready account'
+                  : 'Single-line account'}
+              </Typography>
+            </Card>
+
+            <Card padding="md" shadow="md" style={styles.card}>
+              <Typography variant="small" color="secondary">
+                Next Bill Date
+              </Typography>
+              <Typography variant="h3">{overview.nextBillDate}</Typography>
+            </Card>
+
+            <Card padding="md" shadow="md" style={styles.card}>
+              <Typography variant="small" color="secondary">
+                Outstanding Amount
+              </Typography>
+              <Typography variant="h3">{formattedAmount}</Typography>
+            </Card>
+
+            <Card padding="md" shadow="sm" style={styles.card}>
+              <Typography variant="h4">Lines</Typography>
+              {overview.activeLines.map((line) => (
+                <View key={line.lineId} style={styles.lineRow}>
+                  <Typography variant="body">
+                    {line.nickname} · {line.msisdn}
+                  </Typography>
+                  <Typography variant="small" color="secondary">
+                    {line.status}
+                  </Typography>
+                </View>
+              ))}
+            </Card>
           </>
         )}
 
@@ -242,4 +282,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', marginTop: rnTokens.spacingPx[2] },
   rowWrap: { flexDirection: 'row', flexWrap: 'wrap', marginTop: rnTokens.spacingPx[2] },
   warning: { marginTop: rnTokens.spacingPx[2] },
+  lineRow: { marginTop: rnTokens.spacingPx[2] },
 });

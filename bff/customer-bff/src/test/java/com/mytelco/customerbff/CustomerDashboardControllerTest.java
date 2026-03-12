@@ -102,6 +102,7 @@ class CustomerDashboardControllerTest {
             .andExpect(jsonPath("$.lineStructure").value("MULTI_LINE_READY"));
     }
 
+<<<<<<< HEAD
     @Test
     @WithMockUser(roles = "CUSTOMER")
     void getUsageDetails_daily_shouldReturnPerLineAndServiceBreakdown() throws Exception {
