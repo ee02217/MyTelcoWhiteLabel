@@ -1,0 +1,122 @@
+# Backend Services - Staging Environment
+# Deploys with staging configuration for pre-production testing
+
+namespace: telco-staging
+
+replicaCount: 2
+
+image:
+  repository: mytelco/backend-services
+  tag: staging
+  pullPolicy: Always
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/telco-staging-sa
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: staging-api.mytelco.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: backend-services-staging-tls
+      hosts:
+        - staging-api.mytelco.local
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+
+nodeSelector:
+  tier: staging
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app: backend-services
+          topologyKey: kubernetes.io/hostname
+
+# Environment-specific configuration
+env:
+  - name: SPRING_PROFILES_ACTIVE
+    value: "staging"
+  - name: DATABASE_HOST
+    value: "staging-db.mytelco.local"
+  - name: LOG_LEVEL
+    value: "INFO"
+  - name: CACHE_TTL
+    value: "600"
+
+config:
+  database:
+    pool_size: 10
+    connection_timeout: 60
+  cache:
+    enabled: true
+    type: "redis"
+    redis:
+      host: staging-redis.mytelco.local
+      port: 6379
+  features:
+    feature_flags_enabled: true
+    new_billing_api: true
+    beta_features: true
+
+# Staging-specific overrides
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: 8080
+  initialDelaySeconds: 45
+  periodSeconds: 15
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 10

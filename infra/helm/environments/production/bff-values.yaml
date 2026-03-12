@@ -1,0 +1,133 @@
+# BFF Service - Production Environment
+# Deploys with production configuration for high availability and security
+
+namespace: telco-prod
+
+replicaCount: 3
+
+image:
+  repository: mytelco/bff
+  tag: prod
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: mytelco-registry-secret
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/telco-prod-sa
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: www.mytelco.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: bff-prod-tls
+      hosts:
+        - www.mytelco.com
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 60
+
+nodeSelector:
+  tier: production
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app: bff
+        topologyKey: kubernetes.io/hostname
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+            - key: workload-type
+              operator: In
+              values:
+                - compute-optimized
+
+# Environment-specific configuration
+env:
+  - name: SPRING_PROFILES_ACTIVE
+    value: "prod"
+  - name: BACKEND_SERVICE_URL
+    value: "http://backend-services:8080"
+  - name: LOG_LEVEL
+    value: "WARN"
+  - name: SESSION_TIMEOUT
+    value: "7200"
+
+config:
+  backend:
+    timeout: 120
+    retry_attempts: 3
+  cache:
+    enabled: true
+    type: "redis"
+    redis:
+      host: prod-redis.mytelco.local
+      port: 6379
+      ssl: true
+
+# Production-specific overrides
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: 8080
+  initialDelaySeconds: 60
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: 8080
+  initialDelaySeconds: 20
+  periodSeconds: 10
+
+# Production-specific security
+podDisruptionBudget:
+  minAvailable: 2

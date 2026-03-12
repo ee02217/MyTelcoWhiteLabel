@@ -1,0 +1,104 @@
+# Backend Services - Development Environment
+# Deploys with development configuration and debug settings
+
+namespace: telco-dev
+
+replicaCount: 1
+
+image:
+  repository: mytelco/backend-services
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: dev-api.mytelco.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: backend-services-dev-tls
+      hosts:
+        - dev-api.mytelco.local
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Environment-specific configuration
+env:
+  - name: SPRING_PROFILES_ACTIVE
+    value: "dev"
+  - name: DATABASE_HOST
+    value: "dev-db.mytelco.local"
+  - name: LOG_LEVEL
+    value: "DEBUG"
+  - name: CACHE_TTL
+    value: "300"
+
+config:
+  database:
+    pool_size: 5
+    connection_timeout: 30
+  cache:
+    enabled: true
+    type: "memory"
+  features:
+    feature_flags_enabled: true
+    new_billing_api: true
+
+# Development-specific overrides
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5

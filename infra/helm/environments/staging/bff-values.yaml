@@ -1,0 +1,118 @@
+# BFF Service - Staging Environment
+# Deploys with staging configuration for pre-production testing
+
+namespace: telco-staging
+
+replicaCount: 2
+
+image:
+  repository: mytelco/bff
+  tag: staging
+  pullPolicy: Always
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/telco-staging-sa
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: staging.mytelco.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: bff-staging-tls
+      hosts:
+        - staging.mytelco.local
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+
+nodeSelector:
+  tier: staging
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app: bff
+          topologyKey: kubernetes.io/hostname
+
+# Environment-specific configuration
+env:
+  - name: SPRING_PROFILES_ACTIVE
+    value: "staging"
+  - name: BACKEND_SERVICE_URL
+    value: "http://backend-services:8080"
+  - name: LOG_LEVEL
+    value: "INFO"
+  - name: SESSION_TIMEOUT
+    value: "3600"
+
+config:
+  backend:
+    timeout: 60
+    retry_attempts: 3
+  cache:
+    enabled: true
+    type: "redis"
+    redis:
+      host: staging-redis.mytelco.local
+      port: 6379
+
+# Staging-specific overrides
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: 8080
+  initialDelaySeconds: 45
+  periodSeconds: 15
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 10
