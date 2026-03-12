@@ -1,18 +1,18 @@
 # Local Docker integration environment
 
-This guide starts the local integrated stack for end-to-end component integration and look/feel validation.
+This guide brings up the local integrated stack with **real SPA builds** for web/admin portals (not static placeholders), deterministic baseline seeding, and smoke validation.
 
 ## Scope (MVP)
 
 The local compose stack includes:
 
-- postgres
-- keycloak
+- postgres (with deterministic baseline SQL init)
+- keycloak (deterministic realm import)
 - kong
 - customer-bff
 - admin-bff
-- web-portal
-- admin-portal
+- web-portal (built from `web-portal/` and served by nginx)
+- admin-portal (built from `admin-portal/` and served by nginx)
 
 Compose file:
 
@@ -34,102 +34,86 @@ Compose file:
 2. Validate compose configuration:
 
    ```bash
-   docker compose --env-file .env.local.example -f infra/docker/docker-compose.local.yml config
+   docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml config
    ```
 
 3. Boot local integration stack:
 
    ```bash
-   docker compose --env-file .env.local.example -f infra/docker/docker-compose.local.yml up -d --build
+   docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml up -d --build
    ```
 
 4. Check service status:
 
    ```bash
-   docker compose --env-file .env.local.example -f infra/docker/docker-compose.local.yml ps -a
+   docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml ps -a
    ```
 
-5. Tail logs for a service:
+5. Run smoke checks:
 
    ```bash
-   docker compose --env-file .env.local.example -f infra/docker/docker-compose.local.yml logs -f customer-bff
+   bash scripts/local-smoke-check.sh
    ```
 
-## Health checks
+## Frontend API wiring strategy
 
-Run smoke checks:
+Runtime API routing uses nginx reverse-proxy for both SPA containers:
 
-```bash
-bash scripts/local-smoke-check.sh
-```
+- Requests to `/api/*` from browser go to the portal container.
+- nginx proxies `/api/*` to `${API_UPSTREAM}` (default `http://kong:8000`).
+- This is set via compose env vars:
+  - `WEB_PORTAL_API_UPSTREAM`
+  - `ADMIN_PORTAL_API_UPSTREAM`
 
-Manual health probes:
+Files:
 
-- Postgres readiness: `docker exec mytelco-postgres pg_isready -U mytelco -d mytelco`
-- Keycloak readiness: `http://localhost:8080/health/ready`
-- Keycloak login reachability: `http://localhost:8080/realms/master/account`
-- Kong admin reachability (TLS): `https://localhost:8444/`
-- Kong proxy reachability: `http://localhost:8000/`
-- Customer BFF actuator: `http://localhost:8081/actuator/health`
-- Admin BFF actuator: `http://localhost:8082/actuator/health`
-- Web portal: `http://localhost:3000`
-- Admin portal: `http://localhost:3001`
+- `infra/docker/nginx/web-portal.conf.template`
+- `infra/docker/nginx/admin-portal.conf.template`
 
-## Execution evidence (2026-03-12)
+This keeps browser-side API base deterministic in local docker without rebuilding app code per endpoint change.
 
-Commands executed:
+## Deterministic seed baseline
 
-```bash
-docker compose --env-file .env.local.example -f infra/docker/docker-compose.local.yml config
-docker compose --env-file .env.local.example -f infra/docker/docker-compose.local.yml up -d --build
-docker compose --env-file .env.local.example -f infra/docker/docker-compose.local.yml ps -a
-bash -n scripts/local-smoke-check.sh
-bash scripts/local-smoke-check.sh
-```
+### Postgres
 
-Observed smoke results:
+- Init SQL: `infra/docker/postgres/init/001-baseline.sql`
+- Mounted into: `/docker-entrypoint-initdb.d/001-baseline.sql`
+- Seed marker table:
+  - `bootstrap.seed_info`
+  - expected row: `id=1, seed_version=local-baseline-v1`
 
-- ✅ postgres readiness
-- ✅ keycloak health + login reachability
-- ✅ kong admin reachability (via `8444` TLS) + proxy reachability
-- ✅ customer-bff health endpoint
-- ✅ admin-bff health endpoint
-- ✅ web/admin portal HTTP reachability
+> Note: postgres init scripts run on first DB initialization. To re-run deterministically, reset volume with `docker compose ... down -v`.
 
-## Seeded demo data path
+### Keycloak
 
-Current seeded identity/demo data source:
+- Realm import file: `infra/keycloak/realm-export/telco-dev-realm.json`
+- Keycloak starts with `--import-realm`
 
-- Keycloak realm import JSON: `infra/keycloak/realm-export/telco-dev-realm.json`
+## Smoke checks covered
 
-Postgres demo data seeding is not yet automated in this slice. Add SQL/bootstrap scripts in follow-up increments and document the path in this section.
+`scripts/local-smoke-check.sh` validates:
 
-## Known gaps and next steps
-
-1. **Frontend runtime gap (architectural debt):** the compose baseline serves static placeholder pages for `web-portal` and `admin-portal` via `nginx:alpine` (mounted `infra/docker/static/.../index.html`) to provide deterministic HTTP reachability while front-end container builds are currently blocked by missing design token artifacts.
-   - Debt cost: no real SPA runtime behavior is validated in this baseline.
-   - Payback trigger: before any end-to-end UX sign-off or release-candidate validation.
-
-2. **BFF packaging dependency:** BFF images now rely on Spring Boot repackaged executable jars (`spring-boot:repackage`) and mounted `platform-config` directory for admin startup.
-   - Debt cost: runtime depends on compose-level volume convention.
-   - Payback trigger: when hardening container immutability for CI/staging parity.
-
-3. **Kong admin reachability:** admin API is validated through TLS admin listener (`8444`) with explicit `KONG_ADMIN_LISTEN`.
-   - Debt cost: local scripts must probe TLS admin endpoint (not plain `8001`).
-   - Payback trigger: when finalizing gateway security profile across environments.
+- postgres readiness
+- postgres baseline seed presence
+- keycloak readiness/login reachability
+- kong admin/proxy reachability
+- customer-bff/admin-bff health endpoints
+- web/admin portal root serves real SPA HTML titles
+- web portal `/api` proxy path reachability (`/api/v1/customer/account-overview`)
 
 ## Troubleshooting
 
 - **Port conflicts**: change values in `.env.local`.
 - **Image build failures**: run `docker compose ... build --no-cache` and inspect logs.
-- **BFF healthcheck failing**: inspect actuator endpoint and startup logs:
+- **Seed not present**:
+  - ensure fresh postgres volume (`down -v`) for first-init scripts.
+  - confirm script mount path in compose.
+- **API proxy failures from portals**:
+  - verify `WEB_PORTAL_API_UPSTREAM` / `ADMIN_PORTAL_API_UPSTREAM`
+  - ensure `kong` is healthy and routing config is loaded.
 
-  ```bash
-  docker compose --env-file .env.local.example -f infra/docker/docker-compose.local.yml logs customer-bff admin-bff
-  ```
+Reset local state:
 
-- **Reset local state**:
-
-  ```bash
-  docker compose --env-file .env.local.example -f infra/docker/docker-compose.local.yml down -v
-  ```
+```bash
+docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml down -v
+```

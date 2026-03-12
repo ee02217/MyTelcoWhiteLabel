@@ -12,6 +12,7 @@ services:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres-local-data:/var/lib/postgresql/data
+      - ./postgres/init/001-baseline.sql:/docker-entrypoint-initdb.d/001-baseline.sql:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-mytelco} -d ${POSTGRES_DB:-mytelco}']
       interval: 10s
@@ -131,12 +132,14 @@ services:
       - mytelco-network
 
   web-portal:
-    image: nginx:alpine
+    build:
+      context: ../..
+      dockerfile: infra/docker/web-portal.Dockerfile
     container_name: mytelco-web-portal
+    environment:
+      API_UPSTREAM: ${WEB_PORTAL_API_UPSTREAM:-http://kong:8000}
     ports:
       - '${WEB_PORTAL_PORT:-3000}:80'
-    volumes:
-      - ./static/web-portal/index.html:/usr/share/nginx/html/index.html:ro
     depends_on:
       customer-bff:
         condition: service_started
@@ -152,12 +155,14 @@ services:
       - mytelco-network
 
   admin-portal:
-    image: nginx:alpine
+    build:
+      context: ../..
+      dockerfile: infra/docker/admin-portal.Dockerfile
     container_name: mytelco-admin-portal
+    environment:
+      API_UPSTREAM: ${ADMIN_PORTAL_API_UPSTREAM:-http://kong:8000}
     ports:
       - '${ADMIN_PORTAL_PORT:-3001}:80'
-    volumes:
-      - ./static/admin-portal/index.html:/usr/share/nginx/html/index.html:ro
     depends_on:
       admin-bff:
         condition: service_started
