@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
-import { tokens } from '../../../../platform-config/design-tokens/tokens';
+import { View, ViewStyle } from 'react-native';
+import { rnTokens } from '../../../../platform-config/design-system/tokens';
 
 type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 type CardShadow = 'none' | 'sm' | 'md' | 'lg';
@@ -14,9 +14,9 @@ interface CardProps {
 
 const paddingValues: Record<CardPadding, number> = {
   none: 0,
-  sm: 8,
-  md: 16,
-  lg: 24,
+  sm: rnTokens.spacingPx[2],
+  md: rnTokens.spacingPx[4],
+  lg: rnTokens.spacingPx[6],
 };
 
 const shadowStyles: Record<CardShadow, ViewStyle> = {
@@ -45,14 +45,21 @@ const shadowStyles: Record<CardShadow, ViewStyle> = {
 };
 
 export function Card({ children, padding = 'md', shadow = 'md', style }: CardProps) {
-  const cardStyle: ViewStyle = {
-    backgroundColor: tokens.semantic.background.primary,
-    borderRadius: Number(tokens.borderRadius.lg.replace('rem', '')) * 16,
-    padding: paddingValues[padding],
-    borderWidth: 1,
-    borderColor: tokens.semantic.border.default,
-    ...shadowStyles[shadow],
-  };
-
-  return <View style={[cardStyle, style]}>{children}</View>;
+  return (
+    <View
+      style={[
+        {
+          backgroundColor: rnTokens.colors.semantic.background.primary,
+          borderRadius: rnTokens.radiusPx.lg,
+          borderWidth: 1,
+          borderColor: rnTokens.colors.semantic.border.default,
+          padding: paddingValues[padding],
+        },
+        shadowStyles[shadow],
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
 }

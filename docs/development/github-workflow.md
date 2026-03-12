@@ -119,6 +119,7 @@ This enables the issue activity logger to track work progress.
 
 This repository uses GitHub Actions for CI/CD:
 
+- **Development Standards**: `.github/workflows/development-standards.yml` - formatting, lint, and design contrast checks
 - **CI Pipeline**: `.github/workflows/ci-pr.yml` - Runs on PRs to main
 - **CD Pipeline**: `.github/workflows/cd-environment-promotion.yml` - Handles environment promotion
 

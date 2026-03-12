@@ -1,4 +1,4 @@
-import tokens from '../../platform-config/design-tokens/tokens.json';
+import tokens from '../../platform-config/design-system/tokens.json';
 import { Button, Card, Typography, DesignSystemProvider } from './design-system';
 
 function App() {
@@ -60,7 +60,7 @@ function App() {
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>Design Tokens</h2>
             <p style={styles.text}>
-              This app uses shared design tokens from <code>platform-config/design-tokens/</code>
+              This app uses shared design tokens from <code>platform-config/design-system/</code>
             </p>
 
             <div style={styles.tokenGrid}>

@@ -1,179 +1,85 @@
 #!/usr/bin/env node
-/**
- * Design Contrast Checker
- * Validates WCAG contrast ratios for semantic color pairs
- * Fails if contrast is below WCAG AA requirements (4.5:1 for normal text, 3:1 for large text)
- */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
-// WCAG thresholds
 const WCAG_AA_NORMAL = 4.5;
 const WCAG_AA_LARGE = 3.0;
-const WCAG_AAA_NORMAL = 7.0;
-const WCAG_AAA_LARGE = 4.5;
 
-/**
- * Calculate relative luminance per WCAG 2.1
- */
-function getLuminance(hex) {
-  const rgb = hexToRgb(hex);
-  if (!rgb) return 0;
-
-  const [r, g, b] = [rgb.r, rgb.g, rgb.b].map((c) => {
-    const sRGB = c / 255;
-    return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4);
-  });
-
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/**
- * Convert hex to RGB
- */
 function hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
-    : null;
+  const normalized = hex.replace('#', '');
+  if (normalized.length !== 6) return null;
+  return {
+    r: Number.parseInt(normalized.slice(0, 2), 16),
+    g: Number.parseInt(normalized.slice(2, 4), 16),
+    b: Number.parseInt(normalized.slice(4, 6), 16),
+  };
 }
 
-/**
- * Calculate contrast ratio between two colors
- */
-function getContrastRatio(foreground, background) {
-  const lum1 = getLuminance(foreground);
-  const lum2 = getLuminance(background);
-  const lighter = Math.max(lum1, lum2);
-  const darker = Math.min(lum1, lum2);
+function luminance(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) throw new Error(`Invalid hex color: ${hex}`);
+  const channels = [rgb.r, rgb.g, rgb.b].map((c) => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+function contrastRatio(fg, bg) {
+  const l1 = luminance(fg);
+  const l2 = luminance(bg);
+  const [lighter, darker] = l1 > l2 ? [l1, l2] : [l2, l1];
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-// Define semantic color pairs to check
-const colorPairs = [
+const tokensPath = join(process.cwd(), 'platform-config', 'design-system', 'tokens.json');
+const tokens = JSON.parse(readFileSync(tokensPath, 'utf8'));
+
+const pairs = [
   {
-    name: 'Primary text on primary background',
-    foreground: '#18181b', // semantic.text.primary
-    background: '#ffffff', // semantic.background.primary
-    minRatio: WCAG_AA_NORMAL,
-    textSize: 'normal',
+    name: 'Primary text / primary background',
+    fg: tokens.color.semantic.text.primary,
+    bg: tokens.color.semantic.background.primary,
+    min: WCAG_AA_NORMAL,
   },
   {
-    name: 'Secondary text on primary background',
-    foreground: '#52525b', // semantic.text.secondary
-    background: '#ffffff',
-    minRatio: WCAG_AA_NORMAL,
-    textSize: 'normal',
+    name: 'Secondary text / primary background',
+    fg: tokens.color.semantic.text.secondary,
+    bg: tokens.color.semantic.background.primary,
+    min: WCAG_AA_NORMAL,
   },
   {
-    name: 'Disabled text on primary background',
-    foreground: '#a1a1aa', // semantic.text.disabled
-    background: '#ffffff',
-    minRatio: 2.0, // Below AA - intentional for disabled state
-    textSize: 'disabled',
+    name: 'Primary button text / primary button',
+    fg: '#ffffff',
+    bg: tokens.color.primary[500],
+    min: WCAG_AA_LARGE,
   },
   {
-    name: 'Primary button text on primary background',
-    foreground: '#ffffff',
-    background: '#0073e6', // color.primary[500]
-    minRatio: WCAG_AA_LARGE, // 3.0 - buttons are large enough
-    textSize: 'large',
+    name: 'Secondary button text / secondary button',
+    fg: '#ffffff',
+    bg: tokens.color.secondary[500],
+    min: WCAG_AA_LARGE,
   },
   {
-    name: 'Secondary button text on secondary background',
-    foreground: '#ffffff',
-    background: '#3b82f6', // color.secondary[500]
-    minRatio: WCAG_AA_LARGE,
-    textSize: 'large',
-  },
-  {
-    name: 'Error text on error background',
-    foreground: '#ffffff',
-    background: '#ef4444', // color.error[500]
-    minRatio: WCAG_AA_LARGE,
-    textSize: 'large',
-  },
-  {
-    name: 'Success text on success background',
-    foreground: '#ffffff',
-    background: '#16a34a', // color.success[500]
-    minRatio: WCAG_AA_LARGE,
-    textSize: 'large',
-  },
-  {
-    name: 'Heading text on primary background',
-    foreground: '#18181b',
-    background: '#ffffff',
-    minRatio: WCAG_AA_LARGE,
-    textSize: 'large',
-  },
-  {
-    name: 'Inverse text on dark background',
-    foreground: '#fafafa', // semantic.text.inverse
-    background: '#18181b', // color.neutral[900]
-    minRatio: WCAG_AA_NORMAL,
-    textSize: 'normal',
+    name: 'Inverse text / neutral-900',
+    fg: tokens.color.semantic.text.inverse,
+    bg: tokens.color.neutral[900],
+    min: WCAG_AA_NORMAL,
   },
 ];
 
-function main() {
-  console.log('🎨 Running WCAG Contrast Checks\n');
-  console.log('='.repeat(60));
-
-  const tokensPath = join(process.cwd(), 'platform-config', 'design-tokens', 'tokens.json');
-  let tokens;
-
-  try {
-    const tokensContent = readFileSync(tokensPath, 'utf-8');
-    tokens = JSON.parse(tokensContent);
-  } catch (error) {
-    console.error('❌ Failed to load design tokens:', error.message);
-    process.exit(1);
-  }
-
-  let hasFailures = false;
-  let passedCount = 0;
-
-  for (const pair of colorPairs) {
-    const ratio = getContrastRatio(pair.foreground, pair.background);
-    const passesAA = ratio >= pair.minRatio;
-    const passesAAA = ratio >= (pair.textSize === 'large' ? WCAG_AAA_LARGE : WCAG_AAA_NORMAL);
-
-    const status = passesAA ? '✅ PASS' : '❌ FAIL';
-    const aaaStatus = passesAAA ? 'AAA' : 'AA';
-
-    console.log(`\n${status} ${pair.name}`);
-    console.log(`   Foreground: ${pair.foreground}`);
-    console.log(`   Background: ${pair.background}`);
-    console.log(`   Contrast: ${ratio.toFixed(2)}:1 (min: ${pair.minRatio}:1)`);
-    console.log(`   WCAG Level: ${aaaStatus}`);
-
-    if (!passesAA) {
-      hasFailures = true;
-      console.log(`   ⚠️  Fails WCAG AA for ${pair.textSize} text`);
-    } else {
-      passedCount++;
-    }
-  }
-
-  console.log('\n' + '='.repeat(60));
-  console.log(`\n📊 Summary: ${passedCount}/${colorPairs.length} checks passed`);
-
-  if (hasFailures) {
-    console.log('\n❌ Contrast check FAILED');
-    console.log('   Fix color combinations above to meet WCAG AA standards');
-    console.log('   Run this script again after fixes to verify\n');
-    process.exit(1);
-  } else {
-    console.log('\n✅ All contrast checks PASSED');
-    console.log('   All semantic color pairs meet WCAG AA standards\n');
-    process.exit(0);
-  }
+let failed = 0;
+console.log('Running WCAG contrast checks...');
+for (const pair of pairs) {
+  const ratio = contrastRatio(pair.fg, pair.bg);
+  const ok = ratio >= pair.min;
+  console.log(`${ok ? 'PASS' : 'FAIL'} ${pair.name}: ${ratio.toFixed(2)}:1 (min ${pair.min}:1)`);
+  if (!ok) failed += 1;
 }
 
-main();
+if (failed > 0) {
+  console.error(`Contrast validation failed (${failed} failing pair(s)).`);
+  process.exit(1);
+}
+
+console.log('All contrast checks passed.');

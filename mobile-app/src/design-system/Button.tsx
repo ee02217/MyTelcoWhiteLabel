@@ -1,13 +1,6 @@
 import React from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ViewStyle,
-  TextStyle,
-  TouchableOpacityProps,
-} from 'react-native';
-import { tokens } from '../../../../platform-config/design-tokens/tokens';
+import { Text, TouchableOpacity, TouchableOpacityProps, ViewStyle } from 'react-native';
+import { rnTokens } from '../../../../platform-config/design-system/tokens';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -19,65 +12,43 @@ interface ButtonProps extends Omit<TouchableOpacityProps, 'style'> {
   style?: ViewStyle;
 }
 
-const variantStyles: Record<ButtonVariant, ViewStyle> = {
-  primary: {
-    backgroundColor: tokens.color.primary[500],
-  },
-  secondary: {
-    backgroundColor: tokens.color.secondary[500],
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: tokens.color.primary[500],
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-  },
-};
-
 const sizeStyles: Record<ButtonSize, ViewStyle> = {
-  sm: {
-    paddingVertical: tokens.spacing[1],
-    paddingHorizontal: tokens.spacing[3],
-  },
-  md: {
-    paddingVertical: tokens.spacing[2],
-    paddingHorizontal: tokens.spacing[4],
-  },
-  lg: {
-    paddingVertical: tokens.spacing[3],
-    paddingHorizontal: tokens.spacing[6],
-  },
+  sm: { paddingVertical: rnTokens.spacingPx[1], paddingHorizontal: rnTokens.spacingPx[3] },
+  md: { paddingVertical: rnTokens.spacingPx[2], paddingHorizontal: rnTokens.spacingPx[4] },
+  lg: { paddingVertical: rnTokens.spacingPx[3], paddingHorizontal: rnTokens.spacingPx[6] },
 };
 
-const textSizeStyles: Record<ButtonSize, TextStyle> = {
-  sm: { fontSize: 12 },
-  md: { fontSize: 16 },
-  lg: { fontSize: 18 },
-};
+const textSize: Record<ButtonSize, number> = { sm: 12, md: 16, lg: 18 };
 
 export function Button({ variant = 'primary', size = 'md', title, style, ...props }: ButtonProps) {
-  const buttonStyle: ViewStyle = {
-    borderRadius: Number(tokens.borderRadius.md.replace('rem', '')) * 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...variantStyles[variant],
-    ...sizeStyles[size],
-  };
+  const tone =
+    variant === 'secondary'
+      ? rnTokens.colors.secondary[500]
+      : variant === 'primary'
+        ? rnTokens.colors.primary[500]
+        : 'transparent';
 
+  const borderColor = variant === 'outline' ? rnTokens.colors.primary[500] : 'transparent';
   const textColor =
-    variant === 'primary' || variant === 'secondary' ? '#ffffff' : tokens.color.primary[500];
+    variant === 'primary' || variant === 'secondary' ? '#fff' : rnTokens.colors.primary[500];
 
   return (
-    <TouchableOpacity style={[buttonStyle, style]} {...props}>
-      <Text style={[styles.text, { color: textColor }, textSizeStyles[size]]}>{title}</Text>
+    <TouchableOpacity
+      style={[
+        {
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: rnTokens.radiusPx.md,
+          backgroundColor: tone,
+          borderWidth: variant === 'outline' ? 1 : 0,
+          borderColor,
+        },
+        sizeStyles[size],
+        style,
+      ]}
+      {...props}
+    >
+      <Text style={{ color: textColor, fontWeight: '500', fontSize: textSize[size] }}>{title}</Text>
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  text: {
-    fontWeight: tokens.font.weight.medium,
-  },
-});

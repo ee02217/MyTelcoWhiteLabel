@@ -1,6 +1,6 @@
 import React from 'react';
-import { Text, StyleSheet, TextStyle } from 'react-native';
-import { tokens } from '../../../../platform-config/design-tokens/tokens';
+import { Text, TextStyle } from 'react-native';
+import { rnTokens } from '../../../../platform-config/design-system/tokens';
 
 type TypographyVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'small' | 'caption';
 type TypographyColor = 'primary' | 'secondary' | 'disabled' | 'inverse';
@@ -12,49 +12,21 @@ interface TypographyProps {
   style?: TextStyle;
 }
 
-const variantStyles: Record<TypographyVariant, TextStyle> = {
-  h1: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    lineHeight: 44,
-  },
-  h2: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    lineHeight: 38,
-  },
-  h3: {
-    fontSize: 24,
-    fontWeight: '600',
-    lineHeight: 32,
-  },
-  h4: {
-    fontSize: 20,
-    fontWeight: '600',
-    lineHeight: 28,
-  },
-  body: {
-    fontSize: 16,
-    fontWeight: '400',
-    lineHeight: 24,
-  },
-  small: {
-    fontSize: 14,
-    fontWeight: '400',
-    lineHeight: 20,
-  },
-  caption: {
-    fontSize: 12,
-    fontWeight: '400',
-    lineHeight: 16,
-  },
+const variants: Record<TypographyVariant, TextStyle> = {
+  h1: { fontSize: rnTokens.typography.sizePx['4xl'], lineHeight: 44, fontWeight: '700' },
+  h2: { fontSize: rnTokens.typography.sizePx['3xl'], lineHeight: 38, fontWeight: '700' },
+  h3: { fontSize: rnTokens.typography.sizePx['2xl'], lineHeight: 32, fontWeight: '600' },
+  h4: { fontSize: rnTokens.typography.sizePx.xl, lineHeight: 28, fontWeight: '600' },
+  body: { fontSize: rnTokens.typography.sizePx.base, lineHeight: 24, fontWeight: '400' },
+  small: { fontSize: rnTokens.typography.sizePx.sm, lineHeight: 20, fontWeight: '400' },
+  caption: { fontSize: rnTokens.typography.sizePx.xs, lineHeight: 16, fontWeight: '400' },
 };
 
-const colorValues: Record<TypographyColor, string> = {
-  primary: tokens.semantic.text.primary,
-  secondary: tokens.semantic.text.secondary,
-  disabled: tokens.semantic.text.disabled,
-  inverse: tokens.semantic.text.inverse,
+const colors: Record<TypographyColor, string> = {
+  primary: rnTokens.colors.semantic.text.primary,
+  secondary: rnTokens.colors.semantic.text.secondary,
+  disabled: rnTokens.colors.semantic.text.disabled,
+  inverse: rnTokens.colors.semantic.text.inverse,
 };
 
 export function Typography({
@@ -63,7 +35,5 @@ export function Typography({
   color = 'primary',
   style,
 }: TypographyProps) {
-  return (
-    <Text style={[variantStyles[variant], { color: colorValues[color] }, style]}>{children}</Text>
-  );
+  return <Text style={[variants[variant], { color: colors[color] }, style]}>{children}</Text>;
 }
