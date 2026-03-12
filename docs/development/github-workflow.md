@@ -125,6 +125,7 @@ This repository uses GitHub Actions for CI/CD:
 ### CD Environment Promotion
 
 See [CD Environment Promotion](./cd-environment-promotion.md) for detailed documentation on:
+
 - Environment promotion flow (dev → staging → production)
 - Manual approval mechanism for production
 - Rollback test procedure

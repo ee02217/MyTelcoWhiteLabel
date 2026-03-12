@@ -6,11 +6,11 @@ This document describes the continuous deployment (CD) pipeline for environment 
 
 The CD pipeline automates deployments across three environments:
 
-| Environment | Purpose | Approval Required | Auto-Deploy |
-|-------------|---------|-------------------|-------------|
-| Development | Feature development, integration testing | No | On push to main |
-| Staging | Pre-production validation, rollback testing | No | On push to main |
-| Production | Live production environment | Yes (manual) | On approval |
+| Environment | Purpose                                     | Approval Required | Auto-Deploy     |
+| ----------- | ------------------------------------------- | ----------------- | --------------- |
+| Development | Feature development, integration testing    | No                | On push to main |
+| Staging     | Pre-production validation, rollback testing | No                | On push to main |
+| Production  | Live production environment                 | Yes (manual)      | On approval     |
 
 ## Pipeline Flow
 
@@ -47,16 +47,19 @@ Location: `.github/workflows/cd-environment-promotion.yml`
 ### Jobs
 
 #### 1. Deploy Development (`deploy-dev`)
+
 - Deploys backend-services and BFF to `telco-dev` namespace
 - Uses `infra/helm/environments/dev/` values files
 - Skips if Kubernetes credentials are missing (with warning)
 
 #### 2. Promote to Staging (`promote-stage`)
+
 - Depends on: `deploy-dev`
 - Deploys to `telco-staging` namespace
 - Uses `infra/helm/environments/staging/` values files
 
 #### 3. Stage Rollback Test (`stage-rollback-test`)
+
 - Depends on: `promote-stage`
 - Executes `scripts/stage-rollback-test.sh`
 - Validates rollback capability:
@@ -65,12 +68,14 @@ Location: `.github/workflows/cd-environment-promotion.yml`
   - Verifies namespace accessibility
 
 #### 4. Production Approval (`production-approval`)
+
 - Depends on: `stage-rollback-test`
 - Uses GitHub Environment protection
 - **Manual approval required** before production deployment
 - Environment: `production`
 
 #### 5. Deploy Production (`deploy-prod`)
+
 - Depends on: `production-approval`
 - Only executes after approval gate passes
 - Deploys to `telco-prod` namespace
@@ -110,11 +115,11 @@ Location: `scripts/stage-rollback-test.sh`
 
 ### Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Rollback test passed |
-| 1 | Rollback test failed |
-| 2 | Configuration error |
+| Code | Meaning              |
+| ---- | -------------------- |
+| 0    | Rollback test passed |
+| 1    | Rollback test failed |
+| 2    | Configuration error  |
 
 ### Running Manually
 
@@ -148,31 +153,31 @@ infra/helm/environments/
 
 ### Environment Differences
 
-| Setting | Dev | Staging | Production |
-|---------|-----|---------|------------|
-| Replica Count | 1 | 2 | 3 |
-| Auto-scaling | Disabled | Enabled (2-4) | Enabled (3-10) |
-| Image Tag | latest | staging | prod |
-| Resources | 512Mi | 1Gi | 2Gi |
-| Pod Disruption | None | None | Min 2 available |
-| Redis Cache | Memory | Redis | Redis (SSL) |
+| Setting        | Dev      | Staging       | Production      |
+| -------------- | -------- | ------------- | --------------- |
+| Replica Count  | 1        | 2             | 3               |
+| Auto-scaling   | Disabled | Enabled (2-4) | Enabled (3-10)  |
+| Image Tag      | latest   | staging       | prod            |
+| Resources      | 512Mi    | 1Gi           | 2Gi             |
+| Pod Disruption | None     | None          | Min 2 available |
+| Redis Cache    | Memory   | Redis         | Redis (SSL)     |
 
 ## Required Secrets and Variables
 
 ### GitHub Secrets
 
-| Secret | Description | Required For |
-|--------|-------------|--------------|
-| `KUBECONFIG_DEV` | Kubeconfig for dev cluster | deploy-dev |
-| `KUBECONFIG_STAGING` | Kubeconfig for staging cluster | promote-stage, stage-rollback-test |
-| `KUBECONFIG_PROD` | Kubeconfig for production cluster | deploy-prod |
+| Secret               | Description                       | Required For                       |
+| -------------------- | --------------------------------- | ---------------------------------- |
+| `KUBECONFIG_DEV`     | Kubeconfig for dev cluster        | deploy-dev                         |
+| `KUBECONFIG_STAGING` | Kubeconfig for staging cluster    | promote-stage, stage-rollback-test |
+| `KUBECONFIG_PROD`    | Kubeconfig for production cluster | deploy-prod                        |
 
 ### GitHub Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `HELM_VERSION` | Helm CLI version | 3.14.0 |
-| `KUBECTL_VERSION` | kubectl CLI version | 1.28.0 |
+| Variable          | Description         | Default |
+| ----------------- | ------------------- | ------- |
+| `HELM_VERSION`    | Helm CLI version    | 3.14.0  |
+| `KUBECTL_VERSION` | kubectl CLI version | 1.28.0  |
 
 ### Kubernetes Resources
 

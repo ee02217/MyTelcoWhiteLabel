@@ -213,7 +213,7 @@ jobs:
           echo "This step requires manual approval to proceed to production." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "To approve, use the GitHub UI or workflow_dispatch with approval." >> $GITHUB_STEP_SUMMARY
-          
+
           # Check if we're in an approved state
           # GitHub Environments with required reviewers handle this automatically
           # This step serves as documentation and explicit gate
