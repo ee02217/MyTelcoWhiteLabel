@@ -13,9 +13,18 @@
   "offlineSessionIdleTimeout": 2592000,
   "roles": {
     "realm": [
-      { "name": "CUSTOMER", "description": "Customer persona" },
-      { "name": "ADMIN", "description": "Administrator persona" },
-      { "name": "SUPPORT", "description": "Support persona" }
+      {
+        "name": "CUSTOMER",
+        "description": "Customer persona"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Administrator persona"
+      },
+      {
+        "name": "SUPPORT",
+        "description": "Support persona"
+      }
     ]
   },
   "clients": [
@@ -23,12 +32,15 @@
       "clientId": "web-portal",
       "enabled": true,
       "protocol": "openid-connect",
-      "publicClient": false,
+      "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
-      "redirectUris": ["http://localhost:5173/*"],
-      "webOrigins": ["http://localhost:5173"],
-      "defaultClientScopes": ["openid", "profile", "email", "roles"]
+      "redirectUris": ["http://localhost:5173/*", "http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:5173", "http://localhost:3000"],
+      "defaultClientScopes": ["openid", "profile", "email", "roles", "offline_access"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
     },
     {
       "clientId": "admin-portal",
@@ -94,7 +106,13 @@
       "emailVerified": true,
       "firstName": "Dev",
       "lastName": "Customer",
-      "credentials": [{ "type": "password", "value": "customer123", "temporary": false }],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "customer123",
+          "temporary": false
+        }
+      ],
       "realmRoles": ["CUSTOMER"]
     },
     {
@@ -104,7 +122,13 @@
       "emailVerified": true,
       "firstName": "Dev",
       "lastName": "Admin",
-      "credentials": [{ "type": "password", "value": "admin123", "temporary": false }],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
       "realmRoles": ["ADMIN"]
     },
     {
@@ -114,7 +138,13 @@
       "emailVerified": true,
       "firstName": "Dev",
       "lastName": "Support",
-      "credentials": [{ "type": "password", "value": "support123", "temporary": false }],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "support123",
+          "temporary": false
+        }
+      ],
       "realmRoles": ["SUPPORT"]
     }
   ]
