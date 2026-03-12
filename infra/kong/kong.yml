@@ -1,0 +1,309 @@
+# Kong Declarative Configuration for MyTelcoWhiteLabel
+# Version: 1.0.0
+#
+# This file defines Kong services, routes, and plugins for the
+# white-label, multi-operator Telco Self-Care Platform.
+#
+# Usage:
+#   - Kong DB-less mode: Set KONG_DECLARATIVE_CONFIG=/path/to/kong.yml
+#   - Kong with DB:     Use deck sync to push config
+#   - Validation:      deck validate -s kong.yml
+#
+# Environment Variables:
+#   - KONG_BFF_UPSTREAM:     Upstream URL for BFF service (default: http://bff:8080)
+#   - KONG_ADMIN_BFF_UPSTREAM: Upstream URL for Admin BFF (default: http://admin-bff:8080)
+#   - KONG_JWT_SECRET:       Secret for JWT validation (set in production)
+#   - KONG_RATE_LIMIT_COUNT: Requests per minute (default: 100)
+
+_format_version: '3.0'
+_transform: true
+
+# ============================================
+# UPSTREAMS
+# ============================================
+upstreams:
+  - name: bff-upstream
+    targets:
+      # TODO: Update targets for production cluster service names
+      # In Kubernetes: use cluster-internal service name
+      - target: bff:8080
+        weight: 100
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 5
+          successes: 2
+        unhealthy:
+          interval: 5
+          http_failures: 3
+
+  - name: admin-bff-upstream
+    targets:
+      # TODO: Update targets for production cluster service names
+      - target: admin-bff:8080
+        weight: 100
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 5
+          successes: 2
+        unhealthy:
+          interval: 5
+          http_failures: 3
+
+# ============================================
+# SERVICES
+# ============================================
+
+# ------------------------------------------
+# Customer BFF Service (Web + Mobile)
+# ------------------------------------------
+services:
+  - name: customer-bff
+    url: http://bff-upstream
+    routes:
+      - name: customer-api-v1
+        paths:
+          - /api/v1/customer
+        strip_path: false
+        preserve_host: false
+        plugins:
+          # JWT Authentication
+          - name: jwt
+            config:
+              key_claim_name: kid
+              claims_to_verify:
+                - exp
+              run_on_preflight: true
+          # Rate Limiting
+          - name: rate-limiting
+            config:
+              minute: 100
+              policy: local
+              fault_tolerant: true
+              hide_client_headers: false
+              limit_by: consumer
+              # Note: Override per-operator in annotations or consumer settings
+              # To customize: Add rate-limit annotations on Ingress or
+              # configure per Consumer in Kong
+          # CORS for web/mobile clients
+          - name: cors
+            config:
+              origins:
+                - '*'
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - PATCH
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Operator-ID
+                - X-Request-ID
+              exposed_headers:
+                - X-RateLimit-Remaining
+                - X-RateLimit-Reset
+              credentials: true
+              max_age: 3600
+              preflight_continue: false
+        # Web client path
+      - name: customer-web-v1
+        paths:
+          - /api/v1/web
+        strip_path: false
+        preserve_host: false
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: kid
+              claims_to_verify:
+                - exp
+              run_on_preflight: true
+          - name: rate-limiting
+            config:
+              minute: 100
+              policy: local
+              fault_tolerant: true
+              hide_client_headers: false
+              limit_by: consumer
+          - name: cors
+            config:
+              origins:
+                - '*'
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - PATCH
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Operator-ID
+                - X-Request-ID
+              exposed_headers:
+                - X-RateLimit-Remaining
+                - X-RateLimit-Reset
+              credentials: true
+              max_age: 3600
+              preflight_continue: false
+        # Mobile client path
+      - name: customer-mobile-v1
+        paths:
+          - /api/v1/mobile
+        strip_path: false
+        preserve_host: false
+        plugins:
+          - name: jwt
+            config:
+              key_claim_name: kid
+              claims_to_verify:
+                - exp
+              run_on_preflight: true
+          - name: rate-limiting
+            config:
+              minute: 100
+              policy: local
+              fault_tolerant: true
+              hide_client_headers: false
+              limit_by: consumer
+          - name: cors
+            config:
+              origins:
+                - '*'
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - PATCH
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Operator-ID
+                - X-Request-ID
+              exposed_headers:
+                - X-RateLimit-Remaining
+                - X-RateLimit-Reset
+              credentials: true
+              max_age: 3600
+              preflight_continue: false
+
+  # ------------------------------------------
+  # Admin BFF Service
+  # ------------------------------------------
+  - name: admin-bff
+    url: http://admin-bff-upstream
+    routes:
+      - name: admin-api-v1
+        paths:
+          - /api/v1/admin
+        strip_path: false
+        preserve_host: false
+        plugins:
+          # JWT Authentication with admin scope
+          - name: jwt
+            config:
+              key_claim_name: kid
+              claims_to_verify:
+                - exp
+              run_on_preflight: true
+          # Stricter rate limits for admin
+          - name: rate-limiting
+            config:
+              minute: 50
+              policy: local
+              fault_tolerant: true
+              hide_client_headers: false
+              limit_by: consumer
+          # CORS for admin portal
+          - name: cors
+            config:
+              origins:
+                # TODO: Restrict to admin portal URL in production
+                - '*'
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - PATCH
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Operator-ID
+                - X-Request-ID
+                - X-Admin-ID
+              exposed_headers:
+                - X-RateLimit-Remaining
+                - X-RateLimit-Reset
+              credentials: true
+              max_age: 3600
+              preflight_continue: false
+
+# ============================================
+# CONSUMERS (Reference for operator setup)
+# ============================================
+# Uncomment and configure for database-backed Kong
+#
+# consumers:
+#   - username: operator-telecom
+#     plugins:
+#       - name: rate-limiting
+#         config:
+#           minute: 200
+#           policy: local
+#   - username: operator-mobile
+#     plugins:
+#       - name: rate-limiting
+#         config:
+#           minute: 200
+#           policy: local
+
+# ============================================
+# PLUGINS (Global)
+# ============================================
+plugins:
+  - name: request-transformer
+    config:
+      add:
+        headers:
+          - X-Kong-Upstream-Latency:$(latency.request)
+          - X-Kong-Proxy-Latency:$(latency.proxy)
+  - name: response-transformer
+    config:
+      add:
+        headers:
+          - X-API-Version:1.0
+
+# ============================================
+# NOTES
+# ============================================
+#
+# Rate Limiting Override Strategy:
+# - Default: 100 req/min for customer APIs, 50 req/min for admin
+# - Per-operator override: Use Kong annotations on Kubernetes Ingress
+#   annotations:
+#     konghq.com/plugins: rate-limit-override
+# - Or configure per Consumer in database mode
+# - For Redis-backed rate limiting: Change policy to "redis" and configure
+#
+# JWT Configuration:
+# - Currently validates exp claim
+# - In production: Configure keycloak/jwt issuer in jwt plugin
+# - Add jwks_uri for key rotation
+#
+# Versioning:
+# - All routes use /api/v1/* prefix
+# - v1 is the current stable version
+# - See docs/development/api-versioning-policy.md
