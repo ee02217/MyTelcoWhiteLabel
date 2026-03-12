@@ -109,13 +109,15 @@ function App() {
       throw new Error('One or more API requests failed');
     }
 
-    const [overviewData, usageData, thresholdData, inboxData, billExplorerData] = await Promise.all([
-      overviewRes.json(),
-      usageRes.json(),
-      thresholdRes.json(),
-      inboxRes.json(),
-      billExplorerRes.json(),
-    ]);
+    const [overviewData, usageData, thresholdData, inboxData, billExplorerData] = await Promise.all(
+      [
+        overviewRes.json(),
+        usageRes.json(),
+        thresholdRes.json(),
+        inboxRes.json(),
+        billExplorerRes.json(),
+      ]
+    );
 
     setOverview(overviewData as AccountOverview);
     setUsage(usageData as UsageResponse);
