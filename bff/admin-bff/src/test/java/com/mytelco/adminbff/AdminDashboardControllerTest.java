@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.Instant;
 
@@ -31,6 +32,7 @@ class AdminDashboardControllerTest {
     private MeterRegistry meterRegistry;
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void getDashboard_shouldReturnAggregatedData() throws Exception {
         // Arrange
         var mockResponse = new com.mytelco.adminbff.model.AdminDashboardResponse(
@@ -51,6 +53,7 @@ class AdminDashboardControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "SUPPORT")
     void getDashboardByTenantId_shouldReturnDataForSpecificTenant() throws Exception {
         // Arrange
         var mockResponse = new com.mytelco.adminbff.model.AdminDashboardResponse(

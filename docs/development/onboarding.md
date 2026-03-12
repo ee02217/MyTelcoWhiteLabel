@@ -326,6 +326,7 @@ mvn -version
 ## Next Steps
 
 - Review the [GitHub Workflow Documentation](./github-workflow.md)
+- Review the [Keycloak Identity Development Guide](./keycloak-identity.md) before working on auth/OIDC features
 - Check the product backlog for assigned tasks
 - Join the team channel for questions
 
