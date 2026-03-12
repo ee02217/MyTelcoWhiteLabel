@@ -44,16 +44,16 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              memory: "384Mi"
-              cpu: "200m"
+              memory: '384Mi'
+              cpu: '200m'
             limits:
-              memory: "768Mi"
-              cpu: "400m"
+              memory: '768Mi'
+              cpu: '400m'
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: "kubernetes"
+              value: 'kubernetes'
             - name: BFF_BACKEND-SERVICES_BASE-URL
-              value: "http://backend-services:8080"
+              value: 'http://backend-services:8080'
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000

@@ -8,14 +8,14 @@ The platform uses containerization (Docker) and orchestration (Kubernetes) to en
 
 ## Service Coverage
 
-| Service | Type | Container | Port | Runtime | K8s Runtime |
-|---------|------|-----------|------|---------|-------------|
-| backend-services | Spring Boot | ✅ | 8080 | JVM | ✅ |
-| bff | Spring Boot | ✅ | 8081 | JVM | ✅ |
-| web-portal | React SPA | ✅ | 80 | nginx | ✅ |
-| admin-portal | React SPA | ✅ | 80 | nginx | ✅ |
-| integration-layer | TBD | ❌ | - | - | ❌ (deferred) |
-| mobile-app | React Native | N/A | - | client | ❌ |
+| Service           | Type         | Container | Port | Runtime | K8s Runtime   |
+| ----------------- | ------------ | --------- | ---- | ------- | ------------- |
+| backend-services  | Spring Boot  | ✅        | 8080 | JVM     | ✅            |
+| bff               | Spring Boot  | ✅        | 8081 | JVM     | ✅            |
+| web-portal        | React SPA    | ✅        | 80   | nginx   | ✅            |
+| admin-portal      | React SPA    | ✅        | 80   | nginx   | ✅            |
+| integration-layer | TBD          | ❌        | -    | -       | ❌ (deferred) |
+| mobile-app        | React Native | N/A       | -    | client  | ❌            |
 
 ### Mobile App Exclusion
 
@@ -28,6 +28,7 @@ The **mobile-app** is explicitly excluded from Kubernetes runtime because:
 ### Integration Layer Deferred
 
 The **integration-layer** (ESB/API Gateway) is deferred to a future issue because:
+
 - Not yet an executable service template
 - Requires architectural decisions on implementation (e.g., Kong, Apigee, custom)
 - Will be addressed in a follow-up feature issue
@@ -88,6 +89,7 @@ Uses Spring Boot Actuator for liveness and readiness probes:
 - **Readiness**: `/actuator/health/readiness` - Indicates if the service can handle requests
 
 Configuration (application.yml):
+
 ```yaml
 management:
   endpoint:
@@ -109,14 +111,15 @@ Uses simple HTTP health check on `/health`:
 
 ### Resource Requests and Limits
 
-| Service | Requests | Limits | Rationale |
-|---------|----------|--------|-----------|
-| backend-services | 512Mi, 250m | 1Gi, 500m | JVM heap + overhead for business logic |
-| bff | 384Mi, 200m | 768Mi, 400m | Lightweight BFF, proxies to backend |
-| web-portal | 64Mi, 50m | 128Mi, 100m | Static content, minimal memory |
-| admin-portal | 64Mi, 50m | 128Mi, 100m | Static content, minimal memory |
+| Service          | Requests    | Limits      | Rationale                              |
+| ---------------- | ----------- | ----------- | -------------------------------------- |
+| backend-services | 512Mi, 250m | 1Gi, 500m   | JVM heap + overhead for business logic |
+| bff              | 384Mi, 200m | 768Mi, 400m | Lightweight BFF, proxies to backend    |
+| web-portal       | 64Mi, 50m   | 128Mi, 100m | Static content, minimal memory         |
+| admin-portal     | 64Mi, 50m   | 128Mi, 100m | Static content, minimal memory         |
 
 **Rationale:**
+
 - Backend services have higher resource needs due to JVM overhead
 - BFF is lighter as it primarily proxies requests
 - Frontend services are nginx serving static files
