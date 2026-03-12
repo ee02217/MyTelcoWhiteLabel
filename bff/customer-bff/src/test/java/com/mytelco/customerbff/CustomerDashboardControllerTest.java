@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.Instant;
 
@@ -31,6 +32,7 @@ class CustomerDashboardControllerTest {
     private MeterRegistry meterRegistry;
 
     @Test
+    @WithMockUser(roles = "CUSTOMER")
     void getDashboard_shouldReturnAggregatedData() throws Exception {
         // Arrange
         var mockResponse = new com.mytelco.customerbff.model.CustomerDashboardResponse(
@@ -51,6 +53,7 @@ class CustomerDashboardControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "CUSTOMER")
     void getDashboardByCustomerId_shouldReturnDataForSpecificCustomer() throws Exception {
         // Arrange
         var mockResponse = new com.mytelco.customerbff.model.CustomerDashboardResponse(

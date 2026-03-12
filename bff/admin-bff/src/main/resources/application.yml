@@ -1,0 +1,43 @@
+# Admin BFF Configuration
+server:
+  port: 8082
+
+spring:
+  application:
+    name: admin-bff
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Configure via environment variables for local dev:
+          # export SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://localhost:8080/realms/mytelco-white-label
+          # export SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://localhost:8080/realms/mytelco-white-label/protocol/openid-connect/certs
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:8080/realms/mytelco-white-label}
+          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI:http://localhost:8080/realms/mytelco-white-label/protocol/openid-connect/certs}
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    enable:
+      all: true
+
+# OpenAPI/Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Logging
+logging:
+  level:
+    com.mytelco: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: DEBUG
