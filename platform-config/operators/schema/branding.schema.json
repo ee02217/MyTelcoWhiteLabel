@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mytelco.com/branding.schema.json",
+  "title": "Operator Branding Configuration",
+  "description": "Schema for operator branding configuration including logos, colors, typography, and semantic tokens",
+  "type": "object",
+  "required": ["operatorId", "name", "logo", "colors", "typography"],
+  "properties": {
+    "operatorId": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique identifier for the operator (kebab-case)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the operator"
+    },
+    "logo": {
+      "type": "object",
+      "required": ["light", "dark"],
+      "properties": {
+        "light": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to light mode logo"
+        },
+        "dark": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to dark mode logo"
+        },
+        "favicon": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to favicon"
+        }
+      }
+    },
+    "colors": {
+      "type": "object",
+      "required": ["primary", "secondary", "accent"],
+      "properties": {
+        "primary": {
+          "$ref": "#/definitions/colorPalette"
+        },
+        "secondary": {
+          "$ref": "#/definitions/colorPalette"
+        },
+        "accent": {
+          "$ref": "#/definitions/colorPalette"
+        },
+        "success": {
+          "$ref": "#/definitions/colorPalette"
+        },
+        "warning": {
+          "$ref": "#/definitions/colorPalette"
+        },
+        "error": {
+          "$ref": "#/definitions/colorPalette"
+        },
+        "neutral": {
+          "$ref": "#/definitions/colorPalette"
+        }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "required": ["fontFamily"],
+      "properties": {
+        "fontFamily": {
+          "type": "object",
+          "required": ["sans", "mono"],
+          "properties": {
+            "sans": {
+              "type": "string",
+              "description": "Primary font family"
+            },
+            "mono": {
+              "type": "string",
+              "description": "Monospace font family"
+            }
+          }
+        },
+        "headings": {
+          "type": "object",
+          "properties": {
+            "fontFamily": {
+              "type": "string"
+            },
+            "fontWeight": {
+              "type": "object",
+              "properties": {
+                "h1": { "type": "string" },
+                "h2": { "type": "string" },
+                "h3": { "type": "string" },
+                "h4": { "type": "string" },
+                "h5": { "type": "string" },
+                "h6": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "semanticTokens": {
+      "type": "object",
+      "description": "Mapping from semantic tokens to concrete color values",
+      "properties": {
+        "text": {
+          "type": "object",
+          "properties": {
+            "primary": { "type": "string" },
+            "secondary": { "type": "string" },
+            "disabled": { "type": "string" },
+            "inverse": { "type": "string" }
+          }
+        },
+        "background": {
+          "type": "object",
+          "properties": {
+            "primary": { "type": "string" },
+            "secondary": { "type": "string" },
+            "tertiary": { "type": "string" }
+          }
+        },
+        "border": {
+          "type": "object",
+          "properties": {
+            "default": { "type": "string" },
+            "focus": { "type": "string" }
+          }
+        }
+      }
+    },
+    "cssVariables": {
+      "type": "object",
+      "description": "Custom CSS variables to be applied",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the branding configuration"
+    },
+    "lastUpdated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of last update"
+    }
+  },
+  "definitions": {
+    "colorPalette": {
+      "type": "object",
+      "properties": {
+        "50": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "100": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "200": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "300": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "400": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "500": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "600": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "700": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "800": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "900": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+      }
+    }
+  },
+  "additionalProperties": false
+}
