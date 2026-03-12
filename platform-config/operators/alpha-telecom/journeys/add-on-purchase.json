@@ -1,0 +1,31 @@
+{
+  "operatorId": "alpha-telecom",
+  "journeyId": "add-on-purchase",
+  "version": 2,
+  "steps": [
+    {
+      "order": 1,
+      "id": "segment-check",
+      "type": "validation",
+      "condition": "subscriber.segment != 'BLOCKED'"
+    },
+    {
+      "order": 2,
+      "id": "offer-bundles",
+      "type": "selection",
+      "condition": "catalog.addOns.length > 0"
+    },
+    {
+      "order": 3,
+      "id": "wallet-charge",
+      "type": "payment",
+      "condition": "wallet.balance >= selectedAddOn.price"
+    },
+    {
+      "order": 4,
+      "id": "receipt",
+      "type": "confirmation",
+      "condition": "payment.status == 'SUCCESS'"
+    }
+  ]
+}

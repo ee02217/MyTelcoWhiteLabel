@@ -284,6 +284,18 @@ Shared design tokens live in `platform-config/design-system/`:
 
 Read `docs/development/design-system.md` for component usage conventions and run `node scripts/check-design-contrast.mjs` before opening PRs.
 
+### Operator Feature Flags & Journeys
+
+For white-label runtime toggles and journey flows, read:
+
+- `docs/development/feature-flags-and-journeys.md`
+
+Validate operator config before pushing:
+
+```bash
+node scripts/validate-feature-flags-config.mjs
+```
+
 ## Troubleshooting
 
 ### "No changed modules detected"

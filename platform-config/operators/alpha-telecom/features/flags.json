@@ -1,0 +1,28 @@
+{
+  "operatorId": "alpha-telecom",
+  "version": 3,
+  "updatedAt": "2026-03-12T00:00:00Z",
+  "channels": {
+    "web": {
+      "flags": {
+        "planChangeEnabled": true,
+        "addOnPurchaseEnabled": true,
+        "retentionBannerEnabled": true
+      }
+    },
+    "mobile": {
+      "flags": {
+        "planChangeEnabled": false,
+        "addOnPurchaseEnabled": true,
+        "retentionBannerEnabled": false
+      }
+    },
+    "admin": {
+      "flags": {
+        "planChangeEnabled": true,
+        "addOnPurchaseEnabled": true,
+        "retentionBannerEnabled": true
+      }
+    }
+  }
+}

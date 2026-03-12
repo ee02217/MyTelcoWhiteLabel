@@ -1,0 +1,25 @@
+{
+  "operatorId": "default",
+  "journeyId": "add-on-purchase",
+  "version": 1,
+  "steps": [
+    {
+      "order": 1,
+      "id": "eligibility-check",
+      "type": "validation",
+      "condition": "subscriber.segment in ['PREPAID','POSTPAID']"
+    },
+    {
+      "order": 2,
+      "id": "add-on-selection",
+      "type": "selection",
+      "condition": "catalog.addOns.length > 0"
+    },
+    {
+      "order": 3,
+      "id": "payment-and-confirmation",
+      "type": "payment",
+      "condition": "selectedAddOn != null"
+    }
+  ]
+}

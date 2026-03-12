@@ -1,0 +1,25 @@
+{
+  "operatorId": "default",
+  "journeyId": "plan-change",
+  "version": 1,
+  "steps": [
+    {
+      "order": 1,
+      "id": "eligibility-check",
+      "type": "validation",
+      "condition": "subscriber.status == 'ACTIVE'"
+    },
+    {
+      "order": 2,
+      "id": "plan-selection",
+      "type": "selection",
+      "condition": "availablePlans.length > 0"
+    },
+    {
+      "order": 3,
+      "id": "confirm-change",
+      "type": "confirmation",
+      "condition": "selectedPlan != null"
+    }
+  ]
+}
