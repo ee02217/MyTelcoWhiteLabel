@@ -16,6 +16,19 @@ type AccountOverview = {
   outstandingAmount: number;
 };
 
+type PaymentMethodResponse = {
+  paymentMethodId: string;
+  token: string;
+  status: string;
+};
+
+type CheckoutResponse = {
+  transactionId: string;
+  status: 'SUCCESS' | 'FAILED';
+  message: string;
+  idempotencyKey: string;
+};
+
 const fallbackOverview: AccountOverview = {
   plan: 'Unavailable (login required)',
   activeLineCount: 0,
@@ -28,10 +41,17 @@ function App() {
   const [status, setStatus] = useState('Idle');
   const [error, setError] = useState<string | null>(null);
 
-  const authedFetch = async (path: string) => {
+  const [paymentToken, setPaymentToken] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState('No payment attempt yet');
+
+  const authedFetch = async (path: string, init: RequestInit = {}) => {
     if (!session?.accessToken) throw new Error('Not authenticated');
     const res = await fetch(path, {
-      headers: { Authorization: `Bearer ${session.accessToken}` },
+      ...init,
+      headers: {
+        ...(init.headers || {}),
+        Authorization: `Bearer ${session.accessToken}`,
+      },
     });
     if (res.status === 401) {
       setStatus('401 from protected API');
@@ -54,6 +74,58 @@ function App() {
     } catch (err) {
       setOverview(fallbackOverview);
       setError(err instanceof Error ? err.message : 'Failed to load account overview');
+    }
+  };
+
+  const registerPaymentMethod = async () => {
+    setError(null);
+    try {
+      const response = await authedFetch('/api/v1/customer/payments/methods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cardHolder: 'Demo Customer',
+          cardLast4: '4242',
+          cardBrand: 'VISA',
+          expiry: '12/30',
+        }),
+      });
+      const payload = (await response.json()) as PaymentMethodResponse;
+      setPaymentToken(payload.token);
+      setPaymentStatus(`Payment method registered (${payload.status})`);
+    } catch (err) {
+      setPaymentStatus('Payment method registration failed');
+      setError(err instanceof Error ? err.message : 'Payment method registration failed');
+    }
+  };
+
+  const checkout = async (idempotencyKey: string, forceFailure = false) => {
+    if (!paymentToken) {
+      setPaymentStatus('Register payment method first');
+      return;
+    }
+    setError(null);
+    try {
+      const response = await authedFetch('/api/v1/customer/payments/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify({
+          paymentMethodToken: paymentToken,
+          amount: forceFailure ? 999.99 : 39.9,
+          currency: 'EUR',
+          billReference: forceFailure ? 'FAIL' : 'INV-35',
+        }),
+      });
+      const payload = (await response.json()) as CheckoutResponse;
+      setPaymentStatus(
+        `${payload.status}: ${payload.message} (tx=${payload.transactionId}, idem=${payload.idempotencyKey})`
+      );
+    } catch (err) {
+      setPaymentStatus('Checkout call failed');
+      setError(err instanceof Error ? err.message : 'Checkout failed');
     }
   };
 
@@ -89,7 +161,7 @@ function App() {
   return (
     <DesignSystemProvider>
       <div style={styles.container}>
-        <h1 style={styles.title}>MyTelco OIDC E2E Dashboard</h1>
+        <h1 style={styles.title}>MyTelco OIDC + Payment Dashboard</h1>
 
         <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
           <Typography variant="h4">Session</Typography>
@@ -135,6 +207,39 @@ function App() {
               <Typography variant="body">Outstanding: {formattedAmount}</Typography>
             </>
           )}
+        </Card>
+
+        <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+          <Typography variant="h4">Payment journey (Issue #35)</Typography>
+          <Typography variant="small" color="secondary">
+            {paymentStatus}
+          </Typography>
+          <div style={styles.row}>
+            <Button size="sm" onClick={() => registerPaymentMethod().catch(() => undefined)}>
+              Register payment method
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => checkout('web-idem-success-35').catch(() => undefined)}
+              disabled={!paymentToken}
+            >
+              Checkout success
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => checkout('web-idem-success-35').catch(() => undefined)}
+              disabled={!paymentToken}
+            >
+              Replay same idempotency key
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => checkout('web-idem-fail-35', true).catch(() => undefined)}
+              disabled={!paymentToken}
+            >
+              Checkout failure
+            </Button>
+          </div>
         </Card>
 
         {error && <p style={styles.warning}>{error}</p>}

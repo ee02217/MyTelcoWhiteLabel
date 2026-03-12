@@ -17,6 +17,13 @@ type TokenSet = {
 };
 
 type AccountOverview = { plan: string; activeLineCount: number; outstandingAmount: number };
+type PaymentMethodResponse = { paymentMethodId: string; token: string; status: string };
+type CheckoutResponse = {
+  transactionId: string;
+  status: 'SUCCESS' | 'FAILED';
+  message: string;
+  idempotencyKey: string;
+};
 
 const issuer = process.env.OIDC_ISSUER || 'http://localhost:8080/realms/mytelco-white-label';
 const clientId = process.env.OIDC_CLIENT_ID || 'mobile-app';
@@ -30,6 +37,8 @@ export default function App() {
   const [tokens, setTokens] = useState<TokenSet | null>(null);
   const [status, setStatus] = useState('Idle');
   const [overview, setOverview] = useState<AccountOverview | null>(null);
+  const [paymentToken, setPaymentToken] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState('No payment attempt yet');
 
   const discovery = useMemo(
     () => ({
@@ -109,6 +118,67 @@ export default function App() {
     setStatus('Protected API success (200)');
   };
 
+  const registerPaymentMethod = async () => {
+    if (!tokens?.accessToken) {
+      setPaymentStatus('Login required');
+      return;
+    }
+    const res = await fetch(`${apiBase}/api/v1/customer/payments/methods`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        cardHolder: 'Mobile Demo User',
+        cardLast4: '1111',
+        cardBrand: 'VISA',
+        expiry: '11/30',
+      }),
+    });
+    if (!res.ok) {
+      setPaymentStatus(`Payment method registration failed (${res.status})`);
+      return;
+    }
+    const payload = (await res.json()) as PaymentMethodResponse;
+    setPaymentToken(payload.token);
+    setPaymentStatus(`Payment method registered (${payload.status})`);
+  };
+
+  const checkout = async (idempotencyKey: string, forceFailure = false) => {
+    if (!tokens?.accessToken) {
+      setPaymentStatus('Login required');
+      return;
+    }
+    if (!paymentToken) {
+      setPaymentStatus('Register payment method first');
+      return;
+    }
+
+    const res = await fetch(`${apiBase}/api/v1/customer/payments/checkout`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify({
+        paymentMethodToken: paymentToken,
+        amount: forceFailure ? 999.99 : 15.5,
+        currency: 'EUR',
+        billReference: forceFailure ? 'FAIL' : 'INV-35-MOBILE',
+      }),
+    });
+
+    if (!res.ok) {
+      setPaymentStatus(`Checkout failed (${res.status})`);
+      return;
+    }
+
+    const payload = (await res.json()) as CheckoutResponse;
+    setPaymentStatus(`${payload.status}: ${payload.message} (${payload.transactionId})`);
+  };
+
   const refresh = async () => {
     if (!tokens?.refreshToken) {
       setStatus('No refresh token available');
@@ -139,6 +209,7 @@ export default function App() {
     await AsyncStorage.removeItem(TOKEN_KEY);
     setTokens(null);
     setOverview(null);
+    setPaymentToken(null);
     setStatus('Session cleared locally');
     await WebBrowser.openBrowserAsync(
       `${discovery.endSessionEndpoint}?client_id=${encodeURIComponent(clientId)}${idTokenHint}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`
@@ -149,7 +220,7 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Typography variant="h1" color="primary">
-          MyTelco Mobile OIDC
+          MyTelco Mobile OIDC + Payments
         </Typography>
 
         <Card padding="md" shadow="md" style={styles.card}>
@@ -181,6 +252,29 @@ export default function App() {
               </Typography>
             </>
           )}
+        </Card>
+
+        <Card padding="md" shadow="md" style={styles.card}>
+          <Typography variant="h4">Payment journey (Issue #35)</Typography>
+          <Typography variant="small" color="secondary">
+            {paymentStatus}
+          </Typography>
+          <Button title="Register payment method" onPress={registerPaymentMethod} />
+          <Button
+            title="Checkout success"
+            onPress={() => checkout('mobile-idem-success-35')}
+            style={styles.buttonSpacing}
+          />
+          <Button
+            title="Replay same idempotency key"
+            onPress={() => checkout('mobile-idem-success-35')}
+            style={styles.buttonSpacing}
+          />
+          <Button
+            title="Checkout failure"
+            onPress={() => checkout('mobile-idem-fail-35', true)}
+            style={styles.buttonSpacing}
+          />
         </Card>
 
         <StatusBar style="auto" />
