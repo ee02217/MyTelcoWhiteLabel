@@ -75,6 +75,12 @@ npm run lint:changed -- --base HEAD~5
 
 For integrated local stack validation, see [Local Docker integration environment](./local-docker-integration.md).
 
+For feature-specific references, see:
+
+- [Support Case Management](./support-case-management.md)
+- [Order Orchestration](./order-orchestration.md)
+- [SIM/eSIM + Roaming Basic](./sim-esim-roaming-basic.md)
+
 Once you've identified which module you need to work on:
 
 ```bash

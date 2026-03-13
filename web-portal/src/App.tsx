@@ -11,6 +11,7 @@ import {
 } from './auth-oidc';
 import { CatalogPanel } from './features/catalog/CatalogPanel';
 import { TroubleshootingPanel } from './features/troubleshooting/TroubleshootingPanel';
+import { SupportCasesPanel } from './features/support/SupportCasesPanel';
 
 type AccountOverview = {
   plan: string;
@@ -670,6 +671,8 @@ function App() {
         </Card>
 
         <TroubleshootingPanel authedFetch={authedFetch} />
+
+        <SupportCasesPanel authedFetch={authedFetch} />
 
         {error && <p style={styles.warning}>{error}</p>}
       </div>
