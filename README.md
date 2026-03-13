@@ -16,6 +16,7 @@ This is the main repository for the Telco Self-Care White-Label Platform, suppor
 - **[Payment History](./docs/development/payment-history.md)** - F-06.3 12-month history, receipt download/share, one-click retry
 - **[Order Orchestration](./docs/development/order-orchestration.md)** - F-07.2 state machine, idempotency, rollback and notifications
 - **[SIM/eSIM + Roaming Basic](./docs/development/sim-esim-roaming-basic.md)** - F-07.3 step-up SIM controls, eSIM QR/status lifecycle, roaming pack purchase
+- **[Support Case Management](./docs/development/support-case-management.md)** - F-08.2 support case creation, timeline, and SLA projection
 
 ## Module Structure
 
