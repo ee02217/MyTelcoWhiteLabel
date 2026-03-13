@@ -63,6 +63,20 @@ type AlertInboxItem = {
   createdAt: string;
 };
 
+type StepUpAction = 'SIM_BLOCK' | 'SIM_UNBLOCK';
+type StepUpChallengeResponse = { challengeId: string; maskedDestination: string };
+type StepUpVerifyResponse = { verificationToken: string };
+type SimActionResponse = {
+  previousStatus: 'ACTIVE' | 'BLOCKED';
+  currentStatus: 'ACTIVE' | 'BLOCKED';
+};
+type EsimActivationResponse = {
+  qrReference: string;
+  status: 'QR_GENERATED' | 'ACTIVATION_IN_PROGRESS' | 'ACTIVATED';
+};
+type RoamingPack = { packId: string; name: string };
+type RoamingPurchaseResponse = { packId: string; updatedAllowanceGb: number; validUntil: string };
+
 const issuer = process.env.OIDC_ISSUER || 'http://localhost:8080/realms/mytelco-white-label';
 const clientId = process.env.OIDC_CLIENT_ID || 'mobile-app';
 const scopes = (process.env.OIDC_SCOPES || 'openid profile email roles offline_access').split(' ');
@@ -82,6 +96,13 @@ export default function App() {
   const [order, setOrder] = useState<CustomerOrderResponse | null>(null);
   const [orderStatus, setOrderStatus] = useState('No order submitted yet');
   const [orderAlerts, setOrderAlerts] = useState<AlertInboxItem[]>([]);
+
+  const [simStatus, setSimStatus] = useState('SIM flow idle');
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [stepUpToken, setStepUpToken] = useState<string | null>(null);
+  const [esimStatus, setEsimStatus] = useState<EsimActivationResponse | null>(null);
+  const [roamingPacks, setRoamingPacks] = useState<RoamingPack[]>([]);
+  const [roamingStatus, setRoamingStatus] = useState('Roaming flow idle');
 
   const discovery = useMemo(
     () => ({
@@ -328,6 +349,72 @@ export default function App() {
     }
   };
 
+  const issueStepUpChallenge = async (action: StepUpAction) => {
+    const res = await authedFetch('/api/v1/customer/step-up/challenges', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lineId: 'line-mobile-1', action }),
+    });
+    const payload = (await res.json()) as StepUpChallengeResponse;
+    setChallengeId(payload.challengeId);
+    setSimStatus(`Challenge sent to ${payload.maskedDestination}`);
+  };
+
+  const verifyStepUp = async () => {
+    if (!challengeId) return;
+    const res = await authedFetch('/api/v1/customer/step-up/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challengeId, code: '123456' }),
+    });
+    const payload = (await res.json()) as StepUpVerifyResponse;
+    setStepUpToken(payload.verificationToken);
+    setSimStatus('Step-up verified');
+  };
+
+  const simAction = async (action: 'block' | 'unblock') => {
+    if (!stepUpToken) {
+      setSimStatus('Step-up verification required first');
+      return;
+    }
+    const res = await authedFetch(`/api/v1/customer/sim/line-mobile-1/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stepUpVerificationToken: stepUpToken, reason: 'self-service' }),
+    });
+    const payload = (await res.json()) as SimActionResponse;
+    setSimStatus(`SIM ${action} success (${payload.previousStatus} -> ${payload.currentStatus})`);
+  };
+
+  const activateEsim = async () => {
+    const res = await authedFetch('/api/v1/customer/esim/line-mobile-1/activate', {
+      method: 'POST',
+    });
+    setEsimStatus((await res.json()) as EsimActivationResponse);
+  };
+
+  const pollEsimStatus = async () => {
+    const res = await authedFetch('/api/v1/customer/esim/line-mobile-1/status');
+    setEsimStatus((await res.json()) as EsimActivationResponse);
+  };
+
+  const loadRoamingPacks = async () => {
+    const res = await authedFetch('/api/v1/customer/roaming/packs?country=pt&lineId=line-mobile-1');
+    setRoamingPacks((await res.json()) as RoamingPack[]);
+  };
+
+  const purchaseRoamingPack = async (packId: string) => {
+    const res = await authedFetch('/api/v1/customer/roaming/packs/purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lineId: 'line-mobile-1', country: 'pt', packId }),
+    });
+    const payload = (await res.json()) as RoamingPurchaseResponse;
+    setRoamingStatus(
+      `Purchased ${payload.packId}: ${payload.updatedAllowanceGb}GB until ${payload.validUntil}`
+    );
+  };
+
   const loadOrderAlerts = async () => {
     try {
       const res = await authedFetch('/api/v1/customer/alerts/inbox');
@@ -507,6 +594,55 @@ export default function App() {
             <Typography key={alert.id} variant="small" color="secondary">
               {new Date(alert.createdAt).toLocaleString()}: {alert.message}
             </Typography>
+          ))}
+        </Card>
+
+        <Card padding="md" shadow="md" style={styles.card}>
+          <Typography variant="h4">SIM/eSIM/Roaming (Issue #39)</Typography>
+          <Typography variant="small" color="secondary">
+            {simStatus}
+          </Typography>
+          <Button
+            title="Issue step-up challenge"
+            onPress={() => issueStepUpChallenge('SIM_BLOCK')}
+          />
+          <Button
+            title="Verify challenge (MVP code)"
+            onPress={verifyStepUp}
+            style={styles.buttonSpacing}
+          />
+          <Button
+            title="Block SIM"
+            onPress={() => simAction('block')}
+            style={styles.buttonSpacing}
+          />
+          <Button
+            title="Unblock SIM"
+            onPress={() => simAction('unblock')}
+            style={styles.buttonSpacing}
+          />
+          <Button title="Activate eSIM" onPress={activateEsim} style={styles.buttonSpacing} />
+          <Button title="Poll eSIM status" onPress={pollEsimStatus} style={styles.buttonSpacing} />
+          {esimStatus && (
+            <Typography variant="small" color="secondary">
+              eSIM {esimStatus.status} · QR ref {esimStatus.qrReference}
+            </Typography>
+          )}
+          <Typography variant="small" color="secondary">
+            {roamingStatus}
+          </Typography>
+          <Button
+            title="Load PT roaming packs"
+            onPress={loadRoamingPacks}
+            style={styles.buttonSpacing}
+          />
+          {roamingPacks.slice(0, 2).map((pack) => (
+            <Button
+              key={pack.packId}
+              title={`Buy ${pack.name}`}
+              onPress={() => purchaseRoamingPack(pack.packId)}
+              style={styles.buttonSpacing}
+            />
           ))}
         </Card>
 

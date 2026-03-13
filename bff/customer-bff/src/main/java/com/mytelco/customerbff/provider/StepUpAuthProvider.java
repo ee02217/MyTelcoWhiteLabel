@@ -1,0 +1,42 @@
+package com.mytelco.customerbff.provider;
+
+import com.mytelco.customerbff.model.StepUpAction;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Component
+public class StepUpAuthProvider {
+
+    private final Map<String, ChallengeState> challenges = new ConcurrentHashMap<>();
+    private final Map<String, VerificationState> verificationTokens = new ConcurrentHashMap<>();
+
+    public ChallengeState createChallenge(String lineId, StepUpAction action, Instant expiresAt, String expectedCode) {
+        String challengeId = "stp_" + UUID.randomUUID();
+        ChallengeState state = new ChallengeState(challengeId, lineId, action, expectedCode, expiresAt);
+        challenges.put(challengeId, state);
+        return state;
+    }
+
+    public ChallengeState getChallenge(String challengeId) {
+        return challenges.get(challengeId);
+    }
+
+    public VerificationState issueVerificationToken(String lineId, StepUpAction action, Instant expiresAt) {
+        String token = "stv_" + UUID.randomUUID();
+        VerificationState state = new VerificationState(token, lineId, action, expiresAt);
+        verificationTokens.put(token, state);
+        return state;
+    }
+
+    public VerificationState getVerificationToken(String token) {
+        return verificationTokens.get(token);
+    }
+
+    public record ChallengeState(String challengeId, String lineId, StepUpAction action, String expectedCode, Instant expiresAt) {}
+
+    public record VerificationState(String token, String lineId, StepUpAction action, Instant expiresAt) {}
+}

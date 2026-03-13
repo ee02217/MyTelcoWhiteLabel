@@ -71,6 +71,60 @@ type AlertInboxItem = {
   createdAt: string;
 };
 
+type StepUpAction = 'SIM_BLOCK' | 'SIM_UNBLOCK';
+
+type StepUpChallengeResponse = {
+  challengeId: string;
+  lineId: string;
+  action: StepUpAction;
+  expiresAt: string;
+  maskedDestination: string;
+  message: string;
+};
+
+type StepUpVerifyResponse = {
+  verificationToken: string;
+  expiresAt: string;
+  message: string;
+};
+
+type SimActionResponse = {
+  lineId: string;
+  previousStatus: 'ACTIVE' | 'BLOCKED';
+  currentStatus: 'ACTIVE' | 'BLOCKED';
+  changedAt: string;
+  message: string;
+};
+
+type EsimActivationResponse = {
+  lineId: string;
+  activationId: string;
+  qrPayload: string;
+  qrReference: string;
+  status: 'QR_GENERATED' | 'ACTIVATION_IN_PROGRESS' | 'ACTIVATED';
+  updatedAt: string;
+};
+
+type RoamingPack = {
+  packId: string;
+  country: string;
+  name: string;
+  allowanceGb: number;
+  validityDays: number;
+  price: number;
+  currency: string;
+};
+
+type RoamingPurchaseResponse = {
+  lineId: string;
+  country: string;
+  packId: string;
+  updatedAllowanceGb: number;
+  validFrom: string;
+  validUntil: string;
+  status: string;
+};
+
 const fallbackOverview: AccountOverview = {
   plan: 'Unavailable (login required)',
   activeLineCount: 0,
@@ -92,6 +146,15 @@ function App() {
   const [order, setOrder] = useState<CustomerOrderResponse | null>(null);
   const [orderStatus, setOrderStatus] = useState('No order submitted yet');
   const [orderAlerts, setOrderAlerts] = useState<AlertInboxItem[]>([]);
+
+  const [simStatus, setSimStatus] = useState('SIM flow idle');
+  const [stepUpChallengeId, setStepUpChallengeId] = useState<string | null>(null);
+  const [stepUpToken, setStepUpToken] = useState<string | null>(null);
+
+  const [esimStatus, setEsimStatus] = useState<EsimActivationResponse | null>(null);
+
+  const [roamingPacks, setRoamingPacks] = useState<RoamingPack[]>([]);
+  const [roamingStatus, setRoamingStatus] = useState('Roaming flow idle');
 
   const authedFetch = async (path: string, init: RequestInit = {}) => {
     if (!session?.accessToken) throw new Error('Not authenticated');
@@ -266,6 +329,77 @@ function App() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to refresh order');
     }
+  };
+
+  const issueStepUpChallenge = async (action: StepUpAction) => {
+    const response = await authedFetch('/api/v1/customer/step-up/challenges', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lineId: 'line-web-1', action }),
+    });
+    const payload = (await response.json()) as StepUpChallengeResponse;
+    setStepUpChallengeId(payload.challengeId);
+    setSimStatus(`Challenge sent to ${payload.maskedDestination}`);
+  };
+
+  const verifyStepUp = async () => {
+    if (!stepUpChallengeId) return;
+    const response = await authedFetch('/api/v1/customer/step-up/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challengeId: stepUpChallengeId, code: '123456' }),
+    });
+    const payload = (await response.json()) as StepUpVerifyResponse;
+    setStepUpToken(payload.verificationToken);
+    setSimStatus('Step-up token verified');
+  };
+
+  const simAction = async (action: 'block' | 'unblock') => {
+    if (!stepUpToken) {
+      setSimStatus('Step-up verification required first');
+      return;
+    }
+    const response = await authedFetch(`/api/v1/customer/sim/line-web-1/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        stepUpVerificationToken: stepUpToken,
+        reason: 'self-service request',
+      }),
+    });
+    const payload = (await response.json()) as SimActionResponse;
+    setSimStatus(`SIM ${action} success (${payload.previousStatus} -> ${payload.currentStatus})`);
+  };
+
+  const activateEsim = async () => {
+    const response = await authedFetch('/api/v1/customer/esim/line-web-1/activate', {
+      method: 'POST',
+    });
+    setEsimStatus((await response.json()) as EsimActivationResponse);
+  };
+
+  const pollEsim = async () => {
+    const response = await authedFetch('/api/v1/customer/esim/line-web-1/status');
+    setEsimStatus((await response.json()) as EsimActivationResponse);
+  };
+
+  const loadRoamingPacks = async () => {
+    const response = await authedFetch(
+      '/api/v1/customer/roaming/packs?country=pt&lineId=line-web-1'
+    );
+    setRoamingPacks((await response.json()) as RoamingPack[]);
+  };
+
+  const purchaseRoamingPack = async (packId: string) => {
+    const response = await authedFetch('/api/v1/customer/roaming/packs/purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lineId: 'line-web-1', country: 'pt', packId }),
+    });
+    const payload = (await response.json()) as RoamingPurchaseResponse;
+    setRoamingStatus(
+      `Purchased ${payload.packId}: ${payload.updatedAllowanceGb}GB until ${payload.validUntil}`
+    );
   };
 
   const loadOrderAlerts = async () => {
@@ -462,6 +596,76 @@ function App() {
               {new Date(alert.createdAt).toLocaleString()}: {alert.message}
             </Typography>
           ))}
+        </Card>
+
+        <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+          <Typography variant="h4">SIM/eSIM/Roaming (Issue #39)</Typography>
+          <Typography variant="small" color="secondary">
+            {simStatus}
+          </Typography>
+          <div style={styles.row}>
+            <Button
+              size="sm"
+              onClick={() => issueStepUpChallenge('SIM_BLOCK').catch(() => undefined)}
+            >
+              Issue step-up challenge
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => verifyStepUp().catch(() => undefined)}
+              disabled={!stepUpChallengeId}
+            >
+              Verify challenge (MVP code)
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => simAction('block').catch(() => undefined)}
+              disabled={!stepUpToken}
+            >
+              Block SIM
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => simAction('unblock').catch(() => undefined)}
+              disabled={!stepUpToken}
+            >
+              Unblock SIM
+            </Button>
+          </div>
+          <div style={styles.row}>
+            <Button size="sm" onClick={() => activateEsim().catch(() => undefined)}>
+              Activate eSIM
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => pollEsim().catch(() => undefined)}
+              disabled={!esimStatus}
+            >
+              Poll eSIM status
+            </Button>
+          </div>
+          {esimStatus && (
+            <Typography variant="small" color="secondary" style={{ marginTop: 8 }}>
+              eSIM {esimStatus.status} · QR ref {esimStatus.qrReference}
+            </Typography>
+          )}
+          <Typography variant="small" color="secondary" style={{ marginTop: 8 }}>
+            {roamingStatus}
+          </Typography>
+          <div style={styles.row}>
+            <Button size="sm" onClick={() => loadRoamingPacks().catch(() => undefined)}>
+              Load PT roaming packs
+            </Button>
+            {roamingPacks.slice(0, 2).map((pack) => (
+              <Button
+                key={pack.packId}
+                size="sm"
+                onClick={() => purchaseRoamingPack(pack.packId).catch(() => undefined)}
+              >
+                Buy {pack.name}
+              </Button>
+            ))}
+          </div>
         </Card>
 
         {error && <p style={styles.warning}>{error}</p>}
