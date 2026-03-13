@@ -10,6 +10,7 @@ import { Button, Card, Typography } from './src/design-system';
 import { CatalogPanel } from './src/features/catalog/CatalogPanel';
 import { TroubleshootingPanel } from './src/features/troubleshooting/TroubleshootingPanel';
 import { SupportCasesPanel } from './src/features/support/SupportCasesPanel';
+import { NotificationCenterPanel } from './src/features/notifications/NotificationCenterPanel';
 import { rnTokens } from '../platform-config/design-system/tokens';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -646,6 +647,10 @@ export default function App() {
               style={styles.buttonSpacing}
             />
           ))}
+        </Card>
+
+        <Card padding="md" shadow="md" style={styles.card}>
+          <NotificationCenterPanel authedFetch={authedFetch} />
         </Card>
 
         <Card padding="md" shadow="md" style={styles.card}>

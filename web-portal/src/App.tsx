@@ -12,6 +12,7 @@ import {
 import { CatalogPanel } from './features/catalog/CatalogPanel';
 import { TroubleshootingPanel } from './features/troubleshooting/TroubleshootingPanel';
 import { SupportCasesPanel } from './features/support/SupportCasesPanel';
+import { NotificationCenterPanel } from './features/notifications/NotificationCenterPanel';
 
 type AccountOverview = {
   plan: string;
@@ -669,6 +670,8 @@ function App() {
             ))}
           </div>
         </Card>
+
+        <NotificationCenterPanel authedFetch={authedFetch} />
 
         <TroubleshootingPanel authedFetch={authedFetch} />
 
