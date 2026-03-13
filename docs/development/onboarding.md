@@ -246,6 +246,8 @@ Customer dashboard endpoints:
 
 - `http://localhost:8081/api/v1/customer/dashboard`
 - `http://localhost:8081/api/v1/customer/account-overview` (F-05.1 Account Dashboard)
+- `http://localhost:8081/api/v1/customer/orders` (F-07.2 Order orchestration create/list)
+- `http://localhost:8081/api/v1/customer/orders/{orderId}` (F-07.2 Order state retrieval)
 
 See [account-dashboard-performance.md](./account-dashboard-performance.md) for the p95 < 2.5s objective and measurement approach.
 
@@ -304,6 +306,8 @@ For payment journey implementation and API contract (F-06.2), read `docs/develop
 For payment history implementation and API contract (F-06.3), read `docs/development/payment-history.md`.
 
 For plan/add-on catalog implementation and confirmation flow (F-07.1), read `docs/development/plan-addon-catalog.md`.
+
+For order orchestration implementation and API contract (F-07.2), read `docs/development/order-orchestration.md`.
 
 ### Operator Feature Flags & Journeys
 

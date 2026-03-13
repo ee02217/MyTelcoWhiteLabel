@@ -52,6 +52,25 @@ type PaymentRetryResponse = {
   idempotencyKey: string;
 };
 
+type CustomerOrderResponse = {
+  orderId: string;
+  lineId: string;
+  itemType: string;
+  itemCode: string;
+  idempotencyKey: string;
+  state: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  rollbackApplied: boolean;
+  notificationMessage: string;
+};
+
+type AlertInboxItem = {
+  id: string;
+  service: string;
+  lineId: string;
+  message: string;
+  createdAt: string;
+};
+
 const fallbackOverview: AccountOverview = {
   plan: 'Unavailable (login required)',
   activeLineCount: 0,
@@ -69,6 +88,10 @@ function App() {
 
   const [history, setHistory] = useState<PaymentHistoryItem[]>([]);
   const [historyStatus, setHistoryStatus] = useState('History not loaded yet');
+
+  const [order, setOrder] = useState<CustomerOrderResponse | null>(null);
+  const [orderStatus, setOrderStatus] = useState('No order submitted yet');
+  const [orderAlerts, setOrderAlerts] = useState<AlertInboxItem[]>([]);
 
   const authedFetch = async (path: string, init: RequestInit = {}) => {
     if (!session?.accessToken) throw new Error('Not authenticated');
@@ -202,6 +225,59 @@ function App() {
     }
   };
 
+  const submitOrder = async (simulateFailure = false) => {
+    setError(null);
+    try {
+      const idempotencyKey = simulateFailure ? 'web-order-fail-38' : 'web-order-success-38';
+      const response = await authedFetch('/api/v1/customer/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify({
+          lineId: 'line-web-1',
+          itemType: 'ADDON',
+          itemCode: simulateFailure ? 'FAIL' : 'ADDON-5G',
+          simulateFailure,
+        }),
+      });
+      const payload = (await response.json()) as CustomerOrderResponse;
+      setOrder(payload);
+      setOrderStatus(`Order ${payload.orderId} is ${payload.state}`);
+      await loadOrderAlerts();
+    } catch (err) {
+      setOrderStatus('Order submission failed');
+      setError(err instanceof Error ? err.message : 'Order submission failed');
+    }
+  };
+
+  const refreshOrderStatus = async () => {
+    if (!order?.orderId) {
+      setOrderStatus('Submit an order first');
+      return;
+    }
+    setError(null);
+    try {
+      const response = await authedFetch(`/api/v1/customer/orders/${order.orderId}`);
+      const payload = (await response.json()) as CustomerOrderResponse;
+      setOrder(payload);
+      setOrderStatus(`Order ${payload.orderId} is ${payload.state}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to refresh order');
+    }
+  };
+
+  const loadOrderAlerts = async () => {
+    try {
+      const response = await authedFetch('/api/v1/customer/alerts/inbox');
+      const payload = (await response.json()) as AlertInboxItem[];
+      setOrderAlerts(payload.filter((item) => item.service === 'ORDER'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load order alerts');
+    }
+  };
+
   useEffect(() => {
     completeLoginIfCallback()
       .then((newSession) => {
@@ -217,9 +293,11 @@ function App() {
     if (session) {
       loadOverview().catch(() => undefined);
       loadPaymentHistory().catch(() => undefined);
+      loadOrderAlerts().catch(() => undefined);
     } else {
       setOverview(null);
       setHistory([]);
+      setOrderAlerts([]);
     }
   }, [session]);
 
@@ -354,6 +432,35 @@ function App() {
                 )}
               </div>
             </div>
+          ))}
+        </Card>
+
+        <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+          <Typography variant="h4">Order orchestration (Issue #38)</Typography>
+          <Typography variant="small" color="secondary">
+            {orderStatus}
+          </Typography>
+          <div style={styles.row}>
+            <Button size="sm" onClick={() => submitOrder(false).catch(() => undefined)}>
+              Submit sample add-on order
+            </Button>
+            <Button size="sm" onClick={() => submitOrder(true).catch(() => undefined)}>
+              Submit failing order (rollback)
+            </Button>
+            <Button size="sm" onClick={() => refreshOrderStatus().catch(() => undefined)}>
+              Refresh order state
+            </Button>
+          </div>
+          {order && (
+            <Typography variant="body" style={{ marginTop: 8 }}>
+              {order.orderId} · {order.itemCode} · {order.state} · rollbackApplied=
+              {String(order.rollbackApplied)}
+            </Typography>
+          )}
+          {orderAlerts.slice(0, 3).map((alert) => (
+            <Typography key={alert.id} variant="small" color="secondary" style={{ marginTop: 8 }}>
+              {new Date(alert.createdAt).toLocaleString()}: {alert.message}
+            </Typography>
           ))}
         </Card>
 

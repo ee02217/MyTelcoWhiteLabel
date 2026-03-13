@@ -44,6 +44,25 @@ type PaymentRetryResponse = {
   idempotencyKey: string;
 };
 
+type CustomerOrderResponse = {
+  orderId: string;
+  lineId: string;
+  itemType: string;
+  itemCode: string;
+  idempotencyKey: string;
+  state: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  rollbackApplied: boolean;
+  notificationMessage: string;
+};
+
+type AlertInboxItem = {
+  id: string;
+  service: string;
+  lineId: string;
+  message: string;
+  createdAt: string;
+};
+
 const issuer = process.env.OIDC_ISSUER || 'http://localhost:8080/realms/mytelco-white-label';
 const clientId = process.env.OIDC_CLIENT_ID || 'mobile-app';
 const scopes = (process.env.OIDC_SCOPES || 'openid profile email roles offline_access').split(' ');
@@ -60,6 +79,9 @@ export default function App() {
   const [paymentStatus, setPaymentStatus] = useState('No payment attempt yet');
   const [history, setHistory] = useState<PaymentHistoryItem[]>([]);
   const [historyStatus, setHistoryStatus] = useState('History not loaded yet');
+  const [order, setOrder] = useState<CustomerOrderResponse | null>(null);
+  const [orderStatus, setOrderStatus] = useState('No order submitted yet');
+  const [orderAlerts, setOrderAlerts] = useState<AlertInboxItem[]>([]);
 
   const discovery = useMemo(
     () => ({
@@ -266,11 +288,63 @@ export default function App() {
     }
   };
 
+  const submitOrder = async (simulateFailure = false) => {
+    try {
+      const idempotencyKey = simulateFailure ? 'mobile-order-fail-38' : 'mobile-order-success-38';
+      const res = await authedFetch('/api/v1/customer/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify({
+          lineId: 'line-mobile-1',
+          itemType: 'PLAN',
+          itemCode: simulateFailure ? 'FAIL' : 'PLAN-L',
+          simulateFailure,
+        }),
+      });
+      const payload = (await res.json()) as CustomerOrderResponse;
+      setOrder(payload);
+      setOrderStatus(`Order ${payload.orderId} is ${payload.state}`);
+      await loadOrderAlerts();
+    } catch (err) {
+      setOrderStatus(err instanceof Error ? err.message : 'Order submission failed');
+    }
+  };
+
+  const refreshOrder = async () => {
+    if (!order?.orderId) {
+      setOrderStatus('Submit an order first');
+      return;
+    }
+    try {
+      const res = await authedFetch(`/api/v1/customer/orders/${order.orderId}`);
+      const payload = (await res.json()) as CustomerOrderResponse;
+      setOrder(payload);
+      setOrderStatus(`Order ${payload.orderId} is ${payload.state}`);
+    } catch (err) {
+      setOrderStatus(err instanceof Error ? err.message : 'Order refresh failed');
+    }
+  };
+
+  const loadOrderAlerts = async () => {
+    try {
+      const res = await authedFetch('/api/v1/customer/alerts/inbox');
+      const payload = (await res.json()) as AlertInboxItem[];
+      setOrderAlerts(payload.filter((item) => item.service === 'ORDER'));
+    } catch (err) {
+      setOrderStatus(err instanceof Error ? err.message : 'Failed to load order alerts');
+    }
+  };
+
   useEffect(() => {
     if (tokens?.accessToken) {
       loadPaymentHistory().catch(() => undefined);
+      loadOrderAlerts().catch(() => undefined);
     } else {
       setHistory([]);
+      setOrderAlerts([]);
     }
   }, [tokens?.accessToken]);
 
@@ -404,6 +478,35 @@ export default function App() {
                 />
               )}
             </Card>
+          ))}
+        </Card>
+
+        <Card padding="md" shadow="md" style={styles.card}>
+          <Typography variant="h4">Order orchestration (Issue #38)</Typography>
+          <Typography variant="small" color="secondary">
+            {orderStatus}
+          </Typography>
+          <Button title="Submit sample plan order" onPress={() => submitOrder(false)} />
+          <Button
+            title="Submit failing order (rollback)"
+            onPress={() => submitOrder(true)}
+            style={styles.buttonSpacing}
+          />
+          <Button
+            title="Refresh order state"
+            onPress={() => refreshOrder()}
+            style={styles.buttonSpacing}
+          />
+          {order && (
+            <Typography variant="small" color="secondary">
+              {order.orderId} · {order.itemCode} · {order.state} · rollbackApplied=
+              {String(order.rollbackApplied)}
+            </Typography>
+          )}
+          {orderAlerts.slice(0, 3).map((alert) => (
+            <Typography key={alert.id} variant="small" color="secondary">
+              {new Date(alert.createdAt).toLocaleString()}: {alert.message}
+            </Typography>
           ))}
         </Card>
 
