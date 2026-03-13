@@ -1,0 +1,41 @@
+openapi: 3.0.3
+info:
+  title: TMF Account Facade (MVP)
+  version: 0.1.0
+paths:
+  /api/v1/customer/tmf/account/{id}:
+    get:
+      summary: Retrieve a TMF-compatible Account
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Account found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+components:
+  schemas:
+    Account:
+      type: object
+      required: [id, href, name, status, relatedParty]
+      properties:
+        id: { type: string, example: acc-123 }
+        href: { type: string, example: /tmf-api/accountManagement/v4/account/acc-123 }
+        name: { type: string, example: Premium Unlimited }
+        status: { type: string, example: ACTIVE }
+        relatedParty:
+          $ref: '#/components/schemas/RelatedParty'
+        '@type': { type: string, example: Account }
+    RelatedParty:
+      type: object
+      required: [id, role, name]
+      properties:
+        id: { type: string, example: '351910000000' }
+        role: { type: string, example: customer }
+        name: { type: string, example: '351910000000' }
+        '@referredType': { type: string, example: Individual }

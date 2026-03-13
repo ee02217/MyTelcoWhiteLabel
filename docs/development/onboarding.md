@@ -317,6 +317,15 @@ For order orchestration implementation and API contract (F-07.2), read `docs/dev
 
 For guided troubleshooting flows, session APIs, and analytics outcomes (F-08.1), read `docs/development/guided-troubleshooting.md`.
 
+For TMF-compatible facade scope, mappings, and contracts (F-09.1), read `docs/development/tmf-facade.md`.
+
+TMF OpenAPI specs are available under `docs/apis/`:
+
+- `docs/apis/tmf-catalog.openapi.yaml`
+- `docs/apis/tmf-order.openapi.yaml`
+- `docs/apis/tmf-account.openapi.yaml`
+- `docs/apis/tmf-billing.openapi.yaml`
+
 ### Operator Feature Flags & Journeys
 
 For white-label runtime toggles and journey flows, read:
