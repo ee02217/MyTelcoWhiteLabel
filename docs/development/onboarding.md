@@ -309,6 +309,8 @@ For plan/add-on catalog implementation and confirmation flow (F-07.1), read `doc
 
 For order orchestration implementation and API contract (F-07.2), read `docs/development/order-orchestration.md`.
 
+For guided troubleshooting flows, session APIs, and analytics outcomes (F-08.1), read `docs/development/guided-troubleshooting.md`.
+
 ### Operator Feature Flags & Journeys
 
 For white-label runtime toggles and journey flows, read:

@@ -10,6 +10,7 @@ import {
   type OidcSession,
 } from './auth-oidc';
 import { CatalogPanel } from './features/catalog/CatalogPanel';
+import { TroubleshootingPanel } from './features/troubleshooting/TroubleshootingPanel';
 
 type AccountOverview = {
   plan: string;
@@ -667,6 +668,8 @@ function App() {
             ))}
           </div>
         </Card>
+
+        <TroubleshootingPanel authedFetch={authedFetch} />
 
         {error && <p style={styles.warning}>{error}</p>}
       </div>
