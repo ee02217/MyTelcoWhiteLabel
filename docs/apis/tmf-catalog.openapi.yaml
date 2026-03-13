@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: TMF Catalog Facade (MVP)
+  version: 0.1.0
+paths:
+  /api/v1/customer/tmf/productOffering/{id}:
+    get:
+      summary: Retrieve a TMF-compatible ProductOffering
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: lineId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: operatorId
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: ProductOffering found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductOffering'
+        '404':
+          description: ProductOffering not found
+components:
+  schemas:
+    ProductOffering:
+      type: object
+      required: [id, href, name, lifecycleStatus, price]
+      properties:
+        id: { type: string, example: plan-premium-unlimited }
+        href:
+          {
+            type: string,
+            example: /tmf-api/productCatalogManagement/v4/productOffering/plan-premium-unlimited,
+          }
+        name: { type: string, example: Premium Unlimited 5G }
+        description: { type: string, example: 24-month commitment }
+        lifecycleStatus: { type: string, example: active }
+        price:
+          type: array
+          items:
+            $ref: '#/components/schemas/Money'
+        '@type': { type: string, example: ProductOffering }
+    Money:
+      type: object
+      required: [taxIncludedAmount, unit]
+      properties:
+        taxIncludedAmount: { type: number, format: double, example: 29.99 }
+        unit: { type: string, example: EUR }

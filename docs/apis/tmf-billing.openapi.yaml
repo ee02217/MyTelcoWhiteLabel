@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: TMF Billing Facade (MVP)
+  version: 0.1.0
+paths:
+  /api/v1/customer/tmf/bill/{id}:
+    get:
+      summary: Retrieve a TMF-compatible Bill summary
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: customerId
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Bill found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+components:
+  schemas:
+    Bill:
+      type: object
+      required: [id, href, state, amountDue, paymentDueDate]
+      properties:
+        id: { type: string, example: bill-2026-03 }
+        href: { type: string, example: /tmf-api/billingManagement/v4/bill/bill-2026-03 }
+        state: { type: string, example: issued }
+        amountDue:
+          $ref: '#/components/schemas/Money'
+        paymentDueDate: { type: string, format: date, example: '2026-03-20' }
+        '@type': { type: string, example: Bill }
+    Money:
+      type: object
+      required: [taxIncludedAmount, unit]
+      properties:
+        taxIncludedAmount: { type: number, format: double, example: 13.2 }
+        unit: { type: string, example: EUR }

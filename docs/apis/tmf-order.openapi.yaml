@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: TMF Order Facade (MVP)
+  version: 0.1.0
+paths:
+  /api/v1/customer/tmf/productOrder:
+    post:
+      summary: Create a TMF-compatible ProductOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductOrderCreateRequest'
+      responses:
+        '200':
+          description: ProductOrder accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductOrder'
+  /api/v1/customer/tmf/productOrder/{id}:
+    get:
+      summary: Retrieve ProductOrder by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: ProductOrder found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductOrder'
+        '404':
+          description: ProductOrder not found
+components:
+  schemas:
+    ProductOrderCreateRequest:
+      type: object
+      required: [externalId, lineId, productOfferingId]
+      properties:
+        externalId: { type: string, example: ext-1 }
+        lineId: { type: string, example: line-22 }
+        itemType: { type: string, example: add }
+        productOfferingId: { type: string, example: plan-premium-unlimited }
+        simulateFailure: { type: boolean, example: false }
+    ProductOrder:
+      type: object
+      required: [id, href, state, productOrderItem]
+      properties:
+        id: { type: string, example: ord_abc123 }
+        href:
+          { type: string, example: /tmf-api/productOrderingManagement/v4/productOrder/ord_abc123 }
+        externalId: { type: string, example: ext-1 }
+        state: { type: string, example: COMPLETED }
+        productOrderItem:
+          $ref: '#/components/schemas/ProductOrderItem'
+        '@type': { type: string, example: ProductOrder }
+    ProductOrderItem:
+      type: object
+      required: [id, action, state, product]
+      properties:
+        id: { type: string, example: '1' }
+        action: { type: string, example: add }
+        state: { type: string, example: COMPLETED }
+        product:
+          $ref: '#/components/schemas/ProductRef'
+    ProductRef:
+      type: object
+      required: [id, href, name]
+      properties:
+        id: { type: string, example: plan-premium-unlimited }
+        href:
+          {
+            type: string,
+            example: /tmf-api/productCatalogManagement/v4/productOffering/plan-premium-unlimited,
+          }
+        name: { type: string, example: plan-premium-unlimited }
+        '@referredType': { type: string, example: ProductOffering }
