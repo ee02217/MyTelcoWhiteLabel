@@ -9,6 +9,7 @@ import {
   refreshSession,
   type OidcSession,
 } from './auth-oidc';
+import { CatalogPanel } from './features/catalog/CatalogPanel';
 
 type AccountOverview = {
   plan: string;
@@ -315,6 +316,8 @@ function App() {
             </Button>
           </div>
         </Card>
+
+        <CatalogPanel authedFetch={authedFetch} />
 
         <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
           <Typography variant="h4">Payment history (Issue #36)</Typography>

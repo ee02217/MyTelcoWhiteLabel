@@ -303,6 +303,8 @@ For payment journey implementation and API contract (F-06.2), read `docs/develop
 
 For payment history implementation and API contract (F-06.3), read `docs/development/payment-history.md`.
 
+For plan/add-on catalog implementation and confirmation flow (F-07.1), read `docs/development/plan-addon-catalog.md`.
+
 ### Operator Feature Flags & Journeys
 
 For white-label runtime toggles and journey flows, read:

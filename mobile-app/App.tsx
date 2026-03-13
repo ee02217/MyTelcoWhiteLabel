@@ -7,6 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 import { Button, Card, Typography } from './src/design-system';
+import { CatalogPanel } from './src/features/catalog/CatalogPanel';
 import { rnTokens } from '../platform-config/design-system/tokens';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -231,7 +232,10 @@ export default function App() {
         setHistoryStatus('Login required');
         return;
       }
-      const fileUri = `${FileSystem.cacheDirectory}receipt-${paymentId}.pdf`;
+      const cacheDir =
+        (FileSystem as any).cacheDirectory ??
+        `${(FileSystem as any).Paths?.cache?.uri || 'file:///tmp/'}`;
+      const fileUri = `${cacheDir}receipt-${paymentId}.pdf`;
       await FileSystem.downloadAsync(
         `${apiBase}/api/v1/customer/payments/receipt/${paymentId}/download`,
         fileUri,
@@ -367,6 +371,10 @@ export default function App() {
             onPress={() => checkout('mobile-idem-fail-35', true)}
             style={styles.buttonSpacing}
           />
+        </Card>
+
+        <Card padding="md" shadow="md" style={styles.card}>
+          <CatalogPanel authedFetch={authedFetch} />
         </Card>
 
         <Card padding="md" shadow="md" style={styles.card}>
