@@ -17,6 +17,7 @@ This is the main repository for the Telco Self-Care White-Label Platform, suppor
 - **[Order Orchestration](./docs/development/order-orchestration.md)** - F-07.2 state machine, idempotency, rollback and notifications
 - **[SIM/eSIM + Roaming Basic](./docs/development/sim-esim-roaming-basic.md)** - F-07.3 step-up SIM controls, eSIM QR/status lifecycle, roaming pack purchase
 - **[Support Case Management](./docs/development/support-case-management.md)** - F-08.2 support case creation, timeline, and SLA projection
+- **[Notification Center](./docs/development/notification-center.md)** - F-08.3 inbox, channel preferences, and delivery status lifecycle
 
 ## Module Structure
 
