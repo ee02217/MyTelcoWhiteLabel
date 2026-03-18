@@ -1,63 +1,70 @@
-# Kong Declarative Configuration (Production Profile)
+# Kong Declarative Configuration for MyTelcoWhiteLabel
+# Version: 1.0.0
 #
-# This is the production-hardened gateway profile.
-# Local Docker development must use `infra/kong/kong.local.yml`.
+# This file defines Kong services, routes, and plugins for the
+# white-label, multi-operator Telco Self-Care Platform.
 #
-# Render this file with environment variables before deploy (envsubst/deployment tooling),
-# then validate with decK:
-#   deck file validate infra/kong/kong.yml
+# Usage:
+#   - Kong DB-less mode: Set KONG_DECLARATIVE_CONFIG=/path/to/kong.yml
+#   - Kong with DB:     Use deck sync to push config
+#   - Validation:      deck validate -s kong.yml
 #
-# Required environment variables for production rendering:
-#   KONG_CUSTOMER_BFF_UPSTREAM
-#   KONG_ADMIN_BFF_UPSTREAM
-#   KONG_CUSTOMER_WEB_ORIGIN
-#   KONG_ADMIN_WEB_ORIGIN
-#   KONG_MOBILE_WEBVIEW_ORIGIN
-#   KONG_OIDC_ISSUER
-#   KONG_OIDC_JWKS_URI
-#   KONG_OIDC_AUDIENCE
-#
-# Optional:
-#   KONG_RATE_LIMIT_CUSTOMER_PER_MINUTE (default: 100)
-#   KONG_RATE_LIMIT_ADMIN_PER_MINUTE    (default: 50)
+# Environment Variables:
+#   - KONG_BFF_UPSTREAM:     Upstream URL for BFF service (default: http://bff:8080)
+#   - KONG_ADMIN_BFF_UPSTREAM: Upstream URL for Admin BFF (default: http://admin-bff:8080)
+#   - KONG_JWT_SECRET:       Secret for JWT validation (set in production)
+#   - KONG_RATE_LIMIT_COUNT: Requests per minute (default: 100)
 
 _format_version: '3.0'
 _transform: true
 
+# ============================================
+# UPSTREAMS
+# ============================================
 upstreams:
-  - name: customer-bff-upstream
+  - name: bff-upstream
     targets:
-      - target: ${KONG_CUSTOMER_BFF_UPSTREAM}
+      # TODO: Update targets for production cluster service names
+      # In Kubernetes: use cluster-internal service name
+      - target: bff:8080
         weight: 100
     healthchecks:
       active:
         type: http
-        http_path: /actuator/health
+        http_path: /health
         healthy:
-          interval: 10
+          interval: 5
           successes: 2
         unhealthy:
-          interval: 10
+          interval: 5
           http_failures: 3
 
   - name: admin-bff-upstream
     targets:
-      - target: ${KONG_ADMIN_BFF_UPSTREAM}
+      # TODO: Update targets for production cluster service names
+      - target: admin-bff:8080
         weight: 100
     healthchecks:
       active:
         type: http
-        http_path: /actuator/health
+        http_path: /health
         healthy:
-          interval: 10
+          interval: 5
           successes: 2
         unhealthy:
-          interval: 10
+          interval: 5
           http_failures: 3
 
+# ============================================
+# SERVICES
+# ============================================
+
+# ------------------------------------------
+# Customer BFF Service (Web + Mobile)
+# ------------------------------------------
 services:
   - name: customer-bff
-    url: http://customer-bff-upstream
+    url: http://bff-upstream
     routes:
       - name: customer-api-v1
         paths:
@@ -65,30 +72,29 @@ services:
         strip_path: false
         preserve_host: false
         plugins:
-          - name: openid-connect
+          # JWT Authentication
+          - name: jwt
             config:
-              auth_methods:
-                - bearer
-              issuer: ${KONG_OIDC_ISSUER}
-              jwks_uri: ${KONG_OIDC_JWKS_URI}
-              audience_claim:
-                - aud
-              audience_required:
-                - ${KONG_OIDC_AUDIENCE}
-              verify_signature: true
-              verify_claims: true
-              run_on_preflight: false
+              key_claim_name: kid
+              claims_to_verify:
+                - exp
+              run_on_preflight: true
+          # Rate Limiting
           - name: rate-limiting
             config:
-              minute: ${KONG_RATE_LIMIT_CUSTOMER_PER_MINUTE}
+              minute: 100
               policy: local
               fault_tolerant: true
               hide_client_headers: false
               limit_by: consumer
+              # Note: Override per-operator in annotations or consumer settings
+              # To customize: Add rate-limit annotations on Ingress or
+              # configure per Consumer in Kong
+          # CORS for web/mobile clients
           - name: cors
             config:
               origins:
-                - ${KONG_CUSTOMER_WEB_ORIGIN}
+                - '*'
               methods:
                 - GET
                 - POST
@@ -107,29 +113,22 @@ services:
               credentials: true
               max_age: 3600
               preflight_continue: false
-
+        # Web client path
       - name: customer-web-v1
         paths:
           - /api/v1/web
         strip_path: false
         preserve_host: false
         plugins:
-          - name: openid-connect
+          - name: jwt
             config:
-              auth_methods:
-                - bearer
-              issuer: ${KONG_OIDC_ISSUER}
-              jwks_uri: ${KONG_OIDC_JWKS_URI}
-              audience_claim:
-                - aud
-              audience_required:
-                - ${KONG_OIDC_AUDIENCE}
-              verify_signature: true
-              verify_claims: true
-              run_on_preflight: false
+              key_claim_name: kid
+              claims_to_verify:
+                - exp
+              run_on_preflight: true
           - name: rate-limiting
             config:
-              minute: ${KONG_RATE_LIMIT_CUSTOMER_PER_MINUTE}
+              minute: 100
               policy: local
               fault_tolerant: true
               hide_client_headers: false
@@ -137,7 +136,7 @@ services:
           - name: cors
             config:
               origins:
-                - ${KONG_CUSTOMER_WEB_ORIGIN}
+                - '*'
               methods:
                 - GET
                 - POST
@@ -156,29 +155,22 @@ services:
               credentials: true
               max_age: 3600
               preflight_continue: false
-
+        # Mobile client path
       - name: customer-mobile-v1
         paths:
           - /api/v1/mobile
         strip_path: false
         preserve_host: false
         plugins:
-          - name: openid-connect
+          - name: jwt
             config:
-              auth_methods:
-                - bearer
-              issuer: ${KONG_OIDC_ISSUER}
-              jwks_uri: ${KONG_OIDC_JWKS_URI}
-              audience_claim:
-                - aud
-              audience_required:
-                - ${KONG_OIDC_AUDIENCE}
-              verify_signature: true
-              verify_claims: true
-              run_on_preflight: false
+              key_claim_name: kid
+              claims_to_verify:
+                - exp
+              run_on_preflight: true
           - name: rate-limiting
             config:
-              minute: ${KONG_RATE_LIMIT_CUSTOMER_PER_MINUTE}
+              minute: 100
               policy: local
               fault_tolerant: true
               hide_client_headers: false
@@ -186,7 +178,7 @@ services:
           - name: cors
             config:
               origins:
-                - ${KONG_MOBILE_WEBVIEW_ORIGIN}
+                - '*'
               methods:
                 - GET
                 - POST
@@ -206,6 +198,9 @@ services:
               max_age: 3600
               preflight_continue: false
 
+  # ------------------------------------------
+  # Admin BFF Service
+  # ------------------------------------------
   - name: admin-bff
     url: http://admin-bff-upstream
     routes:
@@ -215,30 +210,27 @@ services:
         strip_path: false
         preserve_host: false
         plugins:
-          - name: openid-connect
+          # JWT Authentication with admin scope
+          - name: jwt
             config:
-              auth_methods:
-                - bearer
-              issuer: ${KONG_OIDC_ISSUER}
-              jwks_uri: ${KONG_OIDC_JWKS_URI}
-              audience_claim:
-                - aud
-              audience_required:
-                - ${KONG_OIDC_AUDIENCE}
-              verify_signature: true
-              verify_claims: true
-              run_on_preflight: false
+              key_claim_name: kid
+              claims_to_verify:
+                - exp
+              run_on_preflight: true
+          # Stricter rate limits for admin
           - name: rate-limiting
             config:
-              minute: ${KONG_RATE_LIMIT_ADMIN_PER_MINUTE}
+              minute: 50
               policy: local
               fault_tolerant: true
               hide_client_headers: false
               limit_by: consumer
+          # CORS for admin portal
           - name: cors
             config:
               origins:
-                - ${KONG_ADMIN_WEB_ORIGIN}
+                # TODO: Restrict to admin portal URL in production
+                - '*'
               methods:
                 - GET
                 - POST
@@ -259,6 +251,28 @@ services:
               max_age: 3600
               preflight_continue: false
 
+# ============================================
+# CONSUMERS (Reference for operator setup)
+# ============================================
+# Uncomment and configure for database-backed Kong
+#
+# consumers:
+#   - username: operator-telecom
+#     plugins:
+#       - name: rate-limiting
+#         config:
+#           minute: 200
+#           policy: local
+#   - username: operator-mobile
+#     plugins:
+#       - name: rate-limiting
+#         config:
+#           minute: 200
+#           policy: local
+
+# ============================================
+# PLUGINS (Global)
+# ============================================
 plugins:
   - name: request-transformer
     config:
@@ -266,9 +280,30 @@ plugins:
         headers:
           - X-Kong-Upstream-Latency:$(latency.request)
           - X-Kong-Proxy-Latency:$(latency.proxy)
-
   - name: response-transformer
     config:
       add:
         headers:
           - X-API-Version:1.0
+
+# ============================================
+# NOTES
+# ============================================
+#
+# Rate Limiting Override Strategy:
+# - Default: 100 req/min for customer APIs, 50 req/min for admin
+# - Per-operator override: Use Kong annotations on Kubernetes Ingress
+#   annotations:
+#     konghq.com/plugins: rate-limit-override
+# - Or configure per Consumer in database mode
+# - For Redis-backed rate limiting: Change policy to "redis" and configure
+#
+# JWT Configuration:
+# - Currently validates exp claim
+# - In production: Configure keycloak/jwt issuer in jwt plugin
+# - Add jwks_uri for key rotation
+#
+# Versioning:
+# - All routes use /api/v1/* prefix
+# - v1 is the current stable version
+# - See docs/development/api-versioning-policy.md

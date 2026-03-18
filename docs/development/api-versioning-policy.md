@@ -129,7 +129,12 @@ GET /api/v1/usage
 
 ### Gateway Configuration
 
-See [`infra/kong/kong.yml`](../../infra/kong/kong.yml) for the declarative Kong configuration.
+Kong profile files:
+
+- Production profile: [`infra/kong/kong.yml`](../../infra/kong/kong.yml)
+- Local profile: [`infra/kong/kong.local.yml`](../../infra/kong/kong.local.yml)
+
+For profile usage and migration steps, see [`docs/development/kong-gateway-profiles.md`](./kong-gateway-profiles.md).
 
 ### Rate Limiting by Version
 
@@ -206,6 +211,7 @@ paths:
 
 ## References
 
-- [Kong Gateway Configuration](../../infra/kong/kong.yml)
+- [Kong Gateway Profiles](./kong-gateway-profiles.md)
+- [Kong Production Configuration](../../infra/kong/kong.yml)
 - [GitHub Workflow](../development/github-workflow.md)
 - [TMF API Guidelines](https://www.tmforum.org/) - Industry standards for telco APIs
