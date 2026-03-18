@@ -1,5 +1,6 @@
 package com.mytelco.customerbff.controller;
 
+import com.mytelco.customerbff.config.NotificationDeliveryProperties;
 import com.mytelco.customerbff.model.NotificationInboxItem;
 import com.mytelco.customerbff.model.NotificationPreferencesResponse;
 import com.mytelco.customerbff.model.NotificationPreferencesUpdateRequest;
@@ -11,7 +12,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,13 +31,16 @@ import java.util.List;
 public class NotificationCenterController {
 
     private final NotificationCenterService notificationCenterService;
+    private final NotificationDeliveryProperties notificationDeliveryProperties;
     private final CustomerIdentityResolver customerIdentityResolver;
 
     public NotificationCenterController(
         NotificationCenterService notificationCenterService,
+        NotificationDeliveryProperties notificationDeliveryProperties,
         CustomerIdentityResolver customerIdentityResolver
     ) {
         this.notificationCenterService = notificationCenterService;
+        this.notificationDeliveryProperties = notificationDeliveryProperties;
         this.customerIdentityResolver = customerIdentityResolver;
     }
 
@@ -66,12 +72,23 @@ public class NotificationCenterController {
     }
 
     @PostMapping("/test-send")
-    @Operation(summary = "Send test notification (MVP helper)")
-    @ApiResponses(@ApiResponse(responseCode = "200", description = "Notification generated"))
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Send test notification (non-production helper)")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Notification generated"),
+        @ApiResponse(responseCode = "403", description = "Test send disabled by runtime policy")
+    })
     public ResponseEntity<NotificationInboxItem> testSend(
         Authentication authentication,
         @Valid @RequestBody NotificationTestSendRequest request
     ) {
+        boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+
+        if (!isAdmin || !notificationDeliveryProperties.isTestSendEnabled()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         String customerId = customerIdentityResolver.resolveCustomerId(authentication);
         return ResponseEntity.ok(notificationCenterService.sendTestNotification(customerId, request));
     }

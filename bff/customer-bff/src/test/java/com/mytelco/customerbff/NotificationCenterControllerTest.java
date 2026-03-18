@@ -1,6 +1,7 @@
 package com.mytelco.customerbff;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mytelco.customerbff.config.NotificationDeliveryProperties;
 import com.mytelco.customerbff.controller.NotificationCenterController;
 import com.mytelco.customerbff.model.NotificationCategory;
 import com.mytelco.customerbff.model.NotificationCategoryPreference;
@@ -44,6 +45,9 @@ class NotificationCenterControllerTest {
 
     @MockBean
     private NotificationCenterService notificationCenterService;
+
+    @MockBean
+    private NotificationDeliveryProperties notificationDeliveryProperties;
 
     @MockBean
     private CustomerIdentityResolver customerIdentityResolver;
@@ -114,8 +118,9 @@ class NotificationCenterControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
-    void shouldSendTestNotification() throws Exception {
+    @WithMockUser(username = "cust-1", roles = "ADMIN")
+    void shouldSendTestNotificationForPrivilegedRoleWhenEnabled() throws Exception {
+        when(notificationDeliveryProperties.isTestSendEnabled()).thenReturn(true);
         when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
         when(notificationCenterService.sendTestNotification(eq("cust-1"), any()))
             .thenReturn(new NotificationInboxItem(
@@ -139,5 +144,37 @@ class NotificationCenterControllerTest {
                 ))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.notificationId").value("n2"));
+    }
+
+    @Test
+    @WithMockUser(username = "cust-1", roles = "ADMIN")
+    void shouldRejectTestSendWhenDisabledByPolicy() throws Exception {
+        when(notificationDeliveryProperties.isTestSendEnabled()).thenReturn(false);
+
+        mockMvc.perform(post("/api/v1/customer/notifications/test-send")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(java.util.Map.of(
+                    "title", "Test",
+                    "message", "Test message",
+                    "category", "SERVICE"
+                ))))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
+    void shouldRejectTestSendForNonPrivilegedRole() throws Exception {
+        when(notificationDeliveryProperties.isTestSendEnabled()).thenReturn(true);
+
+        mockMvc.perform(post("/api/v1/customer/notifications/test-send")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(java.util.Map.of(
+                    "title", "Test",
+                    "message", "Test message",
+                    "category", "SERVICE"
+                ))))
+            .andExpect(status().isForbidden());
     }
 }
