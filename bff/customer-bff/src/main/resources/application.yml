@@ -35,6 +35,19 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+mytelco:
+  step-up:
+    challenge-ttl: ${MYTELCO_STEP_UP_CHALLENGE_TTL:PT5M}
+    verification-token-ttl: ${MYTELCO_STEP_UP_TOKEN_TTL:PT10M}
+    max-attempts: ${MYTELCO_STEP_UP_MAX_ATTEMPTS:3}
+    lockout-duration: ${MYTELCO_STEP_UP_LOCKOUT_DURATION:PT15M}
+    otp-length: ${MYTELCO_STEP_UP_OTP_LENGTH:6}
+    delivery:
+      provider: ${MYTELCO_STEP_UP_DELIVERY_PROVIDER:stub}
+      channel: ${MYTELCO_STEP_UP_DELIVERY_CHANNEL:SMS}
+      masked-destination: ${MYTELCO_STEP_UP_MASKED_DESTINATION:+*** *** *42}
+      webhook-url: ${MYTELCO_STEP_UP_DELIVERY_WEBHOOK_URL:}
+
 # Logging
 logging:
   level:
