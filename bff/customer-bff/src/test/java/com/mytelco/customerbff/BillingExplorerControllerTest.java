@@ -1,20 +1,26 @@
 package com.mytelco.customerbff;
 
 import com.mytelco.customerbff.controller.BillingExplorerController;
-import com.mytelco.customerbff.model.*;
+import com.mytelco.customerbff.model.BillCategoryGroup;
+import com.mytelco.customerbff.model.BillExplorerResponse;
+import com.mytelco.customerbff.model.BillItemCategory;
+import com.mytelco.customerbff.model.BillPeriodComparison;
+import com.mytelco.customerbff.model.BillPeriodSummary;
+import com.mytelco.customerbff.model.InvoiceMetadata;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.BillingExplorerService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -24,6 +30,7 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -40,13 +47,16 @@ class BillingExplorerControllerTest {
     @MockBean
     private BillingExplorerService billingExplorerService;
 
+    @MockBean
+    private CustomerIdentityResolver customerIdentityResolver;
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void getBillExplorer_shouldReturnGroupedPayload() throws Exception {
-        when(billingExplorerService.getBillExplorer("12345", YearMonth.of(2026, 3))).thenReturn(
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(billingExplorerService.getBillExplorer("cust-1", YearMonth.of(2026, 3))).thenReturn(
             new BillExplorerResponse(
-                "12345",
+                "cust-1",
                 "2026-03",
                 LocalDate.of(2026, 3, 1),
                 LocalDate.of(2026, 3, 31),

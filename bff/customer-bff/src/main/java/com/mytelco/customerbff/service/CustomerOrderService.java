@@ -5,6 +5,7 @@ import com.mytelco.customerbff.model.CustomerOrderCreateRequest;
 import com.mytelco.customerbff.model.CustomerOrderResponse;
 import com.mytelco.customerbff.model.OrderState;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,20 +20,26 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Service
 public class CustomerOrderService {
 
-    private static final String CUSTOMER_ID = "12345";
-
     private final AlertInboxService alertInboxService;
     private final Map<String, CustomerOrderResponse> ordersById = new ConcurrentHashMap<>();
     private final Map<String, String> idempotencyToOrderId = new ConcurrentHashMap<>();
     private final Map<String, CopyOnWriteArrayList<String>> orderIdsByLineId = new ConcurrentHashMap<>();
+    private final Map<String, String> orderCustomerByOrderId = new ConcurrentHashMap<>();
 
     public CustomerOrderService(AlertInboxService alertInboxService) {
         this.alertInboxService = alertInboxService;
     }
 
-    public CustomerOrderResponse create(CustomerOrderCreateRequest request, String idempotencyKeyFromHeader) {
+    public CustomerOrderResponse create(
+        CustomerOrderCreateRequest request,
+        String idempotencyKeyFromHeader,
+        String customerId
+    ) {
+        validateCustomerId(customerId);
+
         String idempotencyKey = resolveIdempotencyKey(request, idempotencyKeyFromHeader);
-        String existingOrderId = idempotencyToOrderId.get(idempotencyKey);
+        String scopedIdempotencyKey = scopedIdempotencyKey(customerId, idempotencyKey);
+        String existingOrderId = idempotencyToOrderId.get(scopedIdempotencyKey);
         if (existingOrderId != null) {
             return ordersById.get(existingOrderId);
         }
@@ -57,26 +64,36 @@ public class CustomerOrderService {
         CustomerOrderResponse finalOrder;
         if (Boolean.TRUE.equals(request.simulateFailure()) || "FAIL".equalsIgnoreCase(request.itemCode())) {
             finalOrder = transition(processing, OrderState.FAILED, true, "Order failed. Rollback has been applied.");
-            emitNotification(finalOrder, "ORDER_FAILED", finalOrder.notificationMessage());
+            emitNotification(customerId, finalOrder, "ORDER_FAILED", finalOrder.notificationMessage());
         } else {
             finalOrder = transition(processing, OrderState.COMPLETED, false, "Order completed successfully");
-            emitNotification(finalOrder, "ORDER_COMPLETED", finalOrder.notificationMessage());
+            emitNotification(customerId, finalOrder, "ORDER_COMPLETED", finalOrder.notificationMessage());
         }
 
-        CustomerOrderResponse prior = putIfAbsentIdempotent(idempotencyKey, finalOrder);
+        CustomerOrderResponse prior = putIfAbsentIdempotent(scopedIdempotencyKey, finalOrder, customerId);
         return prior != null ? prior : finalOrder;
     }
 
-    public CustomerOrderResponse getById(String orderId) {
-        return ordersById.get(orderId);
+    public CustomerOrderResponse getById(String customerId, String orderId) {
+        validateCustomerId(customerId);
+        CustomerOrderResponse order = ordersById.get(orderId);
+        if (order == null) {
+            return null;
+        }
+        String ownerCustomerId = orderCustomerByOrderId.get(orderId);
+        if (!customerId.equals(ownerCustomerId)) {
+            return null;
+        }
+        return order;
     }
 
-    public List<CustomerOrderResponse> listByLineId(String lineId) {
+    public List<CustomerOrderResponse> listByLineId(String customerId, String lineId) {
+        validateCustomerId(customerId);
         List<String> ids = orderIdsByLineId.getOrDefault(lineId, new CopyOnWriteArrayList<>());
         List<CustomerOrderResponse> orders = new ArrayList<>();
         for (String id : ids) {
             CustomerOrderResponse order = ordersById.get(id);
-            if (order != null) {
+            if (order != null && customerId.equals(orderCustomerByOrderId.get(id))) {
                 orders.add(order);
             }
         }
@@ -123,12 +140,12 @@ public class CustomerOrderService {
         return resolved;
     }
 
-    private void emitNotification(CustomerOrderResponse order, String actor, String message) {
+    private void emitNotification(String customerId, CustomerOrderResponse order, String actor, String message) {
         alertInboxService.add(
-            CUSTOMER_ID,
+            customerId,
             new AlertInboxItem(
                 "order-alert-" + order.orderId(),
-                CUSTOMER_ID,
+                customerId,
                 order.lineId(),
                 "ORDER",
                 0,
@@ -141,14 +158,29 @@ public class CustomerOrderService {
         );
     }
 
-    private CustomerOrderResponse putIfAbsentIdempotent(String idempotencyKey, CustomerOrderResponse order) {
-        String previousOrderId = idempotencyToOrderId.putIfAbsent(idempotencyKey, order.orderId());
+    private CustomerOrderResponse putIfAbsentIdempotent(
+        String scopedIdempotencyKey,
+        CustomerOrderResponse order,
+        String customerId
+    ) {
+        String previousOrderId = idempotencyToOrderId.putIfAbsent(scopedIdempotencyKey, order.orderId());
         if (previousOrderId != null) {
             return ordersById.get(previousOrderId);
         }
 
         ordersById.put(order.orderId(), order);
+        orderCustomerByOrderId.put(order.orderId(), customerId);
         orderIdsByLineId.computeIfAbsent(order.lineId(), ignored -> new CopyOnWriteArrayList<>()).add(order.orderId());
         return null;
+    }
+
+    private String scopedIdempotencyKey(String customerId, String idempotencyKey) {
+        return customerId + "::" + idempotencyKey;
+    }
+
+    private void validateCustomerId(String customerId) {
+        if (!StringUtils.hasText(customerId)) {
+            throw new IllegalArgumentException("Customer id is required");
+        }
     }
 }

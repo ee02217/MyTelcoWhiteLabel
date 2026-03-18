@@ -10,6 +10,7 @@ import com.mytelco.customerbff.model.NotificationChannelPreference;
 import com.mytelco.customerbff.model.NotificationDeliveryStatus;
 import com.mytelco.customerbff.model.NotificationInboxItem;
 import com.mytelco.customerbff.model.NotificationPreferencesResponse;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.NotificationCenterService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,13 +45,17 @@ class NotificationCenterControllerTest {
     @MockBean
     private NotificationCenterService notificationCenterService;
 
+    @MockBean
+    private CustomerIdentityResolver customerIdentityResolver;
+
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void shouldGetInbox() throws Exception {
-        when(notificationCenterService.getInbox("12345")).thenReturn(List.of(
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(notificationCenterService.getInbox("cust-1")).thenReturn(List.of(
             new NotificationInboxItem(
                 "n1",
-                "12345",
+                "cust-1",
                 "Order update",
                 "Your order shipped.",
                 NotificationCategory.ORDERS,
@@ -68,16 +73,17 @@ class NotificationCenterControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void shouldGetPreferences() throws Exception {
-        when(notificationCenterService.getPreferences("12345")).thenReturn(new NotificationPreferencesResponse(
-            "12345",
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(notificationCenterService.getPreferences("cust-1")).thenReturn(new NotificationPreferencesResponse(
+            "cust-1",
             List.of(new NotificationCategoryPreference(
                 NotificationCategory.BILLING,
                 List.of(new NotificationChannelPreference(NotificationChannel.EMAIL, true))
             )),
             Instant.now(),
-            "customer"
+            "cust-1"
         ));
 
         mockMvc.perform(get("/api/v1/customer/notifications/preferences"))
@@ -86,10 +92,11 @@ class NotificationCenterControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void shouldUpdatePreferences() throws Exception {
-        when(notificationCenterService.updatePreferences(eq("12345"), any(), eq("customer")))
-            .thenReturn(new NotificationPreferencesResponse("12345", List.of(), Instant.now(), "customer"));
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(notificationCenterService.updatePreferences(eq("cust-1"), any(), eq("cust-1")))
+            .thenReturn(new NotificationPreferencesResponse("cust-1", List.of(), Instant.now(), "cust-1"));
 
         mockMvc.perform(put("/api/v1/customer/notifications/preferences")
                 .with(csrf())
@@ -103,16 +110,17 @@ class NotificationCenterControllerTest {
                     ))
                 )))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.customerId").value("12345"));
+            .andExpect(jsonPath("$.customerId").value("cust-1"));
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void shouldSendTestNotification() throws Exception {
-        when(notificationCenterService.sendTestNotification(eq("12345"), any()))
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(notificationCenterService.sendTestNotification(eq("cust-1"), any()))
             .thenReturn(new NotificationInboxItem(
                 "n2",
-                "12345",
+                "cust-1",
                 "Test",
                 "Test message",
                 NotificationCategory.SERVICE,

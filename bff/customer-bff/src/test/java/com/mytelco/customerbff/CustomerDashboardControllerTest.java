@@ -1,7 +1,20 @@
 package com.mytelco.customerbff;
 
 import com.mytelco.customerbff.controller.CustomerDashboardController;
-import com.mytelco.customerbff.model.*;
+import com.mytelco.customerbff.model.AccountOverviewResponse;
+import com.mytelco.customerbff.model.AccountSummary;
+import com.mytelco.customerbff.model.ActiveLine;
+import com.mytelco.customerbff.model.BillingSummary;
+import com.mytelco.customerbff.model.CustomerDashboardResponse;
+import com.mytelco.customerbff.model.CustomerUsageResponse;
+import com.mytelco.customerbff.model.DataFreshness;
+import com.mytelco.customerbff.model.LineStructure;
+import com.mytelco.customerbff.model.LineUsageEntry;
+import com.mytelco.customerbff.model.ServiceUsageBreakdown;
+import com.mytelco.customerbff.model.UsageSummary;
+import com.mytelco.customerbff.model.UsageThresholdCrossing;
+import com.mytelco.customerbff.model.UsageView;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.CustomerAggregationService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -20,6 +33,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -35,8 +49,11 @@ class CustomerDashboardControllerTest {
     @MockBean
     private CustomerAggregationService aggregationService;
 
+    @MockBean
+    private CustomerIdentityResolver customerIdentityResolver;
+
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void getDashboard_shouldReturnAggregatedData() throws Exception {
         var mockResponse = new CustomerDashboardResponse(
             new AccountSummary("ACC-123", "ACTIVE", "Premium", null, "+351123"),
@@ -45,7 +62,8 @@ class CustomerDashboardControllerTest {
             Instant.now()
         );
 
-        when(aggregationService.getDashboard("12345")).thenReturn(mockResponse);
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(aggregationService.getDashboard("cust-1")).thenReturn(mockResponse);
 
         mockMvc.perform(get("/api/v1/customer/dashboard"))
             .andExpect(status().isOk())
@@ -55,7 +73,7 @@ class CustomerDashboardControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void getAccountOverview_shouldReturnMultiLinePayload() throws Exception {
         AccountOverviewResponse response = new AccountOverviewResponse(
             "Premium Unlimited",
@@ -70,7 +88,8 @@ class CustomerDashboardControllerTest {
             LineStructure.MULTI_LINE_READY
         );
 
-        when(aggregationService.getAccountOverview("12345")).thenReturn(response);
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(aggregationService.getAccountOverview("cust-1")).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/customer/account-overview"))
             .andExpect(status().isOk())
@@ -78,20 +97,21 @@ class CustomerDashboardControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void getUsageDetails_daily_shouldReturnThresholdCrossings() throws Exception {
         CustomerUsageResponse response = new CustomerUsageResponse(
             "daily",
             LocalDate.of(2026, 3, 12),
             LocalDate.of(2026, 3, 12),
-            "12345",
+            "cust-1",
             new ServiceUsageBreakdown(2070, 55, 13),
             List.of(new LineUsageEntry("LINE-001", "+351910000001", "Primary", new ServiceUsageBreakdown(9200, 34, 8))),
             List.of(new UsageThresholdCrossing("LINE-001", "DATA", 80, 92.0, Instant.parse("2026-03-12T12:00:00Z"))),
             new DataFreshness(Instant.parse("2026-03-12T11:55:00Z"), "Updated every 15 minutes (SLA <= 15m)")
         );
 
-        when(aggregationService.getUsageDetails("12345", UsageView.DAILY, null)).thenReturn(response);
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(aggregationService.getUsageDetails("cust-1", UsageView.DAILY, null)).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/customer/usage?view=daily"))
             .andExpect(status().isOk())

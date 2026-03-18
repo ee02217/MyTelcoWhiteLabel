@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mytelco.customerbff.controller.CustomerAlertsController;
 import com.mytelco.customerbff.model.AlertInboxItem;
 import com.mytelco.customerbff.model.AlertThresholdConfig;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.AlertInboxService;
 import com.mytelco.customerbff.service.ThresholdConfigService;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -41,11 +43,15 @@ class CustomerAlertsControllerTest {
     @MockBean
     private AlertInboxService alertInboxService;
 
+    @MockBean
+    private CustomerIdentityResolver customerIdentityResolver;
+
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void shouldGetThresholds() throws Exception {
-        when(thresholdConfigService.getConfig("12345"))
-            .thenReturn(new AlertThresholdConfig("12345", List.of(80, 100), 360, Instant.now(), "system"));
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(thresholdConfigService.getConfig("cust-1"))
+            .thenReturn(new AlertThresholdConfig("cust-1", List.of(80, 100), 360, Instant.now(), "system"));
 
         mockMvc.perform(get("/api/v1/customer/alerts/thresholds"))
             .andExpect(status().isOk())
@@ -53,10 +59,11 @@ class CustomerAlertsControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void shouldUpdateThresholds() throws Exception {
-        when(thresholdConfigService.updateConfig(eq("12345"), anyList(), eq("customer")))
-            .thenReturn(new AlertThresholdConfig("12345", List.of(85, 100), 360, Instant.now(), "customer"));
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(thresholdConfigService.updateConfig(eq("cust-1"), anyList(), eq("cust-1")))
+            .thenReturn(new AlertThresholdConfig("cust-1", List.of(85, 100), 360, Instant.now(), "cust-1"));
 
         mockMvc.perform(put("/api/v1/customer/alerts/thresholds")
                 .with(csrf())
@@ -67,10 +74,11 @@ class CustomerAlertsControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void shouldGetInbox() throws Exception {
-        when(alertInboxService.list("12345")).thenReturn(List.of(
-            new AlertInboxItem("1", "12345", "LINE-001", "DATA", 80, 90, "IN_APP", "system", "crossed", Instant.now())
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(alertInboxService.list("cust-1")).thenReturn(List.of(
+            new AlertInboxItem("1", "cust-1", "LINE-001", "DATA", 80, 90, "IN_APP", "system", "crossed", Instant.now())
         ));
 
         mockMvc.perform(get("/api/v1/customer/alerts/inbox"))
