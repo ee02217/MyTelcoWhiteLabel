@@ -2,8 +2,10 @@ package com.mytelco.customerbff.controller;
 
 import com.mytelco.customerbff.model.StepUpChallengeRequest;
 import com.mytelco.customerbff.model.StepUpChallengeResponse;
+import com.mytelco.customerbff.model.StepUpErrorResponse;
 import com.mytelco.customerbff.model.StepUpVerifyRequest;
 import com.mytelco.customerbff.model.StepUpVerifyResponse;
+import com.mytelco.customerbff.service.StepUpAuthException;
 import com.mytelco.customerbff.service.StepUpAuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +30,12 @@ public class StepUpAuthController {
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<StepUpVerifyResponse> verify(@Valid @RequestBody StepUpVerifyRequest request) {
+    public ResponseEntity<?> verify(@Valid @RequestBody StepUpVerifyRequest request) {
         try {
             return ResponseEntity.ok(service.verifyChallenge(request));
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().build();
+        } catch (StepUpAuthException ex) {
+            return ResponseEntity.status(ex.getHttpStatus())
+                .body(new StepUpErrorResponse(ex.getErrorCode().name(), ex.getMessage()));
         }
     }
 }
