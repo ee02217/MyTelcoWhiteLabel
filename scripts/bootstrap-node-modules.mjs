@@ -18,13 +18,7 @@ import { cwd, argv } from 'node:process';
 const REPO_ROOT = cwd();
 const SKIP_ROOT = argv.includes('--skip-root');
 
-const MODULES = [
-  '.',
-  'platform-config/design-tokens',
-  'web-portal',
-  'admin-portal',
-  'mobile-app',
-];
+const MODULES = ['.', 'platform-config/design-tokens', 'web-portal', 'admin-portal', 'mobile-app'];
 
 function run(command, workdir, label) {
   console.log(`[bootstrap] ${label}: ${command}`);

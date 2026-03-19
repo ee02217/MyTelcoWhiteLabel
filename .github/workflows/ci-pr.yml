@@ -251,7 +251,16 @@ jobs:
   build-docker:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    needs: [lint, test-node, bootstrap-root-quality, test-java-backend, test-java-bff, kong-config-validate, sca-scan]
+    needs:
+      [
+        lint,
+        test-node,
+        bootstrap-root-quality,
+        test-java-backend,
+        test-java-bff,
+        kong-config-validate,
+        sca-scan,
+      ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
