@@ -35,8 +35,8 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["http://localhost:5173/*", "http://localhost:3000/*"],
-      "webOrigins": ["http://localhost:5173", "http://localhost:3000"],
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
       "defaultClientScopes": ["openid", "roles"],
       "attributes": {
         "pkce.code.challenge.method": "S256"
