@@ -18,6 +18,10 @@ Compose file:
 
 - `infra/docker/docker-compose.local.yml`
 
+Kong profile used by local compose:
+
+- `infra/kong/kong.local.yml`
+
 ## Prerequisites
 
 - Docker Engine + Docker Compose plugin

@@ -60,7 +60,7 @@ services:
       KONG_PLUGINS: request-transformer,response-transformer,jwt,rate-limiting,cors
     volumes:
       # Mount declarative config
-      - ./kong.yml:/usr/local/kong/declarative/kong.yml:ro
+      - ../../kong/kong.local.yml:/usr/local/kong/declarative/kong.yml:ro
     networks:
       - mytelco-network
     healthcheck:

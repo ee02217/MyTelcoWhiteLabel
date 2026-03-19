@@ -67,7 +67,7 @@ services:
       - '${KONG_PROXY_TLS_PORT:-8443}:8443'
       - '${KONG_ADMIN_TLS_PORT:-8444}:8444'
     volumes:
-      - ../kong/kong.yml:/usr/local/kong/declarative/kong.yml:ro
+      - ../kong/kong.local.yml:/usr/local/kong/declarative/kong.yml:ro
     healthcheck:
       test: ['CMD', 'kong', 'health']
       interval: 10s
