@@ -31,8 +31,29 @@ const resolveRuntimeUri = (configuredUri: string | undefined, fallbackPath: stri
   }
 };
 
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0']);
+
+const resolveRuntimeIssuer = (configuredIssuer: string | undefined) => {
+  if (!configuredIssuer) {
+    return window.location.origin;
+  }
+
+  try {
+    const parsed = new URL(configuredIssuer, window.location.origin);
+    if (!LOOPBACK_HOSTS.has(parsed.hostname.toLowerCase())) {
+      return parsed.toString();
+    }
+
+    const runtimeIssuer = new URL(parsed.toString());
+    runtimeIssuer.hostname = window.location.hostname;
+    return runtimeIssuer.toString();
+  } catch {
+    return configuredIssuer;
+  }
+};
+
 const cfg = {
-  issuer: import.meta.env.VITE_OIDC_ISSUER,
+  issuer: resolveRuntimeIssuer(import.meta.env.VITE_OIDC_ISSUER),
   clientId: import.meta.env.VITE_OIDC_CLIENT_ID,
   redirectUri: resolveRuntimeUri(import.meta.env.VITE_OIDC_REDIRECT_URI, '/callback'),
   postLogoutRedirectUri: resolveRuntimeUri(import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI, '/'),
