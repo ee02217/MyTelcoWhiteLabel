@@ -1,9 +1,11 @@
 # Rollback Evidence (#84)
 
 ## Script
+
 `scripts/stage-rollback-test.sh` - Tests stage rollback procedures
 
 ## Execution Result (Local)
+
 ```
 [INFO] Stage Rollback Test Procedure
 [INFO] Namespace: telco-staging
@@ -14,6 +16,7 @@
 ```
 
 ## Analysis
+
 - Script exists and is executable ✅
 - Script correctly detects missing Kubernetes credentials ✅
 - In a real staging environment with valid kubeconfig, the script would:
@@ -23,5 +26,6 @@
   4. Report pass/fail status
 
 ## Limitation
+
 Local environment lacks Kubernetes cluster, so full rollback execution is not possible.
 The script is designed for stage/production environments with Helm releases.
