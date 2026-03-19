@@ -18,6 +18,46 @@ type AccountOverview = {
   plan: string;
   activeLineCount: number;
   outstandingAmount: number;
+  nextBillDate?: string;
+  accountType?: string;
+};
+
+type HomeDashboardResponse = {
+  accountSummary: {
+    accountStatus: string;
+    planName: string;
+    primaryMsisdn: string;
+  };
+  usageSummary: {
+    dataUsedMb: number;
+    dataLimitMb: number;
+    voiceMinutesUsed: number;
+    voiceMinutesLimit: number;
+    smsUsed: number;
+    smsLimit: number;
+    dataUsagePercent: number;
+    voiceUsagePercent: number;
+    smsUsagePercent: number;
+  };
+  billingSummary: {
+    currentBalance: number;
+    lastPaymentAmount: number;
+    lastPaymentDate: string;
+    nextPaymentDueDate: string;
+    paymentMethod: string;
+    autoPayEnabled: boolean;
+  };
+  responseTime: string;
+};
+
+type HomeNotificationItem = {
+  notificationId: string;
+  readAt: string | null;
+};
+
+type HomeSupportCase = {
+  caseId: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'WAITING_CUSTOMER' | 'RESOLVED' | 'CLOSED';
 };
 
 type PaymentMethodResponse = {
@@ -147,6 +187,10 @@ function App() {
   const [status, setStatus] = useState('Idle');
   const [error, setError] = useState<string | null>(null);
   const [route, setRoute] = useState<AppRoute>(() => routeFromPath(window.location.pathname));
+  const [homeDashboard, setHomeDashboard] = useState<HomeDashboardResponse | null>(null);
+  const [homeUnreadNotifications, setHomeUnreadNotifications] = useState(0);
+  const [homeOpenSupportCases, setHomeOpenSupportCases] = useState(0);
+  const [homeWaitingSupportCases, setHomeWaitingSupportCases] = useState(0);
 
   const [paymentToken, setPaymentToken] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState('No payment attempt yet');
@@ -205,6 +249,44 @@ function App() {
     } catch (err) {
       setOverview(fallbackOverview);
       setError(err instanceof Error ? err.message : 'Failed to load account overview');
+    }
+  };
+
+  const loadHomeDashboard = async () => {
+    const response = await authedFetch('/api/v1/customer/dashboard');
+    setHomeDashboard((await response.json()) as HomeDashboardResponse);
+  };
+
+  const loadHomeNotificationSummary = async () => {
+    const response = await authedFetch('/api/v1/customer/notifications/inbox');
+    const payload = (await response.json()) as HomeNotificationItem[];
+    const unread = payload.filter((item) => !item.readAt).length;
+    setHomeUnreadNotifications(unread);
+  };
+
+  const loadHomeSupportSummary = async () => {
+    const response = await authedFetch('/api/v1/customer/support/cases');
+    const payload = (await response.json()) as HomeSupportCase[];
+    const openOrInProgress = payload.filter(
+      (item) => item.status === 'OPEN' || item.status === 'IN_PROGRESS'
+    ).length;
+    const waitingCustomer = payload.filter((item) => item.status === 'WAITING_CUSTOMER').length;
+    setHomeOpenSupportCases(openOrInProgress);
+    setHomeWaitingSupportCases(waitingCustomer);
+  };
+
+  const refreshHomepageData = async () => {
+    setError(null);
+    try {
+      await Promise.all([
+        loadOverview(),
+        loadHomeDashboard(),
+        loadHomeNotificationSummary(),
+        loadHomeSupportSummary(),
+      ]);
+      setStatus('Homepage data refreshed');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to refresh homepage data');
     }
   };
 
@@ -451,13 +533,20 @@ function App() {
 
   useEffect(() => {
     if (session) {
-      loadOverview().catch(() => undefined);
+      if (route === 'home') {
+        refreshHomepageData().catch(() => undefined);
+      }
       if (route === 'lab') {
+        loadOverview().catch(() => undefined);
         loadPaymentHistory().catch(() => undefined);
         loadOrderAlerts().catch(() => undefined);
       }
     } else {
       setOverview(null);
+      setHomeDashboard(null);
+      setHomeUnreadNotifications(0);
+      setHomeOpenSupportCases(0);
+      setHomeWaitingSupportCases(0);
       setHistory([]);
       setOrderAlerts([]);
     }
@@ -468,10 +557,31 @@ function App() {
     return `${Math.max(0, session.expiresAt - Math.floor(Date.now() / 1000))}s`;
   }, [session]);
 
-  const formattedAmount = new Intl.NumberFormat('en-GB', {
+  const currencyFormatter = new Intl.NumberFormat('en-GB', {
     style: 'currency',
     currency: 'EUR',
-  }).format(overview?.outstandingAmount ?? 0);
+  });
+
+  const formattedAmount = currencyFormatter.format(overview?.outstandingAmount ?? 0);
+
+  const formatCurrency = (value: number | null | undefined) => {
+    if (value === null || value === undefined || Number.isNaN(value)) return '—';
+    return currencyFormatter.format(value);
+  };
+
+  const formatDateValue = (value: string | null | undefined) => {
+    if (!value) return '—';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return parsed.toLocaleDateString();
+  };
+
+  const dataUsedGb = homeDashboard
+    ? (homeDashboard.usageSummary.dataUsedMb / 1024).toFixed(1)
+    : '0.0';
+  const dataLimitGb = homeDashboard
+    ? (homeDashboard.usageSummary.dataLimitMb / 1024).toFixed(1)
+    : '0.0';
 
   if (route === 'home') {
     return (
@@ -523,18 +633,23 @@ function App() {
           </Card>
 
           <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
-            <Typography variant="h4">Account snapshot</Typography>
-            {session && overview && (
+            <Typography variant="h4">Account at a glance</Typography>
+            {session && (
               <>
-                <Typography variant="body">Plan: {overview.plan}</Typography>
-                <Typography variant="body">Active lines: {overview.activeLineCount}</Typography>
-                <Typography variant="body">Outstanding amount: {formattedAmount}</Typography>
+                <Typography variant="body">
+                  Plan: {homeDashboard?.accountSummary.planName || overview?.plan || '—'}
+                </Typography>
+                <Typography variant="body">
+                  Account status: {homeDashboard?.accountSummary.accountStatus || '—'}
+                </Typography>
+                <Typography variant="body">
+                  Primary line: {homeDashboard?.accountSummary.primaryMsisdn || '—'}
+                </Typography>
+                <Typography variant="body">Account type: {overview?.accountType || '—'}</Typography>
+                <Typography variant="body">
+                  Active lines: {overview?.activeLineCount ?? 0}
+                </Typography>
               </>
-            )}
-            {session && !overview && (
-              <Typography variant="small" color="secondary">
-                Snapshot unavailable. Try reloading account overview.
-              </Typography>
             )}
             {!session && (
               <Typography variant="small" color="secondary">
@@ -543,24 +658,94 @@ function App() {
             )}
             {session && (
               <div style={styles.row}>
-                <Button size="sm" onClick={() => loadOverview().catch(() => undefined)}>
-                  Refresh snapshot
+                <Button size="sm" onClick={() => refreshHomepageData().catch(() => undefined)}>
+                  Refresh homepage data
                 </Button>
               </div>
             )}
           </Card>
 
+          <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+            <Typography variant="h4">Usage this cycle</Typography>
+            {session && homeDashboard ? (
+              <>
+                <Typography variant="body">
+                  Data: {dataUsedGb} GB / {dataLimitGb} GB (
+                  {homeDashboard.usageSummary.dataUsagePercent.toFixed(1)}%)
+                </Typography>
+                <Typography variant="body">
+                  Voice: {homeDashboard.usageSummary.voiceMinutesUsed} /{' '}
+                  {homeDashboard.usageSummary.voiceMinutesLimit} min (
+                  {homeDashboard.usageSummary.voiceUsagePercent.toFixed(1)}%)
+                </Typography>
+                <Typography variant="body">
+                  SMS: {homeDashboard.usageSummary.smsUsed} / {homeDashboard.usageSummary.smsLimit}{' '}
+                  ({homeDashboard.usageSummary.smsUsagePercent.toFixed(1)}%)
+                </Typography>
+              </>
+            ) : (
+              <Typography variant="small" color="secondary">
+                Usage summary unavailable.
+              </Typography>
+            )}
+          </Card>
+
+          <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+            <Typography variant="h4">Billing snapshot</Typography>
+            {session && (
+              <>
+                <Typography variant="body">
+                  Current balance: {formatCurrency(homeDashboard?.billingSummary.currentBalance)}
+                </Typography>
+                <Typography variant="body">Outstanding amount: {formattedAmount}</Typography>
+                <Typography variant="body">
+                  Next payment due:{' '}
+                  {formatDateValue(
+                    homeDashboard?.billingSummary.nextPaymentDueDate || overview?.nextBillDate
+                  )}
+                </Typography>
+                <Typography variant="body">
+                  Payment method: {homeDashboard?.billingSummary.paymentMethod || '—'}
+                </Typography>
+                <Typography variant="body">
+                  Auto-pay: {homeDashboard?.billingSummary.autoPayEnabled ? 'Enabled' : 'Disabled'}
+                </Typography>
+              </>
+            )}
+          </Card>
+
+          <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+            <Typography variant="h4">Support and notifications</Typography>
+            {session && (
+              <>
+                <Typography variant="body">
+                  Unread notifications: {homeUnreadNotifications}
+                </Typography>
+                <Typography variant="body">Open support cases: {homeOpenSupportCases}</Typography>
+                <Typography variant="body">Waiting on you: {homeWaitingSupportCases}</Typography>
+              </>
+            )}
+            {!session && (
+              <Typography variant="small" color="secondary">
+                Login to see support and notification status.
+              </Typography>
+            )}
+          </Card>
+
           <Card padding="md" shadow="md">
-            <Typography variant="h4">What you can do next</Typography>
-            <Typography variant="body">- Check account overview and usage</Typography>
-            <Typography variant="body">- Manage payments and download receipts</Typography>
+            <Typography variant="h4">Quick actions</Typography>
             <Typography variant="body">
-              - Submit add-on orders and verify rollback behavior
+              - Open payment, SIM, support and troubleshooting flows
             </Typography>
-            <Typography variant="body">- Manage SIM, eSIM, roaming, and support</Typography>
+            <Typography variant="body">
+              - Validate order rollback and notification pipelines
+            </Typography>
+            <Typography variant="body">
+              - Run full self-care lab journey for integration checks
+            </Typography>
             <div style={styles.row}>
               <Button size="sm" onClick={() => navigateTo('lab')}>
-                Go to advanced flows
+                Open advanced flows
               </Button>
             </div>
           </Card>
