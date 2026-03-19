@@ -1,0 +1,3 @@
+endpoint,sample_count,failed,p50_ms,p95_ms,p99_ms,max_ms,requests_per_sec,threshold_p95_ms,result
+/api/v1/customer/dashboard,1000,0,9,18,24,30,2098.09,400,PASS
+/api/v1/customer/account-overview,1000,0,6,12,15,22,3143.03,400,PASS

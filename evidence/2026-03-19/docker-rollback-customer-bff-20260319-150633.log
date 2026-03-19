@@ -1,0 +1,366 @@
+== Docker rollback-equivalent evidence ==
+service=customer-bff
+compose_file=infra/docker/docker-compose.local.yml
+env_file=.env.local
+health_url=http://localhost:8081/actuator/health
+log_file=evidence/2026-03-19/docker-rollback-customer-bff-20260319-150633.log
+
+[1/7] Ensure stack is up
+ Image mytelco-local-admin-portal Building 
+ Image mytelco-local-customer-bff Building 
+ Image mytelco-local-admin-bff Building 
+ Image mytelco-local-web-portal Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 2.96kB done
+#1 DONE 0.0s
+
+#2 [admin-portal internal] load build definition from admin-portal.Dockerfile
+#2 transferring dockerfile: 955B done
+#2 DONE 0.0s
+
+#3 [customer-bff internal] load build definition from Dockerfile
+#3 transferring dockerfile: 388B done
+#3 DONE 0.0s
+
+#4 [admin-bff internal] load build definition from Dockerfile
+#4 transferring dockerfile: 388B done
+#4 DONE 0.0s
+
+#5 [web-portal internal] load build definition from web-portal.Dockerfile
+#5 transferring dockerfile: 941B done
+#5 DONE 0.0s
+
+#6 [web-portal internal] load metadata for docker.io/library/nginx:alpine
+#6 DONE 0.0s
+
+#7 [web-portal internal] load metadata for docker.io/library/node:20-alpine
+#7 DONE 0.4s
+
+#8 [admin-portal internal] load .dockerignore
+#8 transferring context: 2B done
+#8 DONE 0.0s
+
+#9 [admin-portal stage-1 1/3] FROM docker.io/library/nginx:alpine@sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba
+#9 resolve docker.io/library/nginx:alpine@sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba done
+#9 DONE 0.0s
+
+#10 [admin-portal build 1/7] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+#10 resolve docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa done
+#10 DONE 0.0s
+
+#11 [admin-portal internal] load build context
+#11 transferring context: 3.68kB done
+#11 DONE 0.0s
+
+#12 [web-portal internal] load build context
+#12 transferring context: 4.25kB done
+#12 DONE 0.0s
+
+#13 [admin-portal build 2/7] WORKDIR /workspace/admin-portal
+#13 CACHED
+
+#14 [admin-portal build 3/7] COPY admin-portal/package*.json ./
+#14 CACHED
+
+#15 [admin-portal build 4/7] RUN npm ci
+#15 CACHED
+
+#16 [admin-portal build 6/7] COPY platform-config/ /workspace/platform-config/
+#16 CACHED
+
+#17 [admin-portal stage-1 2/3] COPY infra/docker/nginx/admin-portal.conf.template /etc/nginx/templates/default.conf.template
+#17 CACHED
+
+#18 [admin-portal build 7/7] RUN npm run build
+#18 CACHED
+
+#19 [admin-portal build 5/7] COPY admin-portal/ ./
+#19 CACHED
+
+#20 [web-portal build 3/7] COPY web-portal/package*.json ./
+#20 CACHED
+
+#21 [web-portal build 4/7] RUN npm ci
+#21 CACHED
+
+#22 [web-portal stage-1 2/3] COPY infra/docker/nginx/web-portal.conf.template /etc/nginx/templates/default.conf.template
+#22 CACHED
+
+#23 [web-portal build 2/7] WORKDIR /workspace/web-portal
+#23 CACHED
+
+#24 [web-portal build 5/7] COPY web-portal/ ./
+#24 CACHED
+
+#25 [web-portal build 7/7] RUN npm run build
+#25 CACHED
+
+#26 [web-portal build 6/7] COPY platform-config/ /workspace/platform-config/
+#26 CACHED
+
+#27 [admin-portal stage-1 3/3] COPY --from=build /workspace/admin-portal/dist /usr/share/nginx/html
+#27 CACHED
+
+#28 [web-portal stage-1 3/3] COPY --from=build /workspace/web-portal/dist /usr/share/nginx/html
+#28 CACHED
+
+#29 [admin-bff internal] load metadata for docker.io/library/eclipse-temurin:21-jdk-alpine
+#29 DONE 0.5s
+
+#30 [admin-bff internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine
+#30 DONE 0.5s
+
+#31 [customer-bff internal] load .dockerignore
+#31 transferring context: 2B done
+#31 DONE 0.0s
+
+#32 [admin-bff internal] load .dockerignore
+#32 transferring context: 2B done
+#32 DONE 0.0s
+
+#33 [customer-bff internal] load build context
+#33 DONE 0.0s
+
+#34 [admin-bff internal] load build context
+#34 DONE 0.0s
+
+#35 [admin-portal] exporting to image
+#35 exporting layers done
+#35 exporting manifest sha256:453469549ef347a0d803d47b3be540805bea3f2ed84290c3679dc0a7edd14658 done
+#35 exporting config sha256:c051fe9575d8ea0b3cbbb0f16aebc94fc47fb88c54f619d04572a3a0bd49d4c7 done
+#35 exporting attestation manifest sha256:aca828f7763294ffb14e76133d258d22f02724294e50bb218ab52769cb0f7567 done
+#35 exporting manifest list sha256:2466b6575fa1086a3b2275e71ddd773b15d388c8e5e32c550e52a3e7cff326a0 done
+#35 naming to docker.io/library/mytelco-local-admin-portal:latest done
+#35 unpacking to docker.io/library/mytelco-local-admin-portal:latest done
+#35 DONE 0.1s
+
+#36 [admin-bff stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:6ad8ed080d9be96b61438ec3ce99388e294af216ed57356000c06070e85c5d5d
+#36 resolve docker.io/library/eclipse-temurin:21-jre-alpine@sha256:6ad8ed080d9be96b61438ec3ce99388e294af216ed57356000c06070e85c5d5d
+#36 resolve docker.io/library/eclipse-temurin:21-jre-alpine@sha256:6ad8ed080d9be96b61438ec3ce99388e294af216ed57356000c06070e85c5d5d 0.0s done
+#36 DONE 0.0s
+
+#37 [customer-bff build 1/5] FROM docker.io/library/eclipse-temurin:21-jdk-alpine@sha256:c98f0d2e171c898bf896dc4166815d28a56d428e218190a1f35cdc7d82efd61f
+#37 resolve docker.io/library/eclipse-temurin:21-jdk-alpine@sha256:c98f0d2e171c898bf896dc4166815d28a56d428e218190a1f35cdc7d82efd61f 0.0s done
+#37 DONE 0.0s
+
+#38 [web-portal] exporting to image
+#38 exporting layers done
+#38 exporting manifest sha256:3f2bfd8be98da8364b33cb86038382b59382ffd36140102e887982cbc12cd48c done
+#38 exporting config sha256:2eb7d8403cfd77dd129475420ee6687fd9ff4b896cbcff05a85f3486da6ec9c2 done
+#38 exporting attestation manifest sha256:22484bc9227bbe1d0c1dc5442f57bfeb4e20e1fd3d254f11807ecef02b002045 done
+#38 exporting manifest list sha256:fb5d95fef97f22f869d16622202f58f0ca9a5e40adf55f83d755739d54f766b0 done
+#38 naming to docker.io/library/mytelco-local-web-portal:latest done
+#38 unpacking to docker.io/library/mytelco-local-web-portal:latest done
+#38 DONE 0.1s
+
+#34 [admin-bff internal] load build context
+#34 transferring context: 3.48kB done
+#34 DONE 0.0s
+
+#33 [customer-bff internal] load build context
+#33 transferring context: 18.28kB 0.0s done
+#33 DONE 0.0s
+
+#39 [admin-bff build 4/5] COPY src src
+#39 CACHED
+
+#40 [admin-bff build 3/5] COPY pom.xml .
+#40 CACHED
+
+#41 [admin-bff build 5/5] RUN apk add --no-cache maven &&     mvn clean package spring-boot:repackage -DskipTests
+#41 CACHED
+
+#42 [admin-bff stage-1 3/3] COPY --from=build /app/target/*.jar app.jar
+#42 CACHED
+
+#43 [customer-bff stage-1 2/3] WORKDIR /app
+#43 CACHED
+
+#44 [customer-bff build 2/5] WORKDIR /app
+#44 CACHED
+
+#45 [customer-bff build 3/5] COPY pom.xml .
+#45 CACHED
+
+#46 [customer-bff build 5/5] RUN apk add --no-cache maven &&     mvn clean package spring-boot:repackage -DskipTests
+#46 CACHED
+
+#47 [customer-bff build 4/5] COPY src src
+#47 CACHED
+
+#48 [customer-bff stage-1 3/3] COPY --from=build /app/target/*.jar app.jar
+#48 CACHED
+
+#49 [admin-bff] exporting to image
+#49 exporting layers done
+#49 exporting manifest sha256:0e2620f05fb2f1d53536e3a7c67a3ddc3e5c99bf9860c42c7a34fb0debbec846 done
+#49 exporting config sha256:4e2106797911448695ea75690ca7c49c418359a8a844a1d5e1ece832a3438273 done
+#49 exporting attestation manifest sha256:25cc358591d74028fdb2a7ea4aa66e0c340ad05d1ac9a108e11202a82c8720cd 0.0s done
+#49 exporting manifest list sha256:8b82562ee006c8cff19aa2c0f7122b406530aee8e326f104ae96002d364ad911 done
+#49 naming to docker.io/library/mytelco-local-admin-bff:latest done
+#49 unpacking to docker.io/library/mytelco-local-admin-bff:latest done
+#49 DONE 0.1s
+
+#50 [customer-bff] exporting to image
+#50 exporting layers done
+#50 exporting manifest sha256:08be2618f11542db06bfbc9f8ab81e71e884f403b86fe124f81f3242a9c3a044 done
+#50 exporting config sha256:c01eb39435787da223d8844b43b04bf4aec5a0ae5db535487b04c81e822112d4 done
+#50 exporting attestation manifest sha256:1095fc046a0d5475ebdfb65df18c5cc812fa1964891b8ea5f1500c30fd7f507c 0.0s done
+#50 exporting manifest list sha256:08872f720fc016d670e23ac53243cdf597ff05b5d9128a8b10a7edd4f93df8b3 done
+#50 naming to docker.io/library/mytelco-local-customer-bff:latest done
+#50 unpacking to docker.io/library/mytelco-local-customer-bff:latest done
+#50 DONE 0.1s
+
+#51 [admin-portal] resolving provenance for metadata file
+#51 DONE 0.0s
+
+#52 [web-portal] resolving provenance for metadata file
+#52 DONE 0.0s
+
+#53 [admin-bff] resolving provenance for metadata file
+#53 DONE 0.0s
+
+#54 [customer-bff] resolving provenance for metadata file
+#54 DONE 0.0s
+ Image mytelco-local-admin-portal Built 
+ Image mytelco-local-customer-bff Built 
+ Image mytelco-local-web-portal Built 
+ Image mytelco-local-admin-bff Built 
+ Container mytelco-kong Running 
+ Container mytelco-keycloak Running 
+ Container mytelco-postgres Running 
+ Container mytelco-admin-bff Recreate 
+ Container mytelco-customer-bff Recreate 
+ Container mytelco-admin-bff Recreated 
+ Container mytelco-admin-portal Recreate 
+ Container mytelco-customer-bff Recreated 
+ Container mytelco-web-portal Recreate 
+ Container mytelco-admin-portal Recreated 
+ Container mytelco-web-portal Recreated 
+ Container mytelco-postgres Waiting 
+ Container mytelco-keycloak Waiting 
+ Container mytelco-keycloak Waiting 
+ Container mytelco-kong Waiting 
+ Container mytelco-kong Waiting 
+ Container mytelco-postgres Waiting 
+ Container mytelco-keycloak Healthy 
+ Container mytelco-kong Healthy 
+ Container mytelco-postgres Healthy 
+ Container mytelco-customer-bff Starting 
+ Container mytelco-postgres Healthy 
+ Container mytelco-keycloak Healthy 
+ Container mytelco-kong Healthy 
+ Container mytelco-admin-bff Starting 
+ Container mytelco-admin-bff Started 
+ Container mytelco-kong Waiting 
+ Container mytelco-customer-bff Started 
+ Container mytelco-kong Waiting 
+ Container mytelco-kong Healthy 
+ Container mytelco-admin-portal Starting 
+ Container mytelco-kong Healthy 
+ Container mytelco-web-portal Starting 
+ Container mytelco-web-portal Started 
+ Container mytelco-admin-portal Started 
+[2/7] Verify baseline health
+curl: (56) Recv failure: Connection reset by peer
+[OK] baseline health is UP
+[3/7] Snapshot current service image as rollback baseline
+baseline_image=mytelco-local-customer-bff:rollback-baseline-20260319-150633
+baseline_digest=mytelco-local-customer-bff@sha256:08872f720fc016d670e23ac53243cdf597ff05b5d9128a8b10a7edd4f93df8b3
+[4/7] Build intentionally bad image to simulate failed rollout
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.bad
+#1 transferring dockerfile: 125B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/alpine:3.20
+#2 ...
+
+#3 [auth] library/alpine:pull token for registry-1.docker.io
+#3 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/alpine:3.20
+#2 DONE 2.5s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [1/1] FROM docker.io/library/alpine:3.20@sha256:a4f4213abb84c497377b8544c81b3564f313746700372ec4fe84653e4fb03805
+#5 resolve docker.io/library/alpine:3.20@sha256:a4f4213abb84c497377b8544c81b3564f313746700372ec4fe84653e4fb03805
+#5 ...
+
+#6 [auth] library/alpine:pull token for registry-1.docker.io
+#6 DONE 0.0s
+
+#5 [1/1] FROM docker.io/library/alpine:3.20@sha256:a4f4213abb84c497377b8544c81b3564f313746700372ec4fe84653e4fb03805
+#5 resolve docker.io/library/alpine:3.20@sha256:a4f4213abb84c497377b8544c81b3564f313746700372ec4fe84653e4fb03805 0.8s done
+#5 sha256:83b2d7e29698161422a104647ffb26568fe86648ff3609d1b60a4f9e9de38074 0B / 4.09MB 0.2s
+#5 sha256:83b2d7e29698161422a104647ffb26568fe86648ff3609d1b60a4f9e9de38074 1.05MB / 4.09MB 0.5s
+#5 sha256:83b2d7e29698161422a104647ffb26568fe86648ff3609d1b60a4f9e9de38074 4.09MB / 4.09MB 0.5s done
+#5 DONE 1.3s
+
+#7 exporting to image
+#7 exporting layers done
+#7 exporting manifest sha256:1d19bd49f16878456ee3bdd617d0d5f0ffc5fe6fea992d431591771b87371f07 done
+#7 exporting config sha256:de2dc01a01e2e0ec934d0253d75d82693ca44e8c0f789331503971fb109b48ae done
+#7 exporting attestation manifest sha256:2932abda676a50c7a769afc687d1cb503a96f50936b142739d4e7c72a5982683 done
+#7 exporting manifest list sha256:191f5f3b8887fad908a2c5c3aae36bade448a9dc0becd9240dcd013c23fc8237 done
+#7 naming to docker.io/library/mytelco-local-customer-bff:rollback-bad-20260319-150633 done
+#7 unpacking to docker.io/library/mytelco-local-customer-bff:rollback-bad-20260319-150633 0.6s done
+#7 DONE 0.6s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/xtcvm6kuafr2u80xp7dub5rcw
+[5/7] Deploy bad release
+ Container mytelco-kong Running 
+ Container mytelco-keycloak Running 
+ Container mytelco-postgres Running 
+ Container mytelco-customer-bff Recreate 
+ Container mytelco-customer-bff Recreated 
+ Container mytelco-keycloak Waiting 
+ Container mytelco-kong Waiting 
+ Container mytelco-postgres Waiting 
+ Container mytelco-kong Healthy 
+ Container mytelco-keycloak Healthy 
+ Container mytelco-postgres Healthy 
+ Container mytelco-customer-bff Starting 
+ Container mytelco-customer-bff Started 
+NAME      IMAGE     COMMAND   SERVICE   CREATED   STATUS    PORTS
+curl: (7) Failed to connect to localhost port 8081 after 0 ms: Couldn't connect to server
+[OK] bad rollout detected (health code=000)
+[6/7] Roll back to baseline image
+ Container mytelco-keycloak Running 
+ Container mytelco-kong Running 
+ Container mytelco-postgres Running 
+ Container mytelco-customer-bff Recreate 
+ Container mytelco-customer-bff Recreated 
+ Container mytelco-kong Waiting 
+ Container mytelco-postgres Waiting 
+ Container mytelco-keycloak Waiting 
+ Container mytelco-kong Healthy 
+ Container mytelco-keycloak Healthy 
+ Container mytelco-postgres Healthy 
+ Container mytelco-customer-bff Starting 
+ Container mytelco-customer-bff Started 
+curl: (56) Recv failure: Connection reset by peer
+[OK] rollback complete and service healthy
+[7/7] Restore default compose declaration
+ Container mytelco-kong Running 
+ Container mytelco-postgres Running 
+ Container mytelco-keycloak Running 
+ Container mytelco-customer-bff Recreate 
+ Container mytelco-customer-bff Recreated 
+ Container mytelco-postgres Waiting 
+ Container mytelco-keycloak Waiting 
+ Container mytelco-kong Waiting 
+ Container mytelco-keycloak Healthy 
+ Container mytelco-kong Healthy 
+ Container mytelco-postgres Healthy 
+ Container mytelco-customer-bff Starting 
+ Container mytelco-customer-bff Started 
+curl: (56) Recv failure: Connection reset by peer
+[OK] service restored under default compose declaration
+
+[DONE] summary: evidence/2026-03-19/docker-rollback-customer-bff-20260319-150633.md
+[DONE] log: evidence/2026-03-19/docker-rollback-customer-bff-20260319-150633.log
