@@ -2,6 +2,9 @@ package com.mytelco.customerbff.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.mytelco.customerbff.config.NotificationDeliveryProperties;
+import com.mytelco.customerbff.events.DomainEventPublisher;
+import com.mytelco.customerbff.events.EventTopic;
+import com.mytelco.customerbff.events.NoopDomainEventPublisher;
 import com.mytelco.customerbff.model.NotificationCategory;
 import com.mytelco.customerbff.model.NotificationCategoryPreference;
 import com.mytelco.customerbff.model.NotificationCategoryPreferenceUpdate;
@@ -39,11 +42,17 @@ public class NotificationCenterService {
         new ConcurrentHashMap<>();
     private final Map<String, CopyOnWriteArrayList<NotificationInboxItem>> inboxByCustomer = new ConcurrentHashMap<>();
     private DurableStateStore durableStateStore = NoopDurableStateStore.INSTANCE;
+    private DomainEventPublisher domainEventPublisher = NoopDomainEventPublisher.INSTANCE;
 
     @Autowired(required = false)
     public void setDurableStateStore(DurableStateStore durableStateStore) {
         this.durableStateStore = durableStateStore;
         loadState();
+    }
+
+    @Autowired(required = false)
+    public void setDomainEventPublisher(DomainEventPublisher domainEventPublisher) {
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     private final NotificationDeliveryAdapter deliveryAdapter;
@@ -85,7 +94,22 @@ public class NotificationCenterService {
         }
 
         persistState();
-        return mapPreferences(customerId, prefs, actor);
+        NotificationPreferencesResponse response = mapPreferences(customerId, prefs, actor);
+
+        domainEventPublisher.publish(
+            EventTopic.NOTIFICATIONS,
+            "notification.preferences.updated.v1",
+            customerId,
+            actor,
+            Map.of(
+                "customerId", customerId,
+                "updatedBy", actor,
+                "categoryCount", response.categories().size(),
+                "updatedAt", response.updatedAt().toString()
+            )
+        );
+
+        return response;
     }
 
     public NotificationInboxItem sendTestNotification(String customerId, NotificationTestSendRequest request) {
@@ -139,6 +163,21 @@ public class NotificationCenterService {
 
         inboxByCustomer.computeIfAbsent(customerId, ignored -> new CopyOnWriteArrayList<>()).add(item);
         persistState();
+
+        domainEventPublisher.publish(
+            EventTopic.NOTIFICATIONS,
+            "notification.test.sent.v1",
+            customerId,
+            notificationId,
+            Map.of(
+                "notificationId", notificationId,
+                "category", request.category().name(),
+                "requestedChannels", candidateChannels.stream().map(Enum::name).toList(),
+                "deliveredChannels", targetChannels.stream().map(Enum::name).toList(),
+                "deliveryAttempts", deliveries.size()
+            )
+        );
+
         return item;
     }
 

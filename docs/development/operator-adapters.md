@@ -74,7 +74,7 @@ mytelco:
     customer-operator-overrides: {}
     retry:
       max-attempts: ${MYTELCO_OPERATOR_RETRY_MAX_ATTEMPTS:3}
-      initial-backoff: ${MYTELCO_OPERATOR_RETRY_INITIAL_BACKOFF:PT80MS}
+      initial-backoff: ${MYTELCO_OPERATOR_RETRY_INITIAL_BACKOFF:80ms}
       multiplier: ${MYTELCO_OPERATOR_RETRY_MULTIPLIER:2.0}
       max-backoff: ${MYTELCO_OPERATOR_RETRY_MAX_BACKOFF:PT1S}
 ```

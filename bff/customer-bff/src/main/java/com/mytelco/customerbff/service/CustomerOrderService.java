@@ -1,6 +1,9 @@
 package com.mytelco.customerbff.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.mytelco.customerbff.events.DomainEventPublisher;
+import com.mytelco.customerbff.events.EventTopic;
+import com.mytelco.customerbff.events.NoopDomainEventPublisher;
 import com.mytelco.customerbff.model.AlertInboxItem;
 import com.mytelco.customerbff.model.CustomerOrderCreateRequest;
 import com.mytelco.customerbff.model.CustomerOrderResponse;
@@ -33,6 +36,7 @@ public class CustomerOrderService {
     private final Map<String, CopyOnWriteArrayList<String>> orderIdsByLineId = new ConcurrentHashMap<>();
     private final Map<String, String> orderCustomerByOrderId = new ConcurrentHashMap<>();
     private DurableStateStore durableStateStore = NoopDurableStateStore.INSTANCE;
+    private DomainEventPublisher domainEventPublisher = NoopDomainEventPublisher.INSTANCE;
 
     public CustomerOrderService(AlertInboxService alertInboxService) {
         this.alertInboxService = alertInboxService;
@@ -42,6 +46,11 @@ public class CustomerOrderService {
     public void setDurableStateStore(DurableStateStore durableStateStore) {
         this.durableStateStore = durableStateStore;
         loadState();
+    }
+
+    @Autowired(required = false)
+    public void setDomainEventPublisher(DomainEventPublisher domainEventPublisher) {
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     public CustomerOrderResponse create(
@@ -55,7 +64,11 @@ public class CustomerOrderService {
         String scopedIdempotencyKey = scopedIdempotencyKey(customerId, idempotencyKey);
         String existingOrderId = idempotencyToOrderId.get(scopedIdempotencyKey);
         if (existingOrderId != null) {
-            return ordersById.get(existingOrderId);
+            CustomerOrderResponse existingOrder = ordersById.get(existingOrderId);
+            if (existingOrder != null) {
+                publishOrderEvent(customerId, existingOrder, idempotencyKey, true);
+            }
+            return existingOrder;
         }
 
         Instant createdAt = Instant.now();
@@ -83,6 +96,8 @@ public class CustomerOrderService {
             finalOrder = transition(processing, OrderState.COMPLETED, false, "Order completed successfully");
             emitNotification(customerId, finalOrder, "ORDER_COMPLETED", finalOrder.notificationMessage());
         }
+
+        publishOrderEvent(customerId, finalOrder, idempotencyKey, false);
 
         CustomerOrderResponse prior = putIfAbsentIdempotent(scopedIdempotencyKey, finalOrder, customerId);
         return prior != null ? prior : finalOrder;
@@ -168,6 +183,30 @@ public class CustomerOrderService {
                 actor,
                 message,
                 Instant.now()
+            )
+        );
+    }
+
+    private void publishOrderEvent(
+        String customerId,
+        CustomerOrderResponse order,
+        String idempotencyKey,
+        boolean replayed
+    ) {
+        domainEventPublisher.publish(
+            EventTopic.ORDERS,
+            "order.state.changed.v1",
+            customerId,
+            idempotencyKey,
+            Map.of(
+                "orderId", order.orderId(),
+                "lineId", order.lineId(),
+                "itemType", order.itemType(),
+                "itemCode", order.itemCode(),
+                "state", order.state().name(),
+                "rollbackApplied", order.rollbackApplied(),
+                "replayed", replayed,
+                "updatedAt", order.updatedAt().toString()
             )
         );
     }

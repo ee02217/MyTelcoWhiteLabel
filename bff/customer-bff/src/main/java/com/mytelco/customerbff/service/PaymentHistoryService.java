@@ -1,8 +1,12 @@
 package com.mytelco.customerbff.service;
 
+import com.mytelco.customerbff.events.DomainEventPublisher;
+import com.mytelco.customerbff.events.EventTopic;
+import com.mytelco.customerbff.events.NoopDomainEventPublisher;
 import com.mytelco.customerbff.model.PaymentHistoryItem;
 import com.mytelco.customerbff.model.PaymentHistoryResponse;
 import com.mytelco.customerbff.model.PaymentRetryResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,9 +26,15 @@ public class PaymentHistoryService {
 
     private final Map<String, PaymentHistoryItem> paymentsById = new ConcurrentHashMap<>();
     private final Map<String, PaymentRetryResponse> retryByIdempotencyKey = new ConcurrentHashMap<>();
+    private DomainEventPublisher domainEventPublisher = NoopDomainEventPublisher.INSTANCE;
 
     public PaymentHistoryService() {
         seedPayments();
+    }
+
+    @Autowired(required = false)
+    public void setDomainEventPublisher(DomainEventPublisher domainEventPublisher) {
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     public PaymentHistoryResponse getHistory(Integer months) {
@@ -55,12 +65,51 @@ public class PaymentHistoryService {
 
         PaymentRetryResponse existing = retryByIdempotencyKey.get(idempotencyKey);
         if (existing != null) {
+            publishRetryReplay(payment, existing);
             return existing;
         }
 
         PaymentRetryResponse generated = buildRetryResponse(payment, idempotencyKey);
         PaymentRetryResponse prior = retryByIdempotencyKey.putIfAbsent(idempotencyKey, generated);
-        return prior != null ? prior : generated;
+        PaymentRetryResponse response = prior != null ? prior : generated;
+
+        if (prior != null) {
+            publishRetryReplay(payment, prior);
+        } else {
+            publishRetryProcessed(payment, generated);
+        }
+
+        return response;
+    }
+
+    private void publishRetryProcessed(PaymentHistoryItem payment, PaymentRetryResponse response) {
+        domainEventPublisher.publish(
+            EventTopic.PAYMENT,
+            "payment.retry.processed.v1",
+            "unknown",
+            response.idempotencyKey(),
+            Map.of(
+                "paymentId", payment.paymentId(),
+                "referenceId", payment.referenceId(),
+                "status", response.status(),
+                "idempotencyKey", response.idempotencyKey()
+            )
+        );
+    }
+
+    private void publishRetryReplay(PaymentHistoryItem payment, PaymentRetryResponse response) {
+        domainEventPublisher.publish(
+            EventTopic.PAYMENT,
+            "payment.retry.replayed.v1",
+            "unknown",
+            response.idempotencyKey(),
+            Map.of(
+                "paymentId", payment.paymentId(),
+                "referenceId", payment.referenceId(),
+                "status", response.status(),
+                "idempotencyKey", response.idempotencyKey()
+            )
+        );
     }
 
     private PaymentRetryResponse buildRetryResponse(PaymentHistoryItem payment, String idempotencyKey) {
