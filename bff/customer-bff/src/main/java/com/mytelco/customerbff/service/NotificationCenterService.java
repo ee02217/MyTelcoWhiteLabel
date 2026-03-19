@@ -58,6 +58,7 @@ public class NotificationCenterService {
     }
 
     public List<NotificationInboxItem> getInbox(String customerId) {
+        ensureSeedInbox(customerId);
         return inboxByCustomer.getOrDefault(customerId, new CopyOnWriteArrayList<>()).stream()
             .sorted(Comparator.comparing(NotificationInboxItem::createdAt).reversed())
             .toList();
@@ -218,6 +219,52 @@ public class NotificationCenterService {
         }
 
         return offsetMs;
+    }
+
+    private void ensureSeedInbox(String customerId) {
+        if (inboxByCustomer.containsKey(customerId)) {
+            return;
+        }
+
+        Instant now = Instant.now();
+        List<NotificationInboxItem> seededItems = List.of(
+            new NotificationInboxItem(
+                "seed-notif-billing-reminder",
+                customerId,
+                "Upcoming payment reminder",
+                "Your monthly invoice is due in 2 days. Auto-pay is enabled.",
+                NotificationCategory.BILLING,
+                List.of(seedDelivered(NotificationChannel.IN_APP, now.minusSeconds(7200))),
+                now.minusSeconds(7200),
+                null
+            ),
+            new NotificationInboxItem(
+                "seed-notif-security-login",
+                customerId,
+                "New login detected",
+                "A successful self-care login was detected from your current device.",
+                NotificationCategory.SECURITY,
+                List.of(seedDelivered(NotificationChannel.PUSH, now.minusSeconds(1800))),
+                now.minusSeconds(1800),
+                null
+            )
+        );
+
+        inboxByCustomer.put(customerId, new CopyOnWriteArrayList<>(seededItems));
+        persistState();
+    }
+
+    private NotificationChannelDelivery seedDelivered(NotificationChannel channel, Instant updatedAt) {
+        return new NotificationChannelDelivery(
+            channel,
+            NotificationDeliveryStatus.DELIVERED,
+            updatedAt,
+            1,
+            providerName(),
+            "seed-delivery",
+            null,
+            null
+        );
     }
 
     private String providerName() {
