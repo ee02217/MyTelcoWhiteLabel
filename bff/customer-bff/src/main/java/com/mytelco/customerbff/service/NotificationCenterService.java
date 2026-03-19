@@ -1,5 +1,6 @@
 package com.mytelco.customerbff.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.mytelco.customerbff.config.NotificationDeliveryProperties;
 import com.mytelco.customerbff.model.NotificationCategory;
 import com.mytelco.customerbff.model.NotificationCategoryPreference;
@@ -12,6 +13,9 @@ import com.mytelco.customerbff.model.NotificationInboxItem;
 import com.mytelco.customerbff.model.NotificationPreferencesResponse;
 import com.mytelco.customerbff.model.NotificationPreferencesUpdateRequest;
 import com.mytelco.customerbff.model.NotificationTestSendRequest;
+import com.mytelco.customerbff.service.persistence.DurableStateStore;
+import com.mytelco.customerbff.service.persistence.NoopDurableStateStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -28,9 +32,19 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Service
 public class NotificationCenterService {
 
+    private static final String STATE_KEY = "notification-center-state";
+    private static final int SCHEMA_VERSION = 1;
+
     private final Map<String, EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>>> preferencesByCustomer =
         new ConcurrentHashMap<>();
     private final Map<String, CopyOnWriteArrayList<NotificationInboxItem>> inboxByCustomer = new ConcurrentHashMap<>();
+    private DurableStateStore durableStateStore = NoopDurableStateStore.INSTANCE;
+
+    @Autowired(required = false)
+    public void setDurableStateStore(DurableStateStore durableStateStore) {
+        this.durableStateStore = durableStateStore;
+        loadState();
+    }
 
     private final NotificationDeliveryAdapter deliveryAdapter;
     private final NotificationDeliveryProperties deliveryProperties;
@@ -50,8 +64,7 @@ public class NotificationCenterService {
     }
 
     public NotificationPreferencesResponse getPreferences(String customerId) {
-        EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>> prefs =
-            preferencesByCustomer.computeIfAbsent(customerId, ignored -> defaultPreferences());
+        EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>> prefs = getOrCreatePreferences(customerId, true);
         return mapPreferences(customerId, prefs, "system");
     }
 
@@ -60,8 +73,7 @@ public class NotificationCenterService {
         NotificationPreferencesUpdateRequest request,
         String actor
     ) {
-        EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>> prefs =
-            preferencesByCustomer.computeIfAbsent(customerId, ignored -> defaultPreferences());
+        EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>> prefs = getOrCreatePreferences(customerId, true);
 
         for (NotificationCategoryPreferenceUpdate update : request.categories()) {
             EnumMap<NotificationChannel, Boolean> categoryPrefs = prefs.computeIfAbsent(
@@ -71,12 +83,12 @@ public class NotificationCenterService {
             update.channels().forEach((channel, enabled) -> categoryPrefs.put(channel, Boolean.TRUE.equals(enabled)));
         }
 
+        persistState();
         return mapPreferences(customerId, prefs, actor);
     }
 
     public NotificationInboxItem sendTestNotification(String customerId, NotificationTestSendRequest request) {
-        EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>> prefs =
-            preferencesByCustomer.computeIfAbsent(customerId, ignored -> defaultPreferences());
+        EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>> prefs = getOrCreatePreferences(customerId, true);
         EnumMap<NotificationChannel, Boolean> categoryPrefs = prefs.getOrDefault(request.category(), defaultChannelMap());
 
         EnumSet<NotificationChannel> candidateChannels = request.requestedChannels() == null || request.requestedChannels().isEmpty()
@@ -125,6 +137,7 @@ public class NotificationCenterService {
         );
 
         inboxByCustomer.computeIfAbsent(customerId, ignored -> new CopyOnWriteArrayList<>()).add(item);
+        persistState();
         return item;
     }
 
@@ -245,5 +258,64 @@ public class NotificationCenterService {
         }
 
         return new NotificationPreferencesResponse(customerId, categories, Instant.now(), updatedBy);
+    }
+
+    private EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>> getOrCreatePreferences(
+        String customerId,
+        boolean persistWhenCreated
+    ) {
+        EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>> existing = preferencesByCustomer.get(customerId);
+        if (existing != null) {
+            return existing;
+        }
+
+        EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>> created = defaultPreferences();
+        preferencesByCustomer.put(customerId, created);
+        if (persistWhenCreated) {
+            persistState();
+        }
+        return created;
+    }
+
+    private void loadState() {
+        NotificationCenterState state = durableStateStore.read(
+            STATE_KEY,
+            new TypeReference<>() {
+            },
+            NotificationCenterState::empty
+        );
+
+        preferencesByCustomer.clear();
+        preferencesByCustomer.putAll(state.preferencesByCustomer());
+
+        inboxByCustomer.clear();
+        state.inboxByCustomer().forEach((customerId, inbox) ->
+            inboxByCustomer.put(customerId, new CopyOnWriteArrayList<>(inbox))
+        );
+    }
+
+    private void persistState() {
+        Map<String, EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>>> prefsSnapshot = new ConcurrentHashMap<>();
+        preferencesByCustomer.forEach((customerId, prefsByCategory) -> {
+            EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>> categorySnapshot =
+                new EnumMap<>(NotificationCategory.class);
+            prefsByCategory.forEach((category, channelPrefs) -> categorySnapshot.put(category, new EnumMap<>(channelPrefs)));
+            prefsSnapshot.put(customerId, categorySnapshot);
+        });
+
+        Map<String, List<NotificationInboxItem>> inboxSnapshot = new ConcurrentHashMap<>();
+        inboxByCustomer.forEach((customerId, inbox) -> inboxSnapshot.put(customerId, List.copyOf(inbox)));
+
+        durableStateStore.write(STATE_KEY, new NotificationCenterState(SCHEMA_VERSION, prefsSnapshot, inboxSnapshot));
+    }
+
+    private record NotificationCenterState(
+        int schemaVersion,
+        Map<String, EnumMap<NotificationCategory, EnumMap<NotificationChannel, Boolean>>> preferencesByCustomer,
+        Map<String, List<NotificationInboxItem>> inboxByCustomer
+    ) {
+        private static NotificationCenterState empty() {
+            return new NotificationCenterState(SCHEMA_VERSION, Map.of(), Map.of());
+        }
     }
 }
