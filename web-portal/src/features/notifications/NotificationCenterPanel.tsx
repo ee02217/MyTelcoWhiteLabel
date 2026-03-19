@@ -33,8 +33,10 @@ type NotificationPreferencesResponse = {
 
 export function NotificationCenterPanel({
   authedFetch,
+  canSendTest,
 }: {
   authedFetch: (path: string, init?: RequestInit) => Promise<Response>;
+  canSendTest?: boolean;
 }) {
   const [inbox, setInbox] = useState<NotificationInboxItem[]>([]);
   const [preferences, setPreferences] = useState<NotificationCategoryPreference[]>([]);
@@ -116,9 +118,18 @@ export function NotificationCenterPanel({
         >
           Load preferences
         </Button>
-        <Button size="sm" onClick={() => sendTest().catch(() => setStatus('Failed to send test'))}>
-          Send test
-        </Button>
+        {canSendTest ? (
+          <Button
+            size="sm"
+            onClick={() => sendTest().catch(() => setStatus('Failed to send test'))}
+          >
+            Send test
+          </Button>
+        ) : (
+          <Typography variant="small" color="secondary">
+            Test send is available in admin-authorized context only.
+          </Typography>
+        )}
       </div>
 
       {preferences.map((item) => (
