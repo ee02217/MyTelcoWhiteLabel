@@ -1,11 +1,16 @@
 package com.mytelco.customerbff.service;
 
+import com.mytelco.customerbff.events.DomainEventPublisher;
+import com.mytelco.customerbff.events.EventTopic;
+import com.mytelco.customerbff.events.NoopDomainEventPublisher;
 import com.mytelco.customerbff.model.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -18,6 +23,7 @@ public class UsageThresholdAlertService {
     private final AlertDedupService dedupService;
     private final AlertInboxService inboxService;
     private final PushNotificationDispatcher pushDispatcher;
+    private DomainEventPublisher domainEventPublisher = NoopDomainEventPublisher.INSTANCE;
 
     public UsageThresholdAlertService(
         ThresholdConfigService thresholdConfigService,
@@ -29,6 +35,11 @@ public class UsageThresholdAlertService {
         this.dedupService = dedupService;
         this.inboxService = inboxService;
         this.pushDispatcher = pushDispatcher;
+    }
+
+    @Autowired(required = false)
+    public void setDomainEventPublisher(DomainEventPublisher domainEventPublisher) {
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     public List<UsageThresholdCrossing> evaluateAndDispatch(String customerId, CustomerUsageResponse usageResponse) {
@@ -75,6 +86,20 @@ public class UsageThresholdAlertService {
                         inAppNotification.message(),
                         crossing.crossedAt()
                     ));
+
+                    domainEventPublisher.publish(
+                        EventTopic.USAGE,
+                        "usage.threshold.crossed.v1",
+                        customerId,
+                        crossing.lineId() + "-" + threshold,
+                        Map.of(
+                            "lineId", crossing.lineId(),
+                            "service", crossing.service(),
+                            "threshold", crossing.thresholdPercent(),
+                            "currentPercent", crossing.currentPercent(),
+                            "crossedAt", crossing.crossedAt().toString()
+                        )
+                    );
                 }
             }
         }

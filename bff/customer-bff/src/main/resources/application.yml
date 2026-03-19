@@ -63,9 +63,24 @@ mytelco:
     customer-operator-overrides: {}
     retry:
       max-attempts: ${MYTELCO_OPERATOR_RETRY_MAX_ATTEMPTS:3}
-      initial-backoff: ${MYTELCO_OPERATOR_RETRY_INITIAL_BACKOFF:PT80MS}
+      initial-backoff: ${MYTELCO_OPERATOR_RETRY_INITIAL_BACKOFF:80ms}
       multiplier: ${MYTELCO_OPERATOR_RETRY_MULTIPLIER:2.0}
       max-backoff: ${MYTELCO_OPERATOR_RETRY_MAX_BACKOFF:PT1S}
+  events:
+    enabled: ${MYTELCO_EVENTS_ENABLED:true}
+    max-delivered-events: ${MYTELCO_EVENTS_MAX_DELIVERED_EVENTS:2000}
+    retry:
+      max-attempts: ${MYTELCO_EVENTS_RETRY_MAX_ATTEMPTS:3}
+      initial-backoff: ${MYTELCO_EVENTS_RETRY_INITIAL_BACKOFF:75ms}
+      multiplier: ${MYTELCO_EVENTS_RETRY_MULTIPLIER:2.0}
+      max-backoff: ${MYTELCO_EVENTS_RETRY_MAX_BACKOFF:PT1S}
+    schema:
+      default-version: ${MYTELCO_EVENTS_SCHEMA_DEFAULT_VERSION:1}
+      versions: {}
+    dispatch:
+      # Optional fault-injection for DLQ/replay testing.
+      fail-on-topics: []
+      fail-on-event-types: []
 
 # Logging
 logging:

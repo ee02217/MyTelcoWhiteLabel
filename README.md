@@ -15,6 +15,7 @@ This is the main repository for the Telco Self-Care White-Label Platform, suppor
 - **[Payment Journey](./docs/development/payment-journey.md)** - F-06.2 payment method registration, tokenized checkout, idempotency
 - **[Payment History](./docs/development/payment-history.md)** - F-06.3 12-month history, receipt download/share, one-click retry
 - **[Operator Adapters](./docs/development/operator-adapters.md)** - F-09.2 adapter contract, reference implementation, retry/error standards
+- **[Kafka Event Backbone](./docs/development/kafka-event-backbone.md)** - F-09.3 topics, schema policy, DLQ, replay tooling
 - **[Order Orchestration](./docs/development/order-orchestration.md)** - F-07.2 state machine, idempotency, rollback and notifications
 - **[SIM/eSIM + Roaming Basic](./docs/development/sim-esim-roaming-basic.md)** - F-07.3 step-up SIM controls, eSIM QR/status lifecycle, roaming pack purchase
 - **[Support Case Management](./docs/development/support-case-management.md)** - F-08.2 support case creation, timeline, and SLA projection

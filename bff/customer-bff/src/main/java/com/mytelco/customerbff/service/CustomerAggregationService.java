@@ -1,14 +1,19 @@
 package com.mytelco.customerbff.service;
 
+import com.mytelco.customerbff.events.DomainEventPublisher;
+import com.mytelco.customerbff.events.EventTopic;
+import com.mytelco.customerbff.events.NoopDomainEventPublisher;
 import com.mytelco.customerbff.model.*;
 import com.mytelco.customerbff.provider.AccountProvider;
 import com.mytelco.customerbff.provider.BillingProvider;
 import com.mytelco.customerbff.provider.UsageProvider;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Map;
 
 /**
  * Service that aggregates data from multiple providers for the customer dashboard.
@@ -24,6 +29,7 @@ public class CustomerAggregationService {
     private final Timer dashboardTimer;
     private final Timer accountOverviewTimer;
     private final Timer usageDetailsTimer;
+    private DomainEventPublisher domainEventPublisher = NoopDomainEventPublisher.INSTANCE;
 
     public CustomerAggregationService(
             AccountProvider accountProvider,
@@ -51,6 +57,11 @@ public class CustomerAggregationService {
             .description("Time taken to aggregate customer usage details")
             .publishPercentiles(0.50, 0.95, 0.99)
             .register(meterRegistry);
+    }
+
+    @Autowired(required = false)
+    public void setDomainEventPublisher(DomainEventPublisher domainEventPublisher) {
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     /**
@@ -83,7 +94,7 @@ public class CustomerAggregationService {
         return usageDetailsTimer.record(() -> {
             CustomerUsageResponse usage = usageProvider.getUsageDetails(customerId, view, lineId);
             var crossings = usageThresholdAlertService.evaluateAndDispatch(customerId, usage);
-            return new CustomerUsageResponse(
+            CustomerUsageResponse response = new CustomerUsageResponse(
                 usage.view(),
                 usage.periodStart(),
                 usage.periodEnd(),
@@ -93,6 +104,21 @@ public class CustomerAggregationService {
                 crossings,
                 usage.dataFreshness()
             );
+
+            domainEventPublisher.publish(
+                EventTopic.USAGE,
+                "usage.details.requested.v1",
+                customerId,
+                usage.view(),
+                Map.of(
+                    "view", usage.view(),
+                    "lineId", lineId == null ? "ALL" : lineId,
+                    "lineCount", usage.lines().size(),
+                    "crossings", crossings.size()
+                )
+            );
+
+            return response;
         });
     }
 }
