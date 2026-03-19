@@ -15,11 +15,27 @@ export type OidcSession = {
   scope?: string;
 };
 
+const resolveRuntimeUri = (configuredUri: string | undefined, fallbackPath: string) => {
+  const origin = window.location.origin;
+
+  if (!configuredUri) {
+    return new URL(fallbackPath, origin).toString();
+  }
+
+  try {
+    const parsed = new URL(configuredUri, origin);
+    const routePath = `${parsed.pathname}${parsed.search}${parsed.hash}` || fallbackPath;
+    return new URL(routePath, origin).toString();
+  } catch {
+    return new URL(fallbackPath, origin).toString();
+  }
+};
+
 const cfg = {
   issuer: import.meta.env.VITE_OIDC_ISSUER,
   clientId: import.meta.env.VITE_OIDC_CLIENT_ID,
-  redirectUri: import.meta.env.VITE_OIDC_REDIRECT_URI,
-  postLogoutRedirectUri: import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI,
+  redirectUri: resolveRuntimeUri(import.meta.env.VITE_OIDC_REDIRECT_URI, '/callback'),
+  postLogoutRedirectUri: resolveRuntimeUri(import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI, '/'),
   scopes: import.meta.env.VITE_OIDC_SCOPES || 'openid roles',
 };
 
