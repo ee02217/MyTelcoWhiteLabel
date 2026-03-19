@@ -77,6 +77,7 @@ public class SupportCaseService {
     }
 
     public List<SupportCaseResponse> list() {
+        ensureSeedCases();
         return casesById.values().stream()
             .map(SupportCaseRecord::toResponse)
             .sorted(Comparator.comparing(SupportCaseResponse::createdAt).reversed())
@@ -109,6 +110,102 @@ public class SupportCaseService {
         casesById.put(caseId, updated);
         persistState();
         return updated.toResponse();
+    }
+
+    private void ensureSeedCases() {
+        if (!casesById.isEmpty()) {
+            return;
+        }
+
+        Instant now = Instant.now();
+
+        seedCase(
+            "sc_seed_network_001",
+            "TECHNICAL",
+            "Intermittent network drops",
+            "Data session drops were detected on line-web-1. Investigation in progress.",
+            "HIGH",
+            SupportCaseStatus.IN_PROGRESS,
+            now.minusSeconds(3 * 24 * 60 * 60L),
+            now.minusSeconds(2 * 60 * 60L),
+            List.of(
+                new SupportCaseTimelineEntry(
+                    "evt_seed_tech_001",
+                    now.minusSeconds(3 * 24 * 60 * 60L),
+                    "system",
+                    "SYSTEM",
+                    "CASE_CREATED",
+                    "Case opened from proactive monitoring alert"
+                ),
+                new SupportCaseTimelineEntry(
+                    "evt_seed_tech_002",
+                    now.minusSeconds(2 * 24 * 60 * 60L),
+                    "support-agent",
+                    "AGENT",
+                    "MESSAGE",
+                    "We are collecting diagnostics from the serving cell."
+                )
+            )
+        );
+
+        seedCase(
+            "sc_seed_billing_001",
+            "BILLING",
+            "Invoice clarification requested",
+            "Customer asked for clarification on invoice line items for last cycle.",
+            "NORMAL",
+            SupportCaseStatus.WAITING_CUSTOMER,
+            now.minusSeconds(4 * 24 * 60 * 60L),
+            now.minusSeconds(20 * 60 * 60L),
+            List.of(
+                new SupportCaseTimelineEntry(
+                    "evt_seed_bill_001",
+                    now.minusSeconds(4 * 24 * 60 * 60L),
+                    "customer1",
+                    "CUSTOMER",
+                    "CASE_CREATED",
+                    "Need a breakdown for the latest invoice."
+                ),
+                new SupportCaseTimelineEntry(
+                    "evt_seed_bill_002",
+                    now.minusSeconds(20 * 60 * 60L),
+                    "billing-agent",
+                    "AGENT",
+                    "MESSAGE",
+                    "Please confirm which charge category you need clarified."
+                )
+            )
+        );
+
+        persistState();
+    }
+
+    private void seedCase(
+        String caseId,
+        String category,
+        String subject,
+        String description,
+        String priority,
+        SupportCaseStatus status,
+        Instant createdAt,
+        Instant updatedAt,
+        List<SupportCaseTimelineEntry> timeline
+    ) {
+        SupportCaseRecord seededCase = new SupportCaseRecord(
+            caseId,
+            category,
+            subject,
+            description,
+            priority,
+            status,
+            createdAt,
+            updatedAt,
+            slaService.slaTargetFor(category, priority),
+            slaService.expectedResponseAt(createdAt, category, priority),
+            List.of(),
+            timeline
+        );
+        casesById.put(caseId, seededCase);
     }
 
     private void loadState() {
