@@ -82,7 +82,7 @@ type RoamingPurchaseResponse = { packId: string; updatedAllowanceGb: number; val
 
 const issuer = process.env.OIDC_ISSUER || 'http://localhost:8080/realms/mytelco-white-label';
 const clientId = process.env.OIDC_CLIENT_ID || 'mobile-app';
-const scopes = (process.env.OIDC_SCOPES || 'openid profile email roles offline_access').split(' ');
+const scopes = (process.env.OIDC_SCOPES || 'openid roles').split(' ');
 const apiBase = process.env.CUSTOMER_BFF_BASE_URL || 'http://localhost:8081';
 const redirectUri = AuthSession.makeRedirectUri({ scheme: 'mytelco', path: 'oauth/callback' });
 

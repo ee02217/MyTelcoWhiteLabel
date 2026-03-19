@@ -84,6 +84,8 @@ services:
     environment:
       SERVER_PORT: 8081
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${INTERNAL_OIDC_ISSUER:-http://keycloak:8080/realms/mytelco-white-label}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${INTERNAL_OIDC_JWKS_URI:-http://keycloak:8080/realms/mytelco-white-label/protocol/openid-connect/certs}
     volumes:
       - ../../platform-config:/app/platform-config:ro
     ports:
@@ -111,6 +113,8 @@ services:
     environment:
       SERVER_PORT: 8082
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${INTERNAL_OIDC_ISSUER:-http://keycloak:8080/realms/mytelco-white-label}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${INTERNAL_OIDC_JWKS_URI:-http://keycloak:8080/realms/mytelco-white-label/protocol/openid-connect/certs}
     volumes:
       - ../../platform-config:/app/platform-config:ro
     ports:
@@ -135,6 +139,12 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/web-portal.Dockerfile
+      args:
+        VITE_OIDC_ISSUER: ${WEB_OIDC_ISSUER:-http://localhost:8080/realms/mytelco-white-label}
+        VITE_OIDC_CLIENT_ID: ${WEB_OIDC_CLIENT_ID:-web-portal}
+        VITE_OIDC_REDIRECT_URI: ${WEB_OIDC_REDIRECT_URI_DOCKER:-http://localhost:3000/callback}
+        VITE_OIDC_POST_LOGOUT_REDIRECT_URI: ${WEB_OIDC_POST_LOGOUT_REDIRECT_URI_DOCKER:-http://localhost:3000}
+        VITE_OIDC_SCOPES: ${WEB_OIDC_SCOPES:-"openid roles"}
     container_name: mytelco-web-portal
     environment:
       API_UPSTREAM: ${WEB_PORTAL_API_UPSTREAM:-http://kong:8000}
@@ -158,6 +168,12 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/admin-portal.Dockerfile
+      args:
+        VITE_OIDC_ISSUER: ${ADMIN_OIDC_ISSUER:-http://localhost:8080/realms/mytelco-white-label}
+        VITE_OIDC_CLIENT_ID: ${ADMIN_OIDC_CLIENT_ID:-admin-portal}
+        VITE_OIDC_REDIRECT_URI: ${ADMIN_OIDC_REDIRECT_URI_DOCKER:-http://localhost:3001/callback}
+        VITE_OIDC_POST_LOGOUT_REDIRECT_URI: ${ADMIN_OIDC_POST_LOGOUT_REDIRECT_URI_DOCKER:-http://localhost:3001}
+        VITE_OIDC_SCOPES: ${ADMIN_OIDC_SCOPES:-"openid roles"}
     container_name: mytelco-admin-portal
     environment:
       API_UPSTREAM: ${ADMIN_PORTAL_API_UPSTREAM:-http://kong:8000}

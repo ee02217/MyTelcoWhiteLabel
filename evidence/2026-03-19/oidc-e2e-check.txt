@@ -1,0 +1,9 @@
+== OIDC endpoint reachability ==
+[OK] OIDC discovery reachable
+[OK] OIDC JWKS reachable
+== Protected API negative path ==
+[OK] 401 confirmed when no bearer token
+[WARN] ACCESS_TOKEN not provided; skipping protected success assertion
+[WARN] FORBIDDEN_TOKEN not provided; skipping 403 assertion
+[WARN] REFRESH_TOKEN not provided; skipping refresh grant assertion
+OIDC E2E check completed
