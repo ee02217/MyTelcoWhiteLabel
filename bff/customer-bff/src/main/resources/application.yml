@@ -56,6 +56,16 @@ mytelco:
       max-attempts: ${MYTELCO_NOTIFICATIONS_DELIVERY_MAX_ATTEMPTS:3}
       retry-backoff: ${MYTELCO_NOTIFICATIONS_DELIVERY_RETRY_BACKOFF:PT1S}
       webhook-url: ${MYTELCO_NOTIFICATIONS_DELIVERY_WEBHOOK_URL:}
+  operator:
+    default-operator-id: ${MYTELCO_OPERATOR_DEFAULT_ID:operator-stub-pt}
+    # Optional overrides as map-like property binding when needed,
+    # e.g. MYTELCO_OPERATOR_CUSTOMER_OPERATOR_OVERRIDES_customer1=operator-acme
+    customer-operator-overrides: {}
+    retry:
+      max-attempts: ${MYTELCO_OPERATOR_RETRY_MAX_ATTEMPTS:3}
+      initial-backoff: ${MYTELCO_OPERATOR_RETRY_INITIAL_BACKOFF:PT80MS}
+      multiplier: ${MYTELCO_OPERATOR_RETRY_MULTIPLIER:2.0}
+      max-backoff: ${MYTELCO_OPERATOR_RETRY_MAX_BACKOFF:PT1S}
 
 # Logging
 logging:
