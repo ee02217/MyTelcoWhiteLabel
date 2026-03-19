@@ -1,0 +1,259 @@
+name: Docker Validation Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_rollback:
+        description: Run rollback-equivalent validation
+        required: false
+        default: 'true'
+        type: choice
+        options: ['true', 'false']
+      run_bff_perf:
+        description: Run BFF performance validation
+        required: false
+        default: 'true'
+        type: choice
+        options: ['true', 'false']
+      run_dashboard:
+        description: Run dashboard constrained-load validation
+        required: false
+        default: 'true'
+        type: choice
+        options: ['true', 'false']
+      bff_requests:
+        description: BFF benchmark request count
+        required: false
+        default: '1000'
+      bff_concurrency:
+        description: BFF benchmark concurrency
+        required: false
+        default: '20'
+      dashboard_runs:
+        description: Dashboard constrained-load run count
+        required: false
+        default: '30'
+      dashboard_target_seconds:
+        description: Dashboard target threshold in seconds
+        required: false
+        default: '2.5'
+      artifact_retention_days:
+        description: Artifact retention in days
+        required: false
+        default: '21'
+  schedule:
+    - cron: '30 3 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  docker-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      EVIDENCE_DIR: evidence/ci/${{ github.run_id }}
+      BFF_P95_THRESHOLD_MS: '400'
+      DASHBOARD_PASSRATE_MIN: '95'
+      BFF_REQUESTS: ${{ github.event.inputs.bff_requests || '1000' }}
+      BFF_CONCURRENCY: ${{ github.event.inputs.bff_concurrency || '20' }}
+      DASHBOARD_RUNS: ${{ github.event.inputs.dashboard_runs || '30' }}
+      DASHBOARD_TARGET_SECONDS: ${{ github.event.inputs.dashboard_target_seconds || '2.5' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install benchmark dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apache2-utils
+
+      - name: Prepare local env
+        run: |
+          cp .env.local.example .env.local
+          mkdir -p "$EVIDENCE_DIR"
+
+      - name: Run rollback-equivalent validation
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run_rollback == 'true'
+        env:
+          EVIDENCE_DIR: ${{ env.EVIDENCE_DIR }}
+        run: |
+          bash scripts/docker-rollback-evidence.sh
+
+      - name: Run BFF performance validation
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run_bff_perf == 'true'
+        env:
+          EVIDENCE_DIR: ${{ env.EVIDENCE_DIR }}
+          REQUESTS: ${{ env.BFF_REQUESTS }}
+          CONCURRENCY: ${{ env.BFF_CONCURRENCY }}
+        run: |
+          bash scripts/docker-bff-performance-evidence.sh
+
+      - name: Run dashboard constrained-load validation
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run_dashboard == 'true'
+        env:
+          EVIDENCE_DIR: ${{ env.EVIDENCE_DIR }}
+          RUNS: ${{ env.DASHBOARD_RUNS }}
+          TARGET_SECONDS: ${{ env.DASHBOARD_TARGET_SECONDS }}
+        run: |
+          bash scripts/docker-dashboard-load-evidence.sh
+
+      - name: Evaluate thresholds and publish summary
+        if: always()
+        env:
+          EXPECT_ROLLBACK: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.run_rollback == 'true' }}
+          EXPECT_BFF: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.run_bff_perf == 'true' }}
+          EXPECT_DASHBOARD: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.run_dashboard == 'true' }}
+          EVIDENCE_DIR: ${{ env.EVIDENCE_DIR }}
+          BFF_P95_THRESHOLD_MS: ${{ env.BFF_P95_THRESHOLD_MS }}
+          DASHBOARD_TARGET_SECONDS: ${{ env.DASHBOARD_TARGET_SECONDS }}
+          DASHBOARD_PASSRATE_MIN: ${{ env.DASHBOARD_PASSRATE_MIN }}
+        run: |
+          python3 - <<'PY'
+          import csv
+          import glob
+          import os
+          import statistics
+          import sys
+
+          evidence_dir = os.environ["EVIDENCE_DIR"]
+          expect_rollback = os.environ["EXPECT_ROLLBACK"].lower() == "true"
+          expect_bff = os.environ["EXPECT_BFF"].lower() == "true"
+          expect_dashboard = os.environ["EXPECT_DASHBOARD"].lower() == "true"
+          bff_p95_threshold = float(os.environ["BFF_P95_THRESHOLD_MS"])
+          dashboard_target = float(os.environ["DASHBOARD_TARGET_SECONDS"])
+          dashboard_passrate_min = float(os.environ["DASHBOARD_PASSRATE_MIN"])
+
+          failures = []
+          summary_lines = ["## Docker Validation Summary", ""]
+
+          if expect_rollback:
+              rollback_summaries = sorted(
+                  glob.glob(f"{evidence_dir}/docker-rollback-*.md")
+              )
+              if not rollback_summaries:
+                  failures.append("Rollback summary artifact missing")
+              else:
+                  summary_lines.append(
+                      f"- Rollback-equivalent: ✅ ({os.path.basename(rollback_summaries[-1])})"
+                  )
+          else:
+              summary_lines.append("- Rollback-equivalent: skipped")
+
+          if expect_bff:
+              bff_csv_files = sorted(
+                  glob.glob(f"{evidence_dir}/docker-bff-performance-summary-*.csv")
+              )
+              if not bff_csv_files:
+                  failures.append("BFF performance CSV artifact missing")
+              else:
+                  bff_csv = bff_csv_files[-1]
+                  summary_lines.append("")
+                  summary_lines.append("### BFF latency gates")
+                  with open(bff_csv, newline="") as fh:
+                      rows = list(csv.DictReader(fh))
+
+                  if not rows:
+                      failures.append("BFF performance CSV has no rows")
+                  else:
+                      for row in rows:
+                          endpoint = row["endpoint"]
+                          p95 = float(row["p95_ms"])
+                          failed = int(float(row["failed"]))
+                          samples = int(float(row["sample_count"]))
+                          ok = p95 < bff_p95_threshold and failed == 0
+                          mark = "✅" if ok else "❌"
+                          summary_lines.append(
+                              f"- {endpoint}: p95={p95:.1f}ms, failed={failed}, samples={samples} {mark}"
+                          )
+                          if p95 >= bff_p95_threshold:
+                              failures.append(
+                                  f"{endpoint} p95 {p95:.1f}ms >= {bff_p95_threshold:.1f}ms"
+                              )
+                          if failed > 0:
+                              failures.append(
+                                  f"{endpoint} has {failed} failed requests"
+                              )
+          else:
+              summary_lines.append("")
+              summary_lines.append("### BFF latency gates")
+              summary_lines.append("- skipped")
+
+          if expect_dashboard:
+              dashboard_csv_files = sorted(
+                  glob.glob(f"{evidence_dir}/docker-dashboard-load-runs-*.csv")
+              )
+              if not dashboard_csv_files:
+                  failures.append("Dashboard load CSV artifact missing")
+              else:
+                  dashboard_csv = dashboard_csv_files[-1]
+                  with open(dashboard_csv, newline="") as fh:
+                      rows = list(csv.DictReader(fh))
+
+                  if not rows:
+                      failures.append("Dashboard load CSV has no rows")
+                  else:
+                      totals = [float(r["total_s"]) for r in rows]
+                      n = len(totals)
+                      sorted_totals = sorted(totals)
+                      p95 = sorted_totals[max(0, int(0.95 * n) - 1)]
+                      median = statistics.median(totals)
+                      pass_rate = (
+                          sum(1 for t in totals if t < dashboard_target) / n * 100.0
+                      )
+
+                      summary_lines.append("")
+                      summary_lines.append("### Dashboard constrained-load gates")
+                      summary_lines.append(
+                          f"- median={median:.3f}s, p95={p95:.3f}s, pass-rate={pass_rate:.1f}%"
+                      )
+
+                      if p95 >= dashboard_target:
+                          failures.append(
+                              f"Dashboard p95 {p95:.3f}s >= target {dashboard_target:.3f}s"
+                          )
+                      if pass_rate < dashboard_passrate_min:
+                          failures.append(
+                              f"Dashboard pass-rate {pass_rate:.1f}% < {dashboard_passrate_min:.1f}%"
+                          )
+          else:
+              summary_lines.append("")
+              summary_lines.append("### Dashboard constrained-load gates")
+              summary_lines.append("- skipped")
+
+          if failures:
+              summary_lines.append("")
+              summary_lines.append("### Failures")
+              for item in failures:
+                  summary_lines.append(f"- {item}")
+
+          summary_text = "\n".join(summary_lines) + "\n"
+          print(summary_text)
+
+          summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary_path:
+              with open(summary_path, "a", encoding="utf-8") as fh:
+                  fh.write(summary_text)
+
+          if failures:
+              sys.exit(1)
+          PY
+
+      - name: Upload docker validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-validation-${{ github.run_id }}
+          path: ${{ env.EVIDENCE_DIR }}/
+          if-no-files-found: warn
+          retention-days: ${{ fromJSON(github.event.inputs.artifact_retention_days || '21') }}
+
+      - name: Teardown compose stack
+        if: always()
+        run: |
+          docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml down -v
