@@ -38,34 +38,36 @@ curl http://localhost:8082/actuator/metrics/admin.dashboard.aggregation
 curl http://localhost:8081/actuator/prometheus | grep dashboard.aggregation
 ```
 
-## Local Baseline Measurement
+## Docker Baseline Measurement (docker-only runtime)
 
 ### Prerequisites
 
-- Maven 3.9+
-- Java 21
+- Docker Engine + Compose plugin
+- ApacheBench (`ab`)
+- Local stack started (`bash scripts/local-smoke-check.sh` should pass)
 
 ### Running Performance Tests
 
 ```bash
-# Customer BFF
-cd bff/customer-bff
-mvn spring-boot:run
-
-# In another terminal, run load test
-for i in {1..100}; do
-  curl -w "\nTime: %{time_total}s\n" -s -o /dev/null http://localhost:8081/api/v1/customer/dashboard
-done | grep -oP 'Time: \K[0-9.]+' | sort -n | awk 'NR==50 {p50=$1} NR==95 {p95=$1} END {print "p50: "p50"s, p95: "p95"s"}'
+bash scripts/docker-bff-performance-evidence.sh
 ```
 
-### Local Baseline Results (Initial)
+What the script does:
 
-| Service      | p50 (local) | p95 (local) | Notes             |
-| ------------ | ----------- | ----------- | ----------------- |
-| customer-bff | ~45ms       | ~85ms       | Stubbed providers |
-| admin-bff    | ~40ms       | ~75ms       | Stubbed providers |
+- boots/rebuilds local docker stack if needed
+- acquires bearer token from local Keycloak
+- runs warm-up and authenticated benchmark for:
+  - `GET /api/v1/customer/dashboard`
+  - `GET /api/v1/customer/account-overview`
+- exports p50/p95/p99, max, req/s, sample count, failed count
 
-_Note: Local baseline with stubbed providers is not indicative of production performance._
+Artifacts are written to `evidence/YYYY-MM-DD/`:
+
+- `docker-bff-*-ab-<timestamp>.txt` (raw ApacheBench output)
+- `docker-bff-performance-summary-<timestamp>.md`
+- `docker-bff-performance-summary-<timestamp>.csv`
+
+_Note: This validates docker-local behavior and instrumentation. It is not a substitute for production-like network/dependency latency._
 
 ## Stage/Production Measurement
 

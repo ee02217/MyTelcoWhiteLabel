@@ -31,27 +31,42 @@ In `customer-bff`:
 
 Both publish percentiles including p95.
 
-## Stage Measurement Approach
+## Docker Measurement Approach (constrained profile)
 
-1. Deploy `customer-bff` with actuator metrics enabled.
-2. Generate synthetic dashboard traffic representative of customer sessions.
-3. Capture p95 for `customer.account.overview.endpoint` from Micrometer/Prometheus.
-4. Correlate endpoint p95 with frontend page-load telemetry under 4G-like throttling.
+In docker-only runtime, use the repeatable constrained profile script:
 
-Recommended load profile for baseline:
+```bash
+bash scripts/docker-dashboard-load-evidence.sh
+```
 
-- Warm-up: 2 minutes
-- Sustained: 10 minutes
-- Concurrency: 20–50 virtual users (tune by environment size)
+What it does:
 
-## Current Local Baseline (MVP Stub)
+1. Ensures local docker stack is running.
+2. Resolves current SPA asset bundle paths from `http://localhost:3000/`.
+3. Acquires access token from local Keycloak.
+4. Runs `N=30` measurements (default) over:
+   - HTML
+   - main JS bundle
+   - main CSS bundle
+   - authenticated `GET /api/v1/customer/account-overview`
+5. Applies constrained profile model:
+   - throughput cap: `1250 KB/s` (~10 Mbps)
+   - synthetic RTT component: `150ms * 4 requests`
+6. Exports median/p95/pass-rate against `< 2.5s`.
 
-Local runs with stubbed providers are significantly under the target and primarily CPU-local. This is **not representative** of production latency.
+Artifacts are written to `evidence/YYYY-MM-DD/`:
 
-Current limitations:
+- `docker-dashboard-load-runs-<timestamp>.csv`
+- `docker-dashboard-load-summary-<timestamp>.md`
 
-- No real downstream service/network hops
-- No real mobile radio variability
-- Minimal payload size and no account history joins
+## Limitations
 
-Therefore, this baseline only confirms instrumentation and endpoint contract readiness.
+This is a **docker-constrained approximation**, not full radio/browser telemetry.
+
+Known gaps vs true mobile 4G conditions:
+
+- no real cellular jitter/packet loss profile
+- no browser CPU contention/hydration trace capture
+- no multi-hop external dependency variance
+
+Use this as docker-gated evidence; escalate to real device/network profiling before external SLO claims.

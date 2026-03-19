@@ -105,6 +105,30 @@ This keeps browser-side API base deterministic in local docker without rebuildin
 - web/admin portal root serves real SPA HTML titles
 - web portal `/api` proxy path reachability (`/api/v1/customer/account-overview`)
 
+## Docker validation evidence pack
+
+For docker-only environments, run the hardening evidence scripts below after the stack is healthy.
+
+1. Rollback-equivalent validation (simulated bad rollout + restore baseline image):
+
+   ```bash
+   bash scripts/docker-rollback-evidence.sh
+   ```
+
+2. Authenticated BFF latency validation (p50/p95/p99, 1000 requests @ concurrency 20):
+
+   ```bash
+   bash scripts/docker-bff-performance-evidence.sh
+   ```
+
+3. Dashboard load validation under constrained network profile (default: 30 runs, 10 Mbps cap, synthetic RTT 150ms):
+
+   ```bash
+   bash scripts/docker-dashboard-load-evidence.sh
+   ```
+
+Artifacts are written under `evidence/YYYY-MM-DD/` with timestamped filenames (raw logs + summary markdown + csv).
+
 ## Troubleshooting
 
 - **Port conflicts**: change values in `.env.local`.
