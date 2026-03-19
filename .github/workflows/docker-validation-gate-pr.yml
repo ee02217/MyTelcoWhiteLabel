@@ -1,0 +1,194 @@
+name: Docker Validation Gate (PR)
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-validation-gate-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  docker-validation-gate:
+    name: Docker Validation Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      EVIDENCE_DIR: evidence/ci/pr-${{ github.event.pull_request.number }}-${{ github.run_id }}
+      BFF_P95_THRESHOLD_MS: '400'
+      DASHBOARD_TARGET_SECONDS: '2.5'
+      DASHBOARD_PASSRATE_MIN: '95'
+      REQUESTS: '1000'
+      CONCURRENCY: '20'
+      RUNS: '30'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect relevant path changes
+        id: detect
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" > /tmp/changed_files.txt
+
+          echo "Changed files:" >> "$GITHUB_STEP_SUMMARY"
+          sed 's/^/- /' /tmp/changed_files.txt >> "$GITHUB_STEP_SUMMARY"
+
+          if grep -Eq '^(\.github/workflows/docker-validation-evidence\.yml|scripts/docker-.*-evidence\.sh|infra/docker/)' /tmp/changed_files.txt; then
+            echo "needs_validation=true" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Docker validation required: ✅ yes" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "needs_validation=false" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Docker validation required: ⏭️ no (gate pass by design)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Install benchmark dependencies
+        if: steps.detect.outputs.needs_validation == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apache2-utils
+
+      - name: Prepare local env
+        if: steps.detect.outputs.needs_validation == 'true'
+        run: |
+          cp .env.local.example .env.local
+          mkdir -p "$EVIDENCE_DIR"
+
+      - name: Run rollback-equivalent validation
+        if: steps.detect.outputs.needs_validation == 'true'
+        env:
+          EVIDENCE_DIR: ${{ env.EVIDENCE_DIR }}
+        run: |
+          bash scripts/docker-rollback-evidence.sh
+
+      - name: Run BFF performance validation
+        if: steps.detect.outputs.needs_validation == 'true'
+        env:
+          EVIDENCE_DIR: ${{ env.EVIDENCE_DIR }}
+          REQUESTS: ${{ env.REQUESTS }}
+          CONCURRENCY: ${{ env.CONCURRENCY }}
+        run: |
+          bash scripts/docker-bff-performance-evidence.sh
+
+      - name: Run dashboard constrained-load validation
+        if: steps.detect.outputs.needs_validation == 'true'
+        env:
+          EVIDENCE_DIR: ${{ env.EVIDENCE_DIR }}
+          RUNS: ${{ env.RUNS }}
+          TARGET_SECONDS: ${{ env.DASHBOARD_TARGET_SECONDS }}
+        run: |
+          bash scripts/docker-dashboard-load-evidence.sh
+
+      - name: Evaluate thresholds
+        if: steps.detect.outputs.needs_validation == 'true'
+        env:
+          EVIDENCE_DIR: ${{ env.EVIDENCE_DIR }}
+          BFF_P95_THRESHOLD_MS: ${{ env.BFF_P95_THRESHOLD_MS }}
+          DASHBOARD_TARGET_SECONDS: ${{ env.DASHBOARD_TARGET_SECONDS }}
+          DASHBOARD_PASSRATE_MIN: ${{ env.DASHBOARD_PASSRATE_MIN }}
+        run: |
+          python3 - <<'PY'
+          import csv
+          import glob
+          import os
+          import statistics
+          import sys
+
+          evidence_dir = os.environ['EVIDENCE_DIR']
+          bff_p95_threshold = float(os.environ['BFF_P95_THRESHOLD_MS'])
+          dashboard_target = float(os.environ['DASHBOARD_TARGET_SECONDS'])
+          dashboard_passrate_min = float(os.environ['DASHBOARD_PASSRATE_MIN'])
+
+          failures = []
+          lines = ['## Docker Validation Gate Results', '']
+
+          rollback = sorted(glob.glob(f'{evidence_dir}/docker-rollback-*.md'))
+          if rollback:
+            lines.append(f'- Rollback-equivalent: ✅ ({os.path.basename(rollback[-1])})')
+          else:
+            failures.append('Rollback artifact missing')
+
+          bff_csv = sorted(glob.glob(f'{evidence_dir}/docker-bff-performance-summary-*.csv'))
+          if not bff_csv:
+            failures.append('BFF performance CSV artifact missing')
+          else:
+            lines.append('')
+            lines.append('### BFF gate')
+            with open(bff_csv[-1], newline='') as fh:
+              rows = list(csv.DictReader(fh))
+            for row in rows:
+              endpoint = row['endpoint']
+              p95 = float(row['p95_ms'])
+              failed = int(float(row['failed']))
+              status = '✅' if (p95 < bff_p95_threshold and failed == 0) else '❌'
+              lines.append(f'- {endpoint}: p95={p95:.1f}ms, failed={failed} {status}')
+              if p95 >= bff_p95_threshold:
+                failures.append(f'{endpoint} p95 {p95:.1f}ms >= {bff_p95_threshold:.1f}ms')
+              if failed > 0:
+                failures.append(f'{endpoint} failed requests = {failed}')
+
+          dashboard_csv = sorted(glob.glob(f'{evidence_dir}/docker-dashboard-load-runs-*.csv'))
+          if not dashboard_csv:
+            failures.append('Dashboard CSV artifact missing')
+          else:
+            with open(dashboard_csv[-1], newline='') as fh:
+              rows = list(csv.DictReader(fh))
+            totals = [float(r['total_s']) for r in rows]
+            n = len(totals)
+            totals_sorted = sorted(totals)
+            median = statistics.median(totals)
+            p95 = totals_sorted[max(0, int(0.95 * n) - 1)]
+            pass_rate = sum(1 for t in totals if t < dashboard_target) / n * 100.0
+
+            lines.append('')
+            lines.append('### Dashboard gate')
+            lines.append(
+              f'- median={median:.3f}s, p95={p95:.3f}s, pass-rate={pass_rate:.1f}%'
+            )
+
+            if p95 >= dashboard_target:
+              failures.append(
+                f'Dashboard p95 {p95:.3f}s >= target {dashboard_target:.3f}s'
+              )
+            if pass_rate < dashboard_passrate_min:
+              failures.append(
+                f'Dashboard pass-rate {pass_rate:.1f}% < {dashboard_passrate_min:.1f}%'
+              )
+
+          if failures:
+            lines.append('')
+            lines.append('### Failures')
+            for f in failures:
+              lines.append(f'- {f}')
+
+          summary = '\n'.join(lines) + '\n'
+          print(summary)
+
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as fh:
+            fh.write(summary)
+
+          if failures:
+            sys.exit(1)
+          PY
+
+      - name: Upload docker validation artifacts
+        if: always() && steps.detect.outputs.needs_validation == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-validation-gate-pr-${{ github.event.pull_request.number }}-${{ github.run_id }}
+          path: ${{ env.EVIDENCE_DIR }}/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Teardown compose stack
+        if: always() && steps.detect.outputs.needs_validation == 'true'
+        run: |
+          docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml down -v
