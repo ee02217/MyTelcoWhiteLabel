@@ -30,17 +30,14 @@ git clone https://github.com/ee02217/MyTelcoWhiteLabel.git
 cd MyTelcoWhiteLabel
 ```
 
-### 2. Install Dependencies
+### 2. Bootstrap Node Dependencies (deterministic)
 
 ```bash
-# Root-level dependencies (for changed-module scripts)
-npm install
-
-# For a specific module
-cd mobile-app
-npm install
-cd ..
+# One-shot bootstrap for root + Node submodules
+npm run bootstrap:node
 ```
+
+This is the required bootstrap path before running root quality gates (`lint:all`, `build:all`).
 
 ### 3. Verify Repository Structure
 
@@ -63,6 +60,7 @@ npm run test:changed
 npm run build:changed
 
 # Run on all modules (ignoring changes)
+# Prerequisite on clean checkout: npm run bootstrap:node
 npm run lint:all
 npm run test:all
 npm run build:all
@@ -84,9 +82,11 @@ For feature-specific references, see:
 Once you've identified which module you need to work on:
 
 ```bash
-# Example: Starting the web portal
+# Ensure dependencies are bootstrapped first (once per clean checkout)
+npm run bootstrap:node
+
+# Example: starting the web portal
 cd web-portal
-npm install
 npm run dev  # or appropriate start command
 ```
 
@@ -104,8 +104,9 @@ MyTelcoWhiteLabel/
 ├── infra/              # Infrastructure as Code
 ├── docs/               # Documentation
 │   └── development/    # Developer guides
-├── scripts/            # Build & automation scripts
-│   └── run-changed.mjs # Changed-module command runner
+├── scripts/                    # Build & automation scripts
+│   ├── run-changed.mjs         # Changed-module command runner
+│   └── bootstrap-node-modules.mjs # Deterministic Node bootstrap
 ├── package.json        # Root package configuration
 └── README.md          # Project overview
 ```
@@ -184,8 +185,8 @@ This repository includes base templates for quick project bootstrapping:
 ### Mobile App (React Native + Expo)
 
 ```bash
+npm run bootstrap:node
 cd mobile-app
-npm install
 npm run start
 ```
 
@@ -205,16 +206,16 @@ Both portals share design tokens from `platform-config/design-system/`.
 **Web Portal:**
 
 ```bash
+npm run bootstrap:node
 cd web-portal
-npm install
 npm run dev
 ```
 
 **Admin Portal:**
 
 ```bash
+npm run bootstrap:node
 cd admin-portal
-npm install
 npm run dev
 ```
 

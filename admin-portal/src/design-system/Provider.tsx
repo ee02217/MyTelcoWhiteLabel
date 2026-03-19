@@ -10,9 +10,9 @@ interface DesignSystemContextValue {
 const DesignSystemContext = createContext<DesignSystemContextValue | null>(null);
 
 export function DesignSystemProvider({ children }: { children: React.ReactNode }) {
-  // Tokens are injected via CSS variables
+  const colorTokens = {} as DesignSystemContextValue['tokens']['color'];
   return (
-    <DesignSystemContext.Provider value={{ tokens: { color: {} } as any }}>
+    <DesignSystemContext.Provider value={{ tokens: { color: colorTokens } }}>
       {children}
     </DesignSystemContext.Provider>
   );
