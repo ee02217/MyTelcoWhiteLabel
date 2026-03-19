@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -33,6 +34,7 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**")
                 .permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/customer/notifications/test-send").hasRole("ADMIN")
                 .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2
