@@ -134,11 +134,19 @@ const fallbackOverview: AccountOverview = {
   outstandingAmount: 0,
 };
 
+type AppRoute = 'home' | 'lab';
+
+const routeFromPath = (pathname: string): AppRoute => {
+  if (pathname === '/lab' || pathname.startsWith('/lab/')) return 'lab';
+  return 'home';
+};
+
 function App() {
   const [session, setSession] = useState<OidcSession | null>(readSession());
   const [overview, setOverview] = useState<AccountOverview | null>(null);
   const [status, setStatus] = useState('Idle');
   const [error, setError] = useState<string | null>(null);
+  const [route, setRoute] = useState<AppRoute>(() => routeFromPath(window.location.pathname));
 
   const [paymentToken, setPaymentToken] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState('No payment attempt yet');
@@ -178,6 +186,14 @@ function App() {
     }
     if (!res.ok) throw new Error(`API failed with ${res.status}`);
     return res;
+  };
+
+  const navigateTo = (nextRoute: AppRoute) => {
+    const targetPath = nextRoute === 'lab' ? '/lab' : '/';
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({}, '', targetPath);
+    }
+    setRoute(nextRoute);
   };
 
   const loadOverview = async () => {
@@ -416,11 +432,18 @@ function App() {
   };
 
   useEffect(() => {
+    const onPopState = () => setRoute(routeFromPath(window.location.pathname));
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  useEffect(() => {
     completeLoginIfCallback()
       .then((newSession) => {
         if (newSession) {
           setSession(newSession);
           setStatus('Login completed via OIDC code+PKCE');
+          setRoute('home');
         }
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'OIDC callback failed'));
@@ -429,14 +452,16 @@ function App() {
   useEffect(() => {
     if (session) {
       loadOverview().catch(() => undefined);
-      loadPaymentHistory().catch(() => undefined);
-      loadOrderAlerts().catch(() => undefined);
+      if (route === 'lab') {
+        loadPaymentHistory().catch(() => undefined);
+        loadOrderAlerts().catch(() => undefined);
+      }
     } else {
       setOverview(null);
       setHistory([]);
       setOrderAlerts([]);
     }
-  }, [session]);
+  }, [route, session]);
 
   const expiresIn = useMemo(() => {
     if (!session) return 'n/a';
@@ -448,10 +473,123 @@ function App() {
     currency: 'EUR',
   }).format(overview?.outstandingAmount ?? 0);
 
+  if (route === 'home') {
+    return (
+      <DesignSystemProvider>
+        <div style={styles.container}>
+          <h1 style={styles.title}>MyTelco Self-Care</h1>
+          <Typography variant="body" color="secondary" style={{ marginBottom: 12 }}>
+            Manage your account, usage, payments, and support in one place.
+          </Typography>
+
+          <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+            <Typography variant="h4">Session</Typography>
+            <Typography variant="small" color="secondary">
+              Status: {status}
+            </Typography>
+            <Typography variant="small" color="secondary">
+              Access token expires in: {expiresIn}
+            </Typography>
+            <div style={styles.row}>
+              {!session && (
+                <Button size="sm" onClick={() => beginLogin().catch((e) => setError(String(e)))}>
+                  Login
+                </Button>
+              )}
+              {session && (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    refreshSession(session)
+                      .then((next) => {
+                        setSession(next);
+                        setStatus('Refresh token grant succeeded');
+                      })
+                      .catch((e) => setError(String(e)));
+                  }}
+                >
+                  Refresh session
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => navigateTo('lab')}>
+                Open Self-Care Lab
+              </Button>
+              {session && (
+                <Button size="sm" variant="ghost" onClick={() => logout(session)}>
+                  Logout
+                </Button>
+              )}
+            </div>
+          </Card>
+
+          <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+            <Typography variant="h4">Account snapshot</Typography>
+            {session && overview && (
+              <>
+                <Typography variant="body">Plan: {overview.plan}</Typography>
+                <Typography variant="body">Active lines: {overview.activeLineCount}</Typography>
+                <Typography variant="body">Outstanding amount: {formattedAmount}</Typography>
+              </>
+            )}
+            {session && !overview && (
+              <Typography variant="small" color="secondary">
+                Snapshot unavailable. Try reloading account overview.
+              </Typography>
+            )}
+            {!session && (
+              <Typography variant="small" color="secondary">
+                Login to see your personal account snapshot.
+              </Typography>
+            )}
+            {session && (
+              <div style={styles.row}>
+                <Button size="sm" onClick={() => loadOverview().catch(() => undefined)}>
+                  Refresh snapshot
+                </Button>
+              </div>
+            )}
+          </Card>
+
+          <Card padding="md" shadow="md">
+            <Typography variant="h4">What you can do next</Typography>
+            <Typography variant="body">- Check account overview and usage</Typography>
+            <Typography variant="body">- Manage payments and download receipts</Typography>
+            <Typography variant="body">
+              - Submit add-on orders and verify rollback behavior
+            </Typography>
+            <Typography variant="body">- Manage SIM, eSIM, roaming, and support</Typography>
+            <div style={styles.row}>
+              <Button size="sm" onClick={() => navigateTo('lab')}>
+                Go to advanced flows
+              </Button>
+            </div>
+          </Card>
+
+          {error && <p style={styles.warning}>{error}</p>}
+        </div>
+      </DesignSystemProvider>
+    );
+  }
+
   return (
     <DesignSystemProvider>
       <div style={styles.container}>
-        <h1 style={styles.title}>MyTelco OIDC + Payment Dashboard</h1>
+        <h1 style={styles.title}>MyTelco Self-Care Lab</h1>
+        <Typography variant="small" color="secondary" style={{ marginBottom: 12 }}>
+          Engineering and integration workspace for advanced end-to-end flows.
+        </Typography>
+
+        <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
+          <Typography variant="h4">Navigation</Typography>
+          <div style={styles.row}>
+            <Button size="sm" variant="outline" onClick={() => navigateTo('home')}>
+              Back to homepage
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => navigateTo('lab')}>
+              Stay in lab
+            </Button>
+          </div>
+        </Card>
 
         <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
           <Typography variant="h4">Session</Typography>
