@@ -65,10 +65,12 @@ Options:
 ### Other Commands
 
 ```bash
-npm run repo:verify     # Verify repository structure
-npm run lint:all       # Lint all modules
-npm run test:all       # Test all modules
-npm run build:all      # Build all modules
+npm run repo:verify      # Verify repository structure
+npm run bootstrap:node   # One-shot deterministic Node bootstrap (clean checkout)
+npm run lint:all         # Lint all modules
+npm run test:all         # Test all modules
+npm run build:all        # Build all modules
+npm run quality:all      # Bootstrap + lint:all + build:all
 ```
 
 ## Getting Started

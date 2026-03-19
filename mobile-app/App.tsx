@@ -278,9 +278,13 @@ export default function App() {
         setHistoryStatus('Login required');
         return;
       }
+      const fileSystemWithCompatPaths = FileSystem as unknown as {
+        cacheDirectory?: string | null;
+        Paths?: { cache?: { uri?: string } };
+      };
       const cacheDir =
-        (FileSystem as any).cacheDirectory ??
-        `${(FileSystem as any).Paths?.cache?.uri || 'file:///tmp/'}`;
+        fileSystemWithCompatPaths.cacheDirectory ??
+        `${fileSystemWithCompatPaths.Paths?.cache?.uri || 'file:///tmp/'}`;
       const fileUri = `${cacheDir}receipt-${paymentId}.pdf`;
       await FileSystem.downloadAsync(
         `${apiBase}/api/v1/customer/payments/receipt/${paymentId}/download`,

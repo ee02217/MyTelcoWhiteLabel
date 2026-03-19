@@ -58,7 +58,7 @@ npm run build
 
 ```bash
 # Generate native Android/iOS projects
-npm run prebuild
+npm run native:prebuild
 ```
 
 ## Project Structure
