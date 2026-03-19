@@ -1,33 +1,41 @@
 package com.mytelco.customerbff.provider;
 
-import com.mytelco.customerbff.model.*;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
+
+import com.mytelco.customerbff.model.BillItemCategory;
+import com.mytelco.customerbff.model.BillLineItem;
+import com.mytelco.customerbff.model.BillPeriodData;
+import com.mytelco.customerbff.model.BillingSummary;
+import com.mytelco.customerbff.model.InvoiceMetadata;
+import com.mytelco.customerbff.operator.OperatorAdapterExecutor;
+
 /**
- * Provider for billing-related data.
- * In production, this would call the billing service.
+ * Billing provider facade.
+ *
+ * <p>Billing summary is adapter-backed to support operator pluggability.
+ * Detailed bill explorer endpoints remain local stubbed behavior for MVP.</p>
  */
 @Component
 public class BillingProvider {
 
-    /**
-     * Retrieves billing summary for the given customer ID.
-     */
+    private final OperatorAdapterExecutor adapterExecutor;
+
+    public BillingProvider(OperatorAdapterExecutor adapterExecutor) {
+        this.adapterExecutor = adapterExecutor;
+    }
+
     public BillingSummary getBillingSummary(String customerId) {
-        return new BillingSummary(
-            new BigDecimal("29.99"),
-            new BigDecimal("49.99"),
-            LocalDate.now().minusDays(15),
-            LocalDate.now().plusDays(15),
-            "Credit Card",
-            true
+        return adapterExecutor.execute(
+            customerId,
+            "billing.summary",
+            adapter -> adapter.getBillingSummary(customerId)
         );
     }
 
