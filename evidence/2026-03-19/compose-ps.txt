@@ -1,0 +1,8 @@
+NAME                   IMAGE                              COMMAND                  SERVICE        CREATED          STATUS                             PORTS
+mytelco-admin-bff      mytelco-local-admin-bff            "java -jar app.jar"      admin-bff      35 seconds ago   Up 23 seconds (healthy)            0.0.0.0:8082->8082/tcp, [::]:8082->8082/tcp
+mytelco-admin-portal   mytelco-local-admin-portal         "/docker-entrypoint.…"   admin-portal   35 seconds ago   Up 23 seconds (health: starting)   0.0.0.0:3001->80/tcp, [::]:3001->80/tcp
+mytelco-customer-bff   mytelco-local-customer-bff         "java -jar app.jar"      customer-bff   35 seconds ago   Up 23 seconds (healthy)            0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp
+mytelco-keycloak       quay.io/keycloak/keycloak:24.0.0   "/opt/keycloak/bin/k…"   keycloak       35 seconds ago   Up 34 seconds (healthy)            0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+mytelco-kong           kong:3.4                           "/docker-entrypoint.…"   kong           35 seconds ago   Up 34 seconds (healthy)            0.0.0.0:8000-8001->8000-8001/tcp, [::]:8000-8001->8000-8001/tcp, 0.0.0.0:8443-8444->8443-8444/tcp, [::]:8443-8444->8443-8444/tcp
+mytelco-postgres       postgres:16-alpine                 "docker-entrypoint.s…"   postgres       35 seconds ago   Up 34 seconds (healthy)            0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+mytelco-web-portal     mytelco-local-web-portal           "/docker-entrypoint.…"   web-portal     35 seconds ago   Up 23 seconds (health: starting)   0.0.0.0:3000->80/tcp, [::]:3000->80/tcp

@@ -20,7 +20,7 @@ const cfg = {
   clientId: import.meta.env.VITE_OIDC_CLIENT_ID,
   redirectUri: import.meta.env.VITE_OIDC_REDIRECT_URI,
   postLogoutRedirectUri: import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI,
-  scopes: import.meta.env.VITE_OIDC_SCOPES || 'openid profile email roles offline_access',
+  scopes: import.meta.env.VITE_OIDC_SCOPES || 'openid roles',
 };
 
 const SESSION_KEY = 'oidc_session';

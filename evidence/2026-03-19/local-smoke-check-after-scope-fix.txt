@@ -1,0 +1,21 @@
+==> Compose service state
+NAME                   IMAGE                              COMMAND                  SERVICE        CREATED          STATUS                            PORTS
+mytelco-admin-bff      mytelco-local-admin-bff            "java -jar app.jar"      admin-bff      16 seconds ago   Up 4 seconds (health: starting)   0.0.0.0:8082->8082/tcp, [::]:8082->8082/tcp
+mytelco-admin-portal   mytelco-local-admin-portal         "/docker-entrypoint.…"   admin-portal   15 seconds ago   Up 4 seconds (health: starting)   0.0.0.0:3001->80/tcp, [::]:3001->80/tcp
+mytelco-customer-bff   mytelco-local-customer-bff         "java -jar app.jar"      customer-bff   16 seconds ago   Up 4 seconds (health: starting)   0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp
+mytelco-keycloak       quay.io/keycloak/keycloak:24.0.0   "/opt/keycloak/bin/k…"   keycloak       16 seconds ago   Up 15 seconds (healthy)           0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+mytelco-kong           kong:3.4                           "/docker-entrypoint.…"   kong           16 seconds ago   Up 15 seconds (healthy)           0.0.0.0:8000-8001->8000-8001/tcp, [::]:8000-8001->8000-8001/tcp, 0.0.0.0:8443-8444->8443-8444/tcp, [::]:8443-8444->8443-8444/tcp
+mytelco-postgres       postgres:16-alpine                 "docker-entrypoint.s…"   postgres       16 seconds ago   Up 15 seconds (healthy)           0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+mytelco-web-portal     mytelco-local-web-portal           "/docker-entrypoint.…"   web-portal     15 seconds ago   Up 4 seconds (health: starting)   0.0.0.0:3000->80/tcp, [::]:3000->80/tcp
+[OK] Postgres readiness -> pg_isready (container: mytelco-postgres)
+[OK] Postgres baseline seed -> bootstrap.seed_info(local-baseline-v1)
+[OK] Keycloak ready -> http://localhost:8080/health/ready (HTTP 200)
+[OK] Keycloak login -> http://localhost:8080/realms/master/account (HTTP 302)
+[OK] Kong admin -> https://localhost:8444/ (HTTP 200)
+[OK] Kong proxy -> http://localhost:8000/ (HTTP 404)
+[OK] Customer BFF -> http://localhost:8081/actuator/health (HTTP 200)
+[OK] Admin BFF -> http://localhost:8082/actuator/health (HTTP 200)
+[OK] Web portal real SPA -> http://localhost:3000/ contains '<title>MyTelco - Customer Portal</title>'
+[OK] Admin portal real SPA -> http://localhost:3001/ contains '<title>MyTelco - Admin Portal</title>'
+[OK] Web portal API proxy -> http://localhost:3000/api/v1/customer/account-overview (HTTP 401)
+Smoke check passed: all checks succeeded
