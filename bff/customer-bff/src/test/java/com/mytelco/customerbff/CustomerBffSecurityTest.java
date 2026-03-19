@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.mytelco.customerbff.config.SecurityConfig;
 import com.mytelco.customerbff.controller.CustomerDashboardController;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.CustomerAggregationService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,9 @@ class CustomerBffSecurityTest {
 
     @MockBean
     private MeterRegistry meterRegistry;
+
+    @MockBean
+    private CustomerIdentityResolver customerIdentityResolver;
 
     @Test
     void dashboard_withNoAuthentication_shouldReturn401() throws Exception {

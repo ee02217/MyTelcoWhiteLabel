@@ -4,6 +4,7 @@ import com.mytelco.customerbff.model.AccountOverviewResponse;
 import com.mytelco.customerbff.model.CustomerDashboardResponse;
 import com.mytelco.customerbff.model.CustomerUsageResponse;
 import com.mytelco.customerbff.model.UsageView;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.CustomerAggregationService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,10 +32,16 @@ public class CustomerDashboardController {
 
     private final CustomerAggregationService aggregationService;
     private final MeterRegistry meterRegistry;
+    private final CustomerIdentityResolver customerIdentityResolver;
 
-    public CustomerDashboardController(CustomerAggregationService aggregationService, MeterRegistry meterRegistry) {
+    public CustomerDashboardController(
+        CustomerAggregationService aggregationService,
+        MeterRegistry meterRegistry,
+        CustomerIdentityResolver customerIdentityResolver
+    ) {
         this.aggregationService = aggregationService;
         this.meterRegistry = meterRegistry;
+        this.customerIdentityResolver = customerIdentityResolver;
     }
 
     /**
@@ -52,8 +60,9 @@ public class CustomerDashboardController {
         @ApiResponse(responseCode = "400", description = "Invalid customer ID"),
         @ApiResponse(responseCode = "404", description = "Customer not found")
     })
-    public ResponseEntity<CustomerDashboardResponse> getDashboard() {
-        CustomerDashboardResponse response = aggregationService.getDashboard("12345");
+    public ResponseEntity<CustomerDashboardResponse> getDashboard(Authentication authentication) {
+        String customerId = customerIdentityResolver.resolveCustomerId(authentication);
+        CustomerDashboardResponse response = aggregationService.getDashboard(customerId);
         return ResponseEntity.ok(response);
     }
 
@@ -71,8 +80,11 @@ public class CustomerDashboardController {
         @ApiResponse(responseCode = "404", description = "Customer not found")
     })
     public ResponseEntity<CustomerDashboardResponse> getDashboardByCustomerId(
-            @Parameter(description = "Customer ID", required = true)
-            @PathVariable String customerId) {
+        Authentication authentication,
+        @Parameter(description = "Customer ID", required = true)
+        @PathVariable String customerId
+    ) {
+        customerIdentityResolver.assertSameCustomer(authentication, customerId);
         CustomerDashboardResponse response = aggregationService.getDashboard(customerId);
         return ResponseEntity.ok(response);
     }
@@ -91,16 +103,19 @@ public class CustomerDashboardController {
         @ApiResponse(responseCode = "404", description = "Customer not found")
     })
     public ResponseEntity<CustomerUsageResponse> getUsageDetails(
-            @RequestParam(defaultValue = "daily") String view,
-            @RequestParam(required = false) String lineId) {
+        Authentication authentication,
+        @RequestParam(defaultValue = "daily") String view,
+        @RequestParam(required = false) String lineId
+    ) {
         Timer timer = Timer.builder("customer.usage.details.endpoint")
             .description("Endpoint time for customer usage details")
             .publishPercentiles(0.50, 0.95, 0.99)
             .register(meterRegistry);
 
+        String customerId = customerIdentityResolver.resolveCustomerId(authentication);
         UsageView usageView = UsageView.fromQuery(view);
         CustomerUsageResponse response = timer.record(
-            () -> aggregationService.getUsageDetails("12345", usageView, lineId)
+            () -> aggregationService.getUsageDetails(customerId, usageView, lineId)
         );
 
         return ResponseEntity.ok(response);
@@ -119,14 +134,15 @@ public class CustomerDashboardController {
         @ApiResponse(responseCode = "400", description = "Invalid customer ID"),
         @ApiResponse(responseCode = "404", description = "Customer not found")
     })
-    public ResponseEntity<AccountOverviewResponse> getAccountOverview() {
+    public ResponseEntity<AccountOverviewResponse> getAccountOverview(Authentication authentication) {
         Timer timer = Timer.builder("customer.account.overview.endpoint")
             .description("Endpoint time for customer account overview")
             .publishPercentiles(0.50, 0.95, 0.99)
             .register(meterRegistry);
 
+        String customerId = customerIdentityResolver.resolveCustomerId(authentication);
         AccountOverviewResponse response = timer.record(
-            () -> aggregationService.getAccountOverview("12345")
+            () -> aggregationService.getAccountOverview(customerId)
         );
 
         return ResponseEntity.ok(response);

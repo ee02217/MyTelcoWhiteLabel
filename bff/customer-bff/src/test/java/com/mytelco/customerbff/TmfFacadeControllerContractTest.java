@@ -21,6 +21,7 @@ import com.mytelco.customerbff.model.tmf.TmfProductOrder;
 import com.mytelco.customerbff.model.tmf.TmfProductOrderItem;
 import com.mytelco.customerbff.model.tmf.TmfProductRef;
 import com.mytelco.customerbff.model.tmf.TmfRelatedParty;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.CatalogService;
 import com.mytelco.customerbff.service.CustomerAggregationService;
 import com.mytelco.customerbff.service.CustomerOrderService;
@@ -68,6 +69,9 @@ class TmfFacadeControllerContractTest {
     @MockBean
     private TmfFacadeMappingService mappingService;
 
+    @MockBean
+    private CustomerIdentityResolver customerIdentityResolver;
+
     @Test
     @WithMockUser(roles = "CUSTOMER")
     void getProductOffering_contractFieldsArePresent() throws Exception {
@@ -104,7 +108,8 @@ class TmfFacadeControllerContractTest {
     @Test
     @WithMockUser(roles = "CUSTOMER")
     void createProductOrder_contractFieldsArePresent() throws Exception {
-        when(customerOrderService.create(any(CustomerOrderCreateRequest.class), anyString())).thenReturn(new CustomerOrderResponse(
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(customerOrderService.create(any(CustomerOrderCreateRequest.class), anyString(), anyString())).thenReturn(new CustomerOrderResponse(
             "ord_abc123",
             "line-22",
             "add",

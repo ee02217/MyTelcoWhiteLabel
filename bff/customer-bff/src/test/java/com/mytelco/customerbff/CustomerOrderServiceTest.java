@@ -12,6 +12,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CustomerOrderServiceTest {
 
+    private static final String CUSTOMER_ID = "cust-1";
+
     private final AlertInboxService alertInboxService = new AlertInboxService();
     private final CustomerOrderService service = new CustomerOrderService(alertInboxService);
 
@@ -19,7 +21,8 @@ class CustomerOrderServiceTest {
     void transitionValidation_shouldRejectInvalidTransitions() {
         CustomerOrderResponse order = service.create(
             new CustomerOrderCreateRequest("line-1", "PLAN", "PLAN-XL", "idem-transition", false),
-            null
+            null,
+            CUSTOMER_ID
         );
 
         assertThat(order.state()).isEqualTo(OrderState.COMPLETED);
@@ -29,7 +32,7 @@ class CustomerOrderServiceTest {
     }
 
     @Test
-    void create_shouldBeIdempotentForSameKey() {
+    void create_shouldBeIdempotentForSameKeyWithinCustomerScope() {
         CustomerOrderCreateRequest request = new CustomerOrderCreateRequest(
             "line-2",
             "ADDON",
@@ -38,23 +41,40 @@ class CustomerOrderServiceTest {
             false
         );
 
-        CustomerOrderResponse first = service.create(request, "idem-order-1");
-        CustomerOrderResponse replay = service.create(request, "idem-order-1");
+        CustomerOrderResponse first = service.create(request, "idem-order-1", CUSTOMER_ID);
+        CustomerOrderResponse replay = service.create(request, "idem-order-1", CUSTOMER_ID);
 
         assertThat(replay.orderId()).isEqualTo(first.orderId());
         assertThat(replay.state()).isEqualTo(OrderState.COMPLETED);
     }
 
     @Test
+    void create_sameIdempotencyAcrossDifferentCustomers_shouldNotCollide() {
+        CustomerOrderCreateRequest request = new CustomerOrderCreateRequest(
+            "line-2",
+            "ADDON",
+            "ADDON-ROAM",
+            null,
+            false
+        );
+
+        CustomerOrderResponse first = service.create(request, "idem-shared", "cust-a");
+        CustomerOrderResponse second = service.create(request, "idem-shared", "cust-b");
+
+        assertThat(second.orderId()).isNotEqualTo(first.orderId());
+    }
+
+    @Test
     void create_failure_shouldSetRollbackAndEmitNotification() {
         CustomerOrderResponse failed = service.create(
             new CustomerOrderCreateRequest("line-3", "PLAN", "FAIL", "idem-fail-order", true),
-            null
+            null,
+            CUSTOMER_ID
         );
 
         assertThat(failed.state()).isEqualTo(OrderState.FAILED);
         assertThat(failed.rollbackApplied()).isTrue();
-        assertThat(alertInboxService.list("12345"))
+        assertThat(alertInboxService.list(CUSTOMER_ID))
             .anySatisfy(item -> {
                 assertThat(item.service()).isEqualTo("ORDER");
                 assertThat(item.lineId()).isEqualTo("line-3");

@@ -5,6 +5,7 @@ import com.mytelco.customerbff.controller.CustomerOrdersController;
 import com.mytelco.customerbff.model.CustomerOrderCreateRequest;
 import com.mytelco.customerbff.model.CustomerOrderResponse;
 import com.mytelco.customerbff.model.OrderState;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.CustomerOrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -36,8 +38,11 @@ class CustomerOrdersControllerTest {
     @MockBean
     private CustomerOrderService customerOrderService;
 
+    @MockBean
+    private CustomerIdentityResolver customerIdentityResolver;
+
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void getOrder_shouldReturnOrderStateContract() throws Exception {
         CustomerOrderResponse response = new CustomerOrderResponse(
             "ord_1",
@@ -52,7 +57,8 @@ class CustomerOrdersControllerTest {
             Instant.parse("2026-03-13T07:01:00Z")
         );
 
-        when(customerOrderService.getById("ord_1")).thenReturn(response);
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(customerOrderService.getById("cust-1", "ord_1")).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/customer/orders/ord_1"))
             .andExpect(status().isOk())
@@ -61,7 +67,7 @@ class CustomerOrdersControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void createOrder_shouldUseHeaderIdempotencyKey() throws Exception {
         CustomerOrderCreateRequest request = new CustomerOrderCreateRequest("line-7", "ADDON", "ADDON-5G", null, false);
         CustomerOrderResponse response = new CustomerOrderResponse(
@@ -77,7 +83,8 @@ class CustomerOrdersControllerTest {
             Instant.now()
         );
 
-        when(customerOrderService.create(eq(request), eq("idem-7"))).thenReturn(response);
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(customerOrderService.create(eq(request), eq("idem-7"), eq("cust-1"))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/customer/orders")
                 .with(csrf())

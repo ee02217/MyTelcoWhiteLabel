@@ -1,6 +1,7 @@
 package com.mytelco.customerbff.controller;
 
 import com.mytelco.customerbff.model.BillExplorerResponse;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.BillingExplorerService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -13,6 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,10 +30,16 @@ public class BillingExplorerController {
 
     private final BillingExplorerService billingExplorerService;
     private final MeterRegistry meterRegistry;
+    private final CustomerIdentityResolver customerIdentityResolver;
 
-    public BillingExplorerController(BillingExplorerService billingExplorerService, MeterRegistry meterRegistry) {
+    public BillingExplorerController(
+        BillingExplorerService billingExplorerService,
+        MeterRegistry meterRegistry,
+        CustomerIdentityResolver customerIdentityResolver
+    ) {
         this.billingExplorerService = billingExplorerService;
         this.meterRegistry = meterRegistry;
+        this.customerIdentityResolver = customerIdentityResolver;
     }
 
     @GetMapping("/explorer")
@@ -44,6 +52,7 @@ public class BillingExplorerController {
         @ApiResponse(responseCode = "400", description = "Invalid period format")
     })
     public ResponseEntity<BillExplorerResponse> getBillExplorer(
+        Authentication authentication,
         @Parameter(description = "Billing period in format YYYY-MM", example = "2026-03")
         @RequestParam String period
     ) {
@@ -52,8 +61,9 @@ public class BillingExplorerController {
             .publishPercentiles(0.50, 0.95, 0.99)
             .register(meterRegistry);
 
+        String customerId = customerIdentityResolver.resolveCustomerId(authentication);
         BillExplorerResponse response = timer.record(
-            () -> billingExplorerService.getBillExplorer("12345", YearMonth.parse(period))
+            () -> billingExplorerService.getBillExplorer(customerId, YearMonth.parse(period))
         );
 
         return ResponseEntity.ok(response);
