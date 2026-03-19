@@ -168,18 +168,35 @@ type RoamingPurchaseResponse = {
   status: string;
 };
 
-const fallbackOverview: AccountOverview = {
-  plan: 'Unavailable (login required)',
-  activeLineCount: 0,
-  outstandingAmount: 0,
-};
-
 type AppRoute = 'home' | 'lab';
+type AccountLoadState = 'idle' | 'loading' | 'ready' | 'auth-error' | 'api-error';
 
 const routeFromPath = (pathname: string): AppRoute => {
   if (pathname === '/lab' || pathname.startsWith('/lab/')) return 'lab';
   return 'home';
 };
+
+const parseJwtRoles = (accessToken: string | undefined) => {
+  if (!accessToken) return [] as string[];
+  try {
+    const payload = accessToken.split('.')[1];
+    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
+    const claims = JSON.parse(atob(padded.replace(/-/g, '+').replace(/_/g, '/')));
+    const roles = claims?.realm_access?.roles;
+    return Array.isArray(roles)
+      ? roles.filter((role): role is string => typeof role === 'string')
+      : [];
+  } catch {
+    return [] as string[];
+  }
+};
+
+const isAuthError = (error: unknown) =>
+  error instanceof Error &&
+  (error.message.includes('Unauthorized') || error.message.includes('Forbidden'));
+
+const toErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error && error.message ? error.message : fallback;
 
 function App() {
   const [session, setSession] = useState<OidcSession | null>(readSession());
@@ -191,6 +208,8 @@ function App() {
   const [homeUnreadNotifications, setHomeUnreadNotifications] = useState(0);
   const [homeOpenSupportCases, setHomeOpenSupportCases] = useState(0);
   const [homeWaitingSupportCases, setHomeWaitingSupportCases] = useState(0);
+  const [accountLoadState, setAccountLoadState] = useState<AccountLoadState>('idle');
+  const [accountLoadMessage, setAccountLoadMessage] = useState<string | null>(null);
 
   const [paymentToken, setPaymentToken] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState('No payment attempt yet');
@@ -205,11 +224,15 @@ function App() {
   const [simStatus, setSimStatus] = useState('SIM flow idle');
   const [stepUpChallengeId, setStepUpChallengeId] = useState<string | null>(null);
   const [stepUpToken, setStepUpToken] = useState<string | null>(null);
+  const [stepUpCode, setStepUpCode] = useState('');
 
   const [esimStatus, setEsimStatus] = useState<EsimActivationResponse | null>(null);
 
   const [roamingPacks, setRoamingPacks] = useState<RoamingPack[]>([]);
   const [roamingStatus, setRoamingStatus] = useState('Roaming flow idle');
+
+  const sessionRoles = useMemo(() => parseJwtRoles(session?.accessToken), [session?.accessToken]);
+  const canSendNotificationTest = sessionRoles.includes('ADMIN');
 
   const authedFetch = async (path: string, init: RequestInit = {}) => {
     if (!session?.accessToken) throw new Error('Not authenticated');
@@ -241,52 +264,99 @@ function App() {
   };
 
   const loadOverview = async () => {
-    setError(null);
-    try {
-      const response = await authedFetch('/api/v1/customer/account-overview');
-      setOverview((await response.json()) as AccountOverview);
-      setStatus('Protected API call succeeded');
-    } catch (err) {
-      setOverview(fallbackOverview);
-      setError(err instanceof Error ? err.message : 'Failed to load account overview');
-    }
+    const response = await authedFetch('/api/v1/customer/account-overview');
+    const payload = (await response.json()) as AccountOverview;
+    setOverview(payload);
+    return payload;
   };
 
   const loadHomeDashboard = async () => {
     const response = await authedFetch('/api/v1/customer/dashboard');
-    setHomeDashboard((await response.json()) as HomeDashboardResponse);
+    return (await response.json()) as HomeDashboardResponse;
   };
 
   const loadHomeNotificationSummary = async () => {
     const response = await authedFetch('/api/v1/customer/notifications/inbox');
     const payload = (await response.json()) as HomeNotificationItem[];
-    const unread = payload.filter((item) => !item.readAt).length;
-    setHomeUnreadNotifications(unread);
+    return payload.filter((item) => !item.readAt).length;
   };
 
   const loadHomeSupportSummary = async () => {
     const response = await authedFetch('/api/v1/customer/support/cases');
     const payload = (await response.json()) as HomeSupportCase[];
-    const openOrInProgress = payload.filter(
-      (item) => item.status === 'OPEN' || item.status === 'IN_PROGRESS'
-    ).length;
-    const waitingCustomer = payload.filter((item) => item.status === 'WAITING_CUSTOMER').length;
-    setHomeOpenSupportCases(openOrInProgress);
-    setHomeWaitingSupportCases(waitingCustomer);
+    return {
+      openOrInProgress: payload.filter(
+        (item) => item.status === 'OPEN' || item.status === 'IN_PROGRESS'
+      ).length,
+      waitingCustomer: payload.filter((item) => item.status === 'WAITING_CUSTOMER').length,
+    };
   };
 
   const refreshHomepageData = async () => {
     setError(null);
-    try {
-      await Promise.all([
+    setAccountLoadState('loading');
+    setAccountLoadMessage(null);
+
+    const [overviewResult, dashboardResult, notificationResult, supportResult] =
+      await Promise.allSettled([
         loadOverview(),
         loadHomeDashboard(),
         loadHomeNotificationSummary(),
         loadHomeSupportSummary(),
       ]);
+
+    if (overviewResult.status === 'fulfilled') {
+      setOverview(overviewResult.value);
+      setAccountLoadState('ready');
+      setStatus('Protected API call succeeded');
+    } else {
+      setOverview(null);
+      if (isAuthError(overviewResult.reason)) {
+        setAccountLoadState('auth-error');
+        setAccountLoadMessage('Session is no longer authorized. Refresh session or login again.');
+      } else {
+        setAccountLoadState('api-error');
+        setAccountLoadMessage('Account snapshot unavailable. Try refreshing homepage data.');
+      }
+    }
+
+    if (dashboardResult.status === 'fulfilled') {
+      setHomeDashboard(dashboardResult.value);
+    } else {
+      setHomeDashboard(null);
+    }
+
+    if (notificationResult.status === 'fulfilled') {
+      setHomeUnreadNotifications(notificationResult.value);
+    } else {
+      setHomeUnreadNotifications(0);
+    }
+
+    if (supportResult.status === 'fulfilled') {
+      setHomeOpenSupportCases(supportResult.value.openOrInProgress);
+      setHomeWaitingSupportCases(supportResult.value.waitingCustomer);
+    } else {
+      setHomeOpenSupportCases(0);
+      setHomeWaitingSupportCases(0);
+    }
+
+    const results = [overviewResult, dashboardResult, notificationResult, supportResult];
+    const failed = results.filter((item) => item.status === 'rejected').length;
+
+    if (failed === 0) {
       setStatus('Homepage data refreshed');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to refresh homepage data');
+      return;
+    }
+
+    if (failed < results.length) {
+      setStatus(`Homepage partially loaded (${results.length - failed}/${results.length})`);
+    } else {
+      setStatus('Homepage data load failed');
+    }
+
+    const firstFailure = results.find((item) => item.status === 'rejected');
+    if (firstFailure && firstFailure.status === 'rejected' && !isAuthError(firstFailure.reason)) {
+      setError(toErrorMessage(firstFailure.reason, 'Failed to refresh homepage data'));
     }
   };
 
@@ -440,15 +510,26 @@ function App() {
     });
     const payload = (await response.json()) as StepUpChallengeResponse;
     setStepUpChallengeId(payload.challengeId);
-    setSimStatus(`Challenge sent to ${payload.maskedDestination}`);
+    setStepUpCode('');
+    setStepUpToken(null);
+    setSimStatus(
+      `Challenge sent to ${payload.maskedDestination} (challenge ${payload.challengeId})`
+    );
   };
 
   const verifyStepUp = async () => {
-    if (!stepUpChallengeId) return;
+    if (!stepUpChallengeId) {
+      setSimStatus('Issue a challenge first');
+      return;
+    }
+    if (!stepUpCode.trim()) {
+      setSimStatus('Enter the challenge code before verification');
+      return;
+    }
     const response = await authedFetch('/api/v1/customer/step-up/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ challengeId: stepUpChallengeId, code: '123456' }),
+      body: JSON.stringify({ challengeId: stepUpChallengeId, code: stepUpCode.trim() }),
     });
     const payload = (await response.json()) as StepUpVerifyResponse;
     setStepUpToken(payload.verificationToken);
@@ -537,7 +618,24 @@ function App() {
         refreshHomepageData().catch(() => undefined);
       }
       if (route === 'lab') {
-        loadOverview().catch(() => undefined);
+        loadOverview()
+          .then(() => {
+            setAccountLoadState('ready');
+            setAccountLoadMessage(null);
+          })
+          .catch((err) => {
+            setOverview(null);
+            if (isAuthError(err)) {
+              setAccountLoadState('auth-error');
+              setAccountLoadMessage(
+                'Session is no longer authorized. Refresh session or login again.'
+              );
+            } else {
+              setAccountLoadState('api-error');
+              setAccountLoadMessage('Account data unavailable. Try refreshing the page.');
+            }
+            setError(toErrorMessage(err, 'Failed to load account overview'));
+          });
         loadPaymentHistory().catch(() => undefined);
         loadOrderAlerts().catch(() => undefined);
       }
@@ -547,6 +645,8 @@ function App() {
       setHomeUnreadNotifications(0);
       setHomeOpenSupportCases(0);
       setHomeWaitingSupportCases(0);
+      setAccountLoadState('idle');
+      setAccountLoadMessage(null);
       setHistory([]);
       setOrderAlerts([]);
     }
@@ -562,12 +662,12 @@ function App() {
     currency: 'EUR',
   });
 
-  const formattedAmount = currencyFormatter.format(overview?.outstandingAmount ?? 0);
-
   const formatCurrency = (value: number | null | undefined) => {
     if (value === null || value === undefined || Number.isNaN(value)) return '—';
     return currencyFormatter.format(value);
   };
+
+  const formattedOutstandingAmount = formatCurrency(overview?.outstandingAmount);
 
   const formatDateValue = (value: string | null | undefined) => {
     if (!value) return '—';
@@ -634,7 +734,7 @@ function App() {
 
           <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
             <Typography variant="h4">Account at a glance</Typography>
-            {session && (
+            {session && accountLoadState === 'ready' && (
               <>
                 <Typography variant="body">
                   Plan: {homeDashboard?.accountSummary.planName || overview?.plan || '—'}
@@ -650,6 +750,17 @@ function App() {
                   Active lines: {overview?.activeLineCount ?? 0}
                 </Typography>
               </>
+            )}
+            {session && accountLoadState === 'loading' && (
+              <Typography variant="small" color="secondary">
+                Loading account snapshot…
+              </Typography>
+            )}
+            {session && accountLoadState !== 'ready' && accountLoadState !== 'loading' && (
+              <Typography variant="small" color="secondary">
+                {accountLoadMessage ||
+                  'Account snapshot unavailable. Try refreshing homepage data.'}
+              </Typography>
             )}
             {!session && (
               <Typography variant="small" color="secondary">
@@ -697,7 +808,9 @@ function App() {
                 <Typography variant="body">
                   Current balance: {formatCurrency(homeDashboard?.billingSummary.currentBalance)}
                 </Typography>
-                <Typography variant="body">Outstanding amount: {formattedAmount}</Typography>
+                <Typography variant="body">
+                  Outstanding amount: {formattedOutstandingAmount}
+                </Typography>
                 <Typography variant="body">
                   Next payment due:{' '}
                   {formatDateValue(
@@ -817,7 +930,7 @@ function App() {
             <>
               <Typography variant="body">Plan: {overview.plan}</Typography>
               <Typography variant="body">Active lines: {overview.activeLineCount}</Typography>
-              <Typography variant="body">Outstanding: {formattedAmount}</Typography>
+              <Typography variant="body">Outstanding: {formattedOutstandingAmount}</Typography>
             </>
           )}
         </Card>
@@ -936,12 +1049,18 @@ function App() {
             >
               Issue step-up challenge
             </Button>
+            <input
+              value={stepUpCode}
+              onChange={(event) => setStepUpCode(event.target.value)}
+              placeholder="Enter OTP code"
+              style={{ minWidth: 140 }}
+            />
             <Button
               size="sm"
               onClick={() => verifyStepUp().catch(() => undefined)}
-              disabled={!stepUpChallengeId}
+              disabled={!stepUpChallengeId || !stepUpCode.trim()}
             >
-              Verify challenge (MVP code)
+              Verify challenge code
             </Button>
             <Button
               size="sm"
@@ -958,6 +1077,9 @@ function App() {
               Unblock SIM
             </Button>
           </div>
+          <Typography variant="small" color="secondary">
+            Local stub OTP is delivered via customer-bff logs. Use that code for verification.
+          </Typography>
           <div style={styles.row}>
             <Button size="sm" onClick={() => activateEsim().catch(() => undefined)}>
               Activate eSIM
@@ -994,7 +1116,7 @@ function App() {
           </div>
         </Card>
 
-        <NotificationCenterPanel authedFetch={authedFetch} />
+        <NotificationCenterPanel authedFetch={authedFetch} canSendTest={canSendNotificationTest} />
 
         <TroubleshootingPanel authedFetch={authedFetch} />
 
