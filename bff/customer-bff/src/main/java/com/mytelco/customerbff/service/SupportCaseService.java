@@ -1,11 +1,15 @@
 package com.mytelco.customerbff.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.mytelco.customerbff.model.SupportCaseAttachment;
 import com.mytelco.customerbff.model.SupportCaseCreateRequest;
 import com.mytelco.customerbff.model.SupportCaseMessageRequest;
 import com.mytelco.customerbff.model.SupportCaseResponse;
 import com.mytelco.customerbff.model.SupportCaseStatus;
 import com.mytelco.customerbff.model.SupportCaseTimelineEntry;
+import com.mytelco.customerbff.service.persistence.DurableStateStore;
+import com.mytelco.customerbff.service.persistence.NoopDurableStateStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -19,11 +23,21 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class SupportCaseService {
 
+    private static final String STATE_KEY = "support-case-state";
+    private static final int SCHEMA_VERSION = 1;
+
     private final SupportCaseSlaService slaService;
-    private final Map<String, SupportCaseAggregate> casesById = new ConcurrentHashMap<>();
+    private final Map<String, SupportCaseRecord> casesById = new ConcurrentHashMap<>();
+    private DurableStateStore durableStateStore = NoopDurableStateStore.INSTANCE;
 
     public SupportCaseService(SupportCaseSlaService slaService) {
         this.slaService = slaService;
+    }
+
+    @Autowired(required = false)
+    public void setDurableStateStore(DurableStateStore durableStateStore) {
+        this.durableStateStore = durableStateStore;
+        loadState();
     }
 
     public SupportCaseResponse create(SupportCaseCreateRequest request) {
@@ -42,7 +56,7 @@ public class SupportCaseService {
             "Support case created"
         ));
 
-        SupportCaseAggregate aggregate = new SupportCaseAggregate(
+        SupportCaseRecord supportCase = new SupportCaseRecord(
             caseId,
             request.category(),
             request.subject(),
@@ -57,30 +71,32 @@ public class SupportCaseService {
             timeline
         );
 
-        casesById.put(caseId, aggregate);
-        return aggregate.toResponse();
+        casesById.put(caseId, supportCase);
+        persistState();
+        return supportCase.toResponse();
     }
 
     public List<SupportCaseResponse> list() {
         return casesById.values().stream()
-            .map(SupportCaseAggregate::toResponse)
+            .map(SupportCaseRecord::toResponse)
             .sorted(Comparator.comparing(SupportCaseResponse::createdAt).reversed())
             .toList();
     }
 
     public SupportCaseResponse get(String caseId) {
-        SupportCaseAggregate aggregate = casesById.get(caseId);
-        return aggregate == null ? null : aggregate.toResponse();
+        SupportCaseRecord supportCase = casesById.get(caseId);
+        return supportCase == null ? null : supportCase.toResponse();
     }
 
     public SupportCaseResponse addMessage(String caseId, SupportCaseMessageRequest request) {
-        SupportCaseAggregate aggregate = casesById.get(caseId);
-        if (aggregate == null) {
+        SupportCaseRecord supportCase = casesById.get(caseId);
+        if (supportCase == null) {
             return null;
         }
 
         Instant now = Instant.now();
-        aggregate.timeline().add(new SupportCaseTimelineEntry(
+        List<SupportCaseTimelineEntry> timeline = new ArrayList<>(supportCase.timeline());
+        timeline.add(new SupportCaseTimelineEntry(
             "evt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12),
             now,
             request.actor(),
@@ -88,52 +104,64 @@ public class SupportCaseService {
             "MESSAGE",
             request.message()
         ));
-        aggregate.updatedAt = now;
-        return aggregate.toResponse();
+
+        SupportCaseRecord updated = supportCase.withUpdatedTimeline(now, timeline);
+        casesById.put(caseId, updated);
+        persistState();
+        return updated.toResponse();
     }
 
-    private static final class SupportCaseAggregate {
-        private final String caseId;
-        private final String category;
-        private final String subject;
-        private final String description;
-        private final String priority;
-        private final SupportCaseStatus status;
-        private final Instant createdAt;
-        private Instant updatedAt;
-        private final String slaTarget;
-        private final Instant expectedResponseAt;
-        private final List<SupportCaseAttachment> attachments;
-        private final List<SupportCaseTimelineEntry> timeline;
+    private void loadState() {
+        SupportCaseState state = durableStateStore.read(
+            STATE_KEY,
+            new TypeReference<>() {
+            },
+            SupportCaseState::empty
+        );
 
-        private SupportCaseAggregate(String caseId,
-                                     String category,
-                                     String subject,
-                                     String description,
-                                     String priority,
-                                     SupportCaseStatus status,
-                                     Instant createdAt,
-                                     Instant updatedAt,
-                                     String slaTarget,
-                                     Instant expectedResponseAt,
-                                     List<SupportCaseAttachment> attachments,
-                                     List<SupportCaseTimelineEntry> timeline) {
-            this.caseId = caseId;
-            this.category = category;
-            this.subject = subject;
-            this.description = description;
-            this.priority = priority;
-            this.status = status;
-            this.createdAt = createdAt;
-            this.updatedAt = updatedAt;
-            this.slaTarget = slaTarget;
-            this.expectedResponseAt = expectedResponseAt;
-            this.attachments = attachments;
-            this.timeline = timeline;
+        casesById.clear();
+        casesById.putAll(state.casesById());
+    }
+
+    private void persistState() {
+        durableStateStore.write(STATE_KEY, new SupportCaseState(SCHEMA_VERSION, Map.copyOf(casesById)));
+    }
+
+    private record SupportCaseState(int schemaVersion, Map<String, SupportCaseRecord> casesById) {
+        private static SupportCaseState empty() {
+            return new SupportCaseState(SCHEMA_VERSION, Map.of());
         }
+    }
 
-        private List<SupportCaseTimelineEntry> timeline() {
-            return timeline;
+    private record SupportCaseRecord(
+        String caseId,
+        String category,
+        String subject,
+        String description,
+        String priority,
+        SupportCaseStatus status,
+        Instant createdAt,
+        Instant updatedAt,
+        String slaTarget,
+        Instant expectedResponseAt,
+        List<SupportCaseAttachment> attachments,
+        List<SupportCaseTimelineEntry> timeline
+    ) {
+        private SupportCaseRecord withUpdatedTimeline(Instant updatedAt, List<SupportCaseTimelineEntry> timeline) {
+            return new SupportCaseRecord(
+                caseId,
+                category,
+                subject,
+                description,
+                priority,
+                status,
+                createdAt,
+                updatedAt,
+                slaTarget,
+                expectedResponseAt,
+                List.copyOf(attachments),
+                List.copyOf(timeline)
+            );
         }
 
         private SupportCaseResponse toResponse() {

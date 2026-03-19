@@ -36,6 +36,8 @@ springdoc:
     path: /swagger-ui.html
 
 mytelco:
+  state:
+    storage-dir: ${MYTELCO_STATE_STORAGE_DIR:data/customer-bff}
   step-up:
     challenge-ttl: ${MYTELCO_STEP_UP_CHALLENGE_TTL:PT5M}
     verification-token-ttl: ${MYTELCO_STEP_UP_TOKEN_TTL:PT10M}

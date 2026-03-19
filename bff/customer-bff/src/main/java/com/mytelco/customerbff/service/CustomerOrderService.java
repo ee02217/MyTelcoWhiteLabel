@@ -1,9 +1,13 @@
 package com.mytelco.customerbff.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.mytelco.customerbff.model.AlertInboxItem;
 import com.mytelco.customerbff.model.CustomerOrderCreateRequest;
 import com.mytelco.customerbff.model.CustomerOrderResponse;
 import com.mytelco.customerbff.model.OrderState;
+import com.mytelco.customerbff.service.persistence.DurableStateStore;
+import com.mytelco.customerbff.service.persistence.NoopDurableStateStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -20,14 +24,24 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Service
 public class CustomerOrderService {
 
+    private static final String STATE_KEY = "customer-order-state";
+    private static final int SCHEMA_VERSION = 1;
+
     private final AlertInboxService alertInboxService;
     private final Map<String, CustomerOrderResponse> ordersById = new ConcurrentHashMap<>();
     private final Map<String, String> idempotencyToOrderId = new ConcurrentHashMap<>();
     private final Map<String, CopyOnWriteArrayList<String>> orderIdsByLineId = new ConcurrentHashMap<>();
     private final Map<String, String> orderCustomerByOrderId = new ConcurrentHashMap<>();
+    private DurableStateStore durableStateStore = NoopDurableStateStore.INSTANCE;
 
     public CustomerOrderService(AlertInboxService alertInboxService) {
         this.alertInboxService = alertInboxService;
+    }
+
+    @Autowired(required = false)
+    public void setDurableStateStore(DurableStateStore durableStateStore) {
+        this.durableStateStore = durableStateStore;
+        loadState();
     }
 
     public CustomerOrderResponse create(
@@ -171,6 +185,7 @@ public class CustomerOrderService {
         ordersById.put(order.orderId(), order);
         orderCustomerByOrderId.put(order.orderId(), customerId);
         orderIdsByLineId.computeIfAbsent(order.lineId(), ignored -> new CopyOnWriteArrayList<>()).add(order.orderId());
+        persistState();
         return null;
     }
 
@@ -181,6 +196,57 @@ public class CustomerOrderService {
     private void validateCustomerId(String customerId) {
         if (!StringUtils.hasText(customerId)) {
             throw new IllegalArgumentException("Customer id is required");
+        }
+    }
+
+    private void loadState() {
+        CustomerOrderState state = durableStateStore.read(
+            STATE_KEY,
+            new TypeReference<>() {
+            },
+            CustomerOrderState::empty
+        );
+
+        ordersById.clear();
+        ordersById.putAll(state.ordersById());
+
+        idempotencyToOrderId.clear();
+        idempotencyToOrderId.putAll(state.idempotencyToOrderId());
+
+        orderIdsByLineId.clear();
+        state.orderIdsByLineId().forEach((lineId, orderIds) ->
+            orderIdsByLineId.put(lineId, new CopyOnWriteArrayList<>(orderIds))
+        );
+
+        orderCustomerByOrderId.clear();
+        orderCustomerByOrderId.putAll(state.orderCustomerByOrderId());
+    }
+
+    private void persistState() {
+        Map<String, List<String>> lineIndexSnapshot = new ConcurrentHashMap<>();
+        orderIdsByLineId.forEach((lineId, orderIds) -> lineIndexSnapshot.put(lineId, List.copyOf(orderIds)));
+
+        durableStateStore.write(
+            STATE_KEY,
+            new CustomerOrderState(
+                SCHEMA_VERSION,
+                Map.copyOf(ordersById),
+                Map.copyOf(idempotencyToOrderId),
+                lineIndexSnapshot,
+                Map.copyOf(orderCustomerByOrderId)
+            )
+        );
+    }
+
+    private record CustomerOrderState(
+        int schemaVersion,
+        Map<String, CustomerOrderResponse> ordersById,
+        Map<String, String> idempotencyToOrderId,
+        Map<String, List<String>> orderIdsByLineId,
+        Map<String, String> orderCustomerByOrderId
+    ) {
+        private static CustomerOrderState empty() {
+            return new CustomerOrderState(SCHEMA_VERSION, Map.of(), Map.of(), Map.of(), Map.of());
         }
     }
 }
