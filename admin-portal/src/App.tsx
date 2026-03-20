@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { Button, Card, DesignSystemProvider, Typography } from './design-system';
+import { Badge, Button, DesignSystemProvider, Field, Panel, Typography } from './design-system';
 import {
   beginLogin,
   completeLoginIfCallback,
@@ -118,7 +118,9 @@ function App() {
   const [userRoleDrafts, setUserRoleDrafts] = useState<Record<string, string>>({});
   const [userEnabledDrafts, setUserEnabledDrafts] = useState<Record<string, boolean>>({});
 
-  const expiresIn = session ? Math.max(0, session.expiresAt - Math.floor(Date.now() / 1000)) : 'n/a';
+  const expiresIn = session
+    ? Math.max(0, session.expiresAt - Math.floor(Date.now() / 1000))
+    : 'n/a';
   const selectedSummary = useMemo(
     () => operators.find((item) => item.operatorId === selectedOperatorId) || null,
     [operators, selectedOperatorId]
@@ -317,17 +319,23 @@ function App() {
       <div style={styles.container}>
         <Typography variant="h2">MyTelco Admin Portal</Typography>
         <Typography variant="body" color="secondary">
-          Operator metadata management (backend-first): profile, channel flags, users/roles and audit.
+          Operator metadata management (backend-first): profile, channel flags, users/roles and
+          audit.
         </Typography>
 
-        <Card padding="md" shadow="md">
-          <Typography variant="h4">Session</Typography>
-          <Typography variant="small" color="secondary">
-            Status: {status}
-          </Typography>
-          <Typography variant="small" color="secondary">
-            Access token expires in: {expiresIn}
-          </Typography>
+        <Panel
+          title="Session"
+          subtitle="Admin OIDC authentication and data refresh controls"
+          actions={
+            <Badge variant={session ? 'success' : 'warning'}>
+              {session ? 'Authenticated' : 'Not logged in'}
+            </Badge>
+          }
+        >
+          <div style={styles.row}>
+            <Badge variant="info">Status: {status}</Badge>
+            <Badge variant="neutral">Access token expires in: {expiresIn}</Badge>
+          </div>
 
           <div style={styles.row}>
             {!session && (
@@ -350,7 +358,11 @@ function App() {
                 >
                   Refresh session
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => refreshAll().catch(() => undefined)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => refreshAll().catch(() => undefined)}
+                >
                   Refresh data
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => logout(session)}>
@@ -359,109 +371,159 @@ function App() {
               </>
             )}
           </div>
+
           {error && (
-            <Typography variant="small" color="secondary" style={{ marginTop: 8 }}>
+            <Badge variant="danger" style={{ width: 'fit-content' }}>
               Error: {error}
-            </Typography>
+            </Badge>
           )}
-        </Card>
+        </Panel>
 
         {session && (
           <div style={styles.twoCols}>
-            <Card padding="md" shadow="md">
-              <Typography variant="h4">Operators</Typography>
-              {operators.length === 0 && <Typography variant="small">No operators loaded.</Typography>}
+            <Panel
+              title="Operators"
+              subtitle="Select an operator to manage profile, users and audit metadata"
+            >
+              {operators.length === 0 && (
+                <Typography variant="small">No operators loaded.</Typography>
+              )}
               {operators.map((operator) => (
                 <div key={operator.operatorId} style={{ marginBottom: 8 }}>
-                  <Button
-                    size="sm"
-                    variant={selectedOperatorId === operator.operatorId ? 'primary' : 'outline'}
-                    onClick={() => setSelectedOperatorId(operator.operatorId)}
-                  >
-                    {operator.name} ({operator.operatorId})
-                  </Button>
+                  <div style={styles.row}>
+                    <Button
+                      size="sm"
+                      variant={selectedOperatorId === operator.operatorId ? 'primary' : 'outline'}
+                      onClick={() => setSelectedOperatorId(operator.operatorId)}
+                    >
+                      {operator.name} ({operator.operatorId})
+                    </Button>
+                    <Badge variant="neutral">v{operator.version}</Badge>
+                    <Badge variant="info">channels {operator.channelCount}</Badge>
+                    <Badge variant="info">journeys {operator.journeyCount}</Badge>
+                    <Badge variant="info">users {operator.userCount}</Badge>
+                  </div>
                   <Typography variant="caption" color="secondary">
-                    v{operator.version} · channels {operator.channelCount} · journeys {operator.journeyCount} · users{' '}
-                    {operator.userCount}
+                    Locales: {operator.locales.join(', ') || 'n/a'} · Updated {operator.updatedAt}
                   </Typography>
                 </div>
               ))}
-            </Card>
+            </Panel>
 
-            <Card padding="md" shadow="md">
-              <Typography variant="h4">Profile editor</Typography>
-              {!profile && <Typography variant="small">Select an operator to load profile.</Typography>}
+            <Panel
+              title="Profile editor"
+              subtitle="Edit operator metadata and feature matrix. Changes create a new version."
+            >
+              {!profile && (
+                <Typography variant="small">Select an operator to load profile.</Typography>
+              )}
               {profile && (
                 <>
-                  <Typography variant="small" color="secondary">
-                    Operator: {profile.operatorId} · version {profile.version} · updated {profile.updatedAt}
-                  </Typography>
+                  <div style={styles.row}>
+                    <Badge variant="neutral">Operator: {profile.operatorId}</Badge>
+                    <Badge variant="info">Version: {profile.version}</Badge>
+                    <Badge variant="neutral">Updated: {profile.updatedAt}</Badge>
+                  </div>
 
-                  <div style={{ marginTop: 10 }}>
-                    <Typography variant="caption">Name</Typography>
+                  <Field label="Name">
                     <input
                       style={styles.input}
                       value={profileNameDraft}
                       onChange={(event) => setProfileNameDraft(event.target.value)}
                     />
-                  </div>
+                  </Field>
 
-                  <div style={{ marginTop: 10 }}>
-                    <Typography variant="caption">Locales (comma separated)</Typography>
+                  <Field
+                    label="Locales"
+                    helper="Comma-separated locale list. Example: en-GB, pt-PT, es-ES"
+                  >
                     <input
                       style={styles.input}
                       value={profileLocalesDraft}
                       onChange={(event) => setProfileLocalesDraft(event.target.value)}
                     />
-                  </div>
+                  </Field>
 
-                  <Typography variant="caption" style={{ marginTop: 10 }}>
-                    Channel feature flags
-                  </Typography>
-                  {Object.entries(profileFeaturesDraft).map(([channel, flags]) => (
-                    <div key={channel} style={{ marginTop: 6 }}>
-                      <Typography variant="small">{channel}</Typography>
-                      <div style={styles.row}>
-                        {Object.entries(flags).map(([flag, enabled]) => (
-                          <label key={`${channel}-${flag}`} style={{ display: 'flex', gap: 4 }}>
-                            <input
-                              type="checkbox"
-                              checked={enabled}
-                              onChange={(event) =>
-                                toggleFeature(channel, flag, event.currentTarget.checked)
-                              }
-                            />
-                            <span style={{ fontSize: 12 }}>{flag}</span>
-                          </label>
-                        ))}
-                      </div>
+                  <Field
+                    label="Branding preview"
+                    helper="Read-only branding metadata from operator config."
+                  >
+                    <div style={styles.row}>
+                      <Badge variant="neutral">primary {profile.branding.primaryColor}</Badge>
+                      <Badge variant="neutral">secondary {profile.branding.secondaryColor}</Badge>
+                      <Badge variant="neutral">logo(light) {profile.branding.logoLight}</Badge>
                     </div>
-                  ))}
+                  </Field>
 
-                  <div style={{ ...styles.row, marginTop: 10 }}>
-                    <Button size="sm" onClick={() => saveProfile().catch((err) => setError(String(err)))}>
+                  <Field label="Channel feature flags">
+                    {Object.entries(profileFeaturesDraft).map(([channel, flags]) => (
+                      <div key={channel} style={{ marginTop: 6 }}>
+                        <Typography variant="small">{channel}</Typography>
+                        <div style={styles.row}>
+                          {Object.entries(flags).map(([flag, enabled]) => (
+                            <label
+                              key={`${channel}-${flag}`}
+                              style={{
+                                display: 'inline-flex',
+                                gap: 6,
+                                alignItems: 'center',
+                                border: '1px solid var(--color-border-default)',
+                                borderRadius: 999,
+                                padding: '4px 10px',
+                                background: enabled
+                                  ? 'rgba(22, 163, 74, 0.10)'
+                                  : 'var(--color-background-secondary)',
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={enabled}
+                                onChange={(event) =>
+                                  toggleFeature(channel, flag, event.currentTarget.checked)
+                                }
+                              />
+                              <span style={{ fontSize: 12 }}>{flag}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </Field>
+
+                  <div style={styles.row}>
+                    <Button
+                      size="sm"
+                      onClick={() => saveProfile().catch((err) => setError(String(err)))}
+                    >
                       Save profile
                     </Button>
                   </div>
                 </>
               )}
-            </Card>
+            </Panel>
           </div>
         )}
 
         {session && selectedSummary && (
-          <Card padding="md" shadow="md">
-            <Typography variant="h4">Operator users and roles</Typography>
-            <Typography variant="small" color="secondary">
-              Selected operator: {selectedSummary.name} ({selectedSummary.operatorId})
-            </Typography>
-
+          <Panel
+            title="Operator users and roles"
+            subtitle={`Selected operator: ${selectedSummary.name} (${selectedSummary.operatorId})`}
+          >
             {users.map((user) => (
-              <div key={user.userId} style={{ marginTop: 10, borderTop: '1px solid #e5e7eb', paddingTop: 8 }}>
-                <Typography variant="body">
-                  {user.displayName} · {user.email}
-                </Typography>
+              <div
+                key={user.userId}
+                style={{ marginTop: 10, borderTop: '1px solid #e5e7eb', paddingTop: 8 }}
+              >
                 <div style={styles.row}>
+                  <Typography variant="body">
+                    {user.displayName} · {user.email}
+                  </Typography>
+                  <Badge variant={user.enabled ? 'success' : 'warning'}>
+                    {user.enabled ? 'enabled' : 'disabled'}
+                  </Badge>
+                </div>
+
+                <Field label="Roles (comma separated)">
                   <input
                     style={styles.input}
                     value={userRoleDrafts[user.userId] || ''}
@@ -469,6 +531,9 @@ function App() {
                       setUserRoleDrafts((prev) => ({ ...prev, [user.userId]: event.target.value }))
                     }
                   />
+                </Field>
+
+                <div style={styles.row}>
                   <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                     <input
                       type="checkbox"
@@ -492,23 +557,33 @@ function App() {
                 </div>
               </div>
             ))}
-          </Card>
+          </Panel>
         )}
 
         {session && selectedSummary && (
-          <Card padding="md" shadow="md">
-            <Typography variant="h4">Audit timeline</Typography>
+          <Panel
+            title="Audit timeline"
+            subtitle="Versioned audit trail for profile and user changes"
+          >
             {audit.length === 0 && <Typography variant="small">No audit entries yet.</Typography>}
             {audit.map((entry) => (
-              <div key={`${entry.timestamp}-${entry.action}-${entry.targetId}`} style={{ marginTop: 10 }}>
-                <Typography variant="small">
-                  {entry.timestamp} · v{entry.version} · {entry.action} · {entry.scope}/{entry.targetId} ·
-                  actor {entry.actor}
-                </Typography>
+              <div
+                key={`${entry.timestamp}-${entry.action}-${entry.targetId}`}
+                style={{ marginTop: 10 }}
+              >
+                <div style={styles.row}>
+                  <Badge variant="neutral">{entry.timestamp}</Badge>
+                  <Badge variant="info">v{entry.version}</Badge>
+                  <Badge variant="neutral">{entry.action}</Badge>
+                  <Badge variant="neutral">
+                    {entry.scope}/{entry.targetId}
+                  </Badge>
+                  <Badge variant="neutral">actor {entry.actor}</Badge>
+                </div>
                 <div style={styles.codeBlock}>{JSON.stringify(entry.changes, null, 2)}</div>
               </div>
             ))}
-          </Card>
+          </Panel>
         )}
       </div>
     </DesignSystemProvider>
