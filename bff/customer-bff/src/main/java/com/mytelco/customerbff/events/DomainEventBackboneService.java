@@ -153,6 +153,14 @@ public class DomainEventBackboneService implements DomainEventPublisher {
         return schemaVersionPolicy.effectivePolicy();
     }
 
+    public Map<String, Object> dispatchStatus() {
+        return Map.of(
+            "enabled", properties.isEnabled(),
+            "mode", properties.getDispatch().getMode(),
+            "sendTimeout", normalizeDuration(properties.getDispatch().getSendTimeout(), Duration.ofSeconds(3)).toString()
+        );
+    }
+
     private void dispatchWithRetry(DomainEventEnvelope envelope) {
         int maxAttempts = Math.max(1, properties.getRetry().getMaxAttempts());
         Duration backoff = normalizeDuration(properties.getRetry().getInitialBackoff(), Duration.ofMillis(1));

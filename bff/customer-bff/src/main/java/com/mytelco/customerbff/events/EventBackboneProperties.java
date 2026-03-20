@@ -112,8 +112,26 @@ public class EventBackboneProperties {
 
     public static class Dispatch {
 
+        private String mode = "stub";
+        private Duration sendTimeout = Duration.ofSeconds(3);
         private List<String> failOnTopics = new ArrayList<>();
         private List<String> failOnEventTypes = new ArrayList<>();
+
+        public String getMode() {
+            return mode;
+        }
+
+        public void setMode(String mode) {
+            this.mode = mode;
+        }
+
+        public Duration getSendTimeout() {
+            return sendTimeout;
+        }
+
+        public void setSendTimeout(Duration sendTimeout) {
+            this.sendTimeout = sendTimeout;
+        }
 
         public List<String> getFailOnTopics() {
             return failOnTopics;

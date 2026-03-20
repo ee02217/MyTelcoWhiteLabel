@@ -67,6 +67,7 @@ Outbox inspection:
 
 - `GET /api/v1/customer/events/outbox?topic=<topic>&limit=<n>`
 - `GET /api/v1/customer/events/topics`
+- `GET /api/v1/customer/events/dispatch-status`
 
 ## Retry policy
 
@@ -105,7 +106,40 @@ The stub dispatcher throws when configured match occurs, enabling deterministic 
   - `notification.preferences.updated.v1`
   - `notification.test.sent.v1`
 
+## Dispatcher modes
+
+Dispatcher selection is configuration-driven:
+
+- `mytelco.events.dispatch.mode=stub` (default)
+  - uses `StubKafkaEventDispatcher`
+  - logs dispatches and supports fault-injection for DLQ testing
+- `mytelco.events.dispatch.mode=kafka`
+  - uses `KafkaDomainEventDispatcher`
+  - publishes serialized `DomainEventEnvelope` JSON payloads to configured Kafka topic names
+
+Kafka mode uses:
+
+- `spring.kafka.bootstrap-servers`
+- `mytelco.events.dispatch.send-timeout`
+
+Example (docker/local):
+
+```env
+MYTELCO_EVENTS_DISPATCH_MODE=kafka
+SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+SPRING_KAFKA_PRODUCER_MAX_BLOCK_MS=3000
+SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS=2000
+SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS=5000
+```
+
+For docker integration day, run compose with Kafka profile:
+
+```bash
+docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml --profile kafka up -d --build
+```
+
 ## Notes
 
-- Current dispatcher is a Kafka stub (`StubKafkaEventDispatcher`) for local runtime.
-- Production rollout can swap dispatcher implementation while preserving contract, policy, and replay tooling.
+- Stub mode remains the safe default for local runtime.
+- Kafka mode preserves the same envelope/topic/schema contracts while switching transport to real broker dispatch.
+- Existing outbox/DLQ/replay APIs remain unchanged across dispatcher modes.
