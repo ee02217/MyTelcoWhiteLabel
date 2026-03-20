@@ -50,9 +50,10 @@
       "publicClient": false,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
-      "redirectUris": ["http://localhost:5174/*"],
-      "webOrigins": ["http://localhost:5174"],
-      "defaultClientScopes": ["openid", "profile", "email", "roles"]
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "defaultClientScopes": ["openid", "roles"],
+      "optionalClientScopes": []
     },
     {
       "clientId": "mobile-app",
