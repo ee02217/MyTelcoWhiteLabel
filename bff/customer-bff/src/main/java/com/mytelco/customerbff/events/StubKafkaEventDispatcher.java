@@ -2,9 +2,11 @@ package com.mytelco.customerbff.events;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(prefix = "mytelco.events.dispatch", name = "mode", havingValue = "stub", matchIfMissing = true)
 public class StubKafkaEventDispatcher implements DomainEventDispatcher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StubKafkaEventDispatcher.class);

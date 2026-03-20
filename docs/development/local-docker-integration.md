@@ -13,6 +13,7 @@ The local compose stack includes:
 - admin-bff
 - web-portal (built from `web-portal/` and served by nginx)
 - admin-portal (built from `admin-portal/` and served by nginx)
+- optional Kafka broker (profile `kafka`, for integration day)
 
 Compose file:
 
@@ -26,6 +27,7 @@ Kong profile used by local compose:
 
 - Docker Engine + Docker Compose plugin
 - Available local ports: `5432`, `8080`, `8000`, `8001`, `8443`, `8444`, `8081`, `8082`, `3000`, `3001`
+- Optional Kafka mode port: `9092`
 
 ## Startup
 
@@ -57,6 +59,38 @@ Kong profile used by local compose:
 
    ```bash
    bash scripts/local-smoke-check.sh
+   ```
+
+## Integration day: enable real Kafka dispatch
+
+By default, event backbone runs in `stub` mode (no real broker publish). For integration validation day, enable Kafka in the same compose stack.
+
+1. Enable Kafka dispatch in `.env.local`:
+
+   ```bash
+   MYTELCO_EVENTS_DISPATCH_MODE=kafka
+   SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+   ```
+
+2. Start stack with Kafka profile:
+
+   ```bash
+   docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml --profile kafka up -d --build
+   ```
+
+3. Verify dispatcher mode:
+
+   ```bash
+   # (with bearer token)
+   curl -s -H "Authorization: Bearer <TOKEN>" \
+     http://localhost:8081/api/v1/customer/events/dispatch-status
+   ```
+
+4. Return to default lightweight mode after integration day:
+
+   ```bash
+   # set MYTELCO_EVENTS_DISPATCH_MODE=stub in .env.local
+   docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml up -d --build
    ```
 
 ## Frontend API wiring strategy

@@ -37,6 +37,11 @@ public class EventBackboneController {
         return ResponseEntity.ok(backboneService.schemaPolicy());
     }
 
+    @GetMapping("/dispatch-status")
+    public ResponseEntity<Map<String, Object>> dispatchStatus() {
+        return ResponseEntity.ok(backboneService.dispatchStatus());
+    }
+
     @GetMapping("/outbox")
     public ResponseEntity<List<DomainEventEnvelope>> outbox(
         @RequestParam(value = "topic", required = false) String topic,

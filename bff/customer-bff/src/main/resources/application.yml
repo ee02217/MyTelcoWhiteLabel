@@ -14,6 +14,17 @@ spring:
           # export SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://localhost:8080/realms/mytelco-white-label/protocol/openid-connect/certs
           issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:8080/realms/mytelco-white-label}
           jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI:http://localhost:8080/realms/mytelco-white-label/protocol/openid-connect/certs}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.block.ms: ${SPRING_KAFKA_PRODUCER_MAX_BLOCK_MS:3000}
+        request.timeout.ms: ${SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS:2000}
+        delivery.timeout.ms: ${SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS:5000}
 
 # Actuator endpoints
 management:
@@ -78,6 +89,9 @@ mytelco:
       default-version: ${MYTELCO_EVENTS_SCHEMA_DEFAULT_VERSION:1}
       versions: {}
     dispatch:
+      # Dispatcher mode: stub | kafka
+      mode: ${MYTELCO_EVENTS_DISPATCH_MODE:stub}
+      send-timeout: ${MYTELCO_EVENTS_DISPATCH_SEND_TIMEOUT:PT3S}
       # Optional fault-injection for DLQ/replay testing.
       fail-on-topics: []
       fail-on-event-types: []
