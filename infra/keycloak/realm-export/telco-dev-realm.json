@@ -35,9 +35,16 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["*"],
-      "webOrigins": ["*"],
-      "defaultClientScopes": ["openid", "roles"],
+      "redirectUris": [
+        "*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "defaultClientScopes": [
+        "openid",
+        "roles"
+      ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
       },
@@ -50,9 +57,17 @@
       "publicClient": false,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
-      "redirectUris": ["http://localhost:5174/*"],
-      "webOrigins": ["http://localhost:5174"],
-      "defaultClientScopes": ["openid", "profile", "email", "roles"]
+      "redirectUris": [
+        "*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "defaultClientScopes": [
+        "openid",
+        "roles"
+      ],
+      "optionalClientScopes": []
     },
     {
       "clientId": "mobile-app",
@@ -61,11 +76,16 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["mytelco://oauth/callback"],
+      "redirectUris": [
+        "mytelco://oauth/callback"
+      ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
       },
-      "defaultClientScopes": ["openid", "roles"],
+      "defaultClientScopes": [
+        "openid",
+        "roles"
+      ],
       "fullScopeAllowed": true
     },
     {
@@ -121,7 +141,9 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["CUSTOMER"]
+      "realmRoles": [
+        "CUSTOMER"
+      ]
     },
     {
       "username": "admin1",
@@ -137,7 +159,9 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["ADMIN"]
+      "realmRoles": [
+        "ADMIN"
+      ]
     },
     {
       "username": "support1",
@@ -153,7 +177,9 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["SUPPORT"]
+      "realmRoles": [
+        "SUPPORT"
+      ]
     }
   ]
 }
