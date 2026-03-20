@@ -1,0 +1,64 @@
+{
+  "$id": "https://example.com/schemas/content.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Operator CMS Content",
+  "description": "Schema for white-label content documents supporting versioned draft/review/publish states.",
+  "type": "object",
+  "required": ["contentId", "versions"],
+  "properties": {
+    "contentId": {
+      "type": "string",
+      "description": "Unique identifier for the content asset."
+    },
+    "operatorId": {
+      "type": "string",
+      "description": "Operator identifier (optional metadata)."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent content operation."
+    },
+    "versions": {
+      "type": "array",
+      "description": "Chronologically ordered versions (earliest first).",
+      "items": {
+        "type": "object",
+        "required": ["locale", "version", "state", "title", "body", "updatedAt"],
+        "properties": {
+          "locale": {
+            "type": "string",
+            "description": "Locale code for this version."
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "state": {
+            "type": "string",
+            "enum": ["DRAFT", "REVIEW", "PUBLISHED"]
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "reviewer": {
+            "type": ["string", "null"]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}
