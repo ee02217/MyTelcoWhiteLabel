@@ -1,5 +1,6 @@
 com/mytelco/customerbff/config/OperatorAdapterProperties$Retry.class
 com/mytelco/customerbff/provider/EsimProvider$EsimActivationState.class
+com/mytelco/customerbff/travel/TravelRecommendation.class
 com/mytelco/customerbff/model/UsageView.class
 com/mytelco/customerbff/service/StubNotificationDeliveryAdapter.class
 com/mytelco/customerbff/service/AlertDedupService.class
@@ -47,6 +48,7 @@ com/mytelco/customerbff/model/SimStatus.class
 com/mytelco/customerbff/operator/OperatorAdapterRegistry.class
 com/mytelco/customerbff/controller/RoamingController.class
 com/mytelco/customerbff/model/CatalogOffer.class
+com/mytelco/customerbff/travel/RoamingUsage.class
 com/mytelco/customerbff/family/controls/SharedControlsResponse.class
 com/mytelco/customerbff/service/StepUpAuthService.class
 com/mytelco/customerbff/model/SupportCaseAttachment.class
@@ -76,12 +78,15 @@ com/mytelco/customerbff/operator/OperatorContextResolver.class
 com/mytelco/customerbff/model/NotificationPreferencesUpdateRequest.class
 com/mytelco/customerbff/service/WebhookStepUpChallengeDeliveryAdapter.class
 com/mytelco/customerbff/service/SimService.class
+com/mytelco/customerbff/travel/TravelController.class
 com/mytelco/customerbff/controller/NotificationCenterController.class
 com/mytelco/customerbff/model/tmf/TmfMoney.class
 com/mytelco/customerbff/model/AlertInboxItem.class
 com/mytelco/customerbff/model/tmf/TmfAccount.class
 com/mytelco/customerbff/model/TroubleshootingResolveRequest.class
 com/mytelco/customerbff/model/PaymentHistoryResponse.class
+com/mytelco/customerbff/travel/InTripControlService.class
+com/mytelco/customerbff/travel/TravelRecommendationService.class
 com/mytelco/customerbff/model/tmf/TmfRelatedParty.class
 com/mytelco/customerbff/model/StepUpAction.class
 com/mytelco/customerbff/model/SupportCaseStatus.class
@@ -94,6 +99,7 @@ com/mytelco/customerbff/model/CustomerUsageResponse.class
 com/mytelco/customerbff/service/status/ServiceStatusController.class
 com/mytelco/customerbff/events/DomainEventEnvelope.class
 com/mytelco/customerbff/analytics/ProductAnalyticsDashboardResponse.class
+com/mytelco/customerbff/travel/EmergencyTopupRequest.class
 com/mytelco/customerbff/model/NotificationCategoryPreferenceUpdate.class
 com/mytelco/customerbff/service/AlertInboxService$1.class
 com/mytelco/customerbff/model/NotificationCategory.class
@@ -136,6 +142,7 @@ com/mytelco/customerbff/operator/StubPortugalOperatorAdapter.class
 com/mytelco/customerbff/service/ThresholdConfigService$1.class
 com/mytelco/customerbff/service/PushNotificationDispatcher.class
 com/mytelco/customerbff/family/FamilyRoleEntry.class
+com/mytelco/customerbff/travel/SpendCap.class
 com/mytelco/customerbff/family/controls/SharedControlAlertLevel.class
 com/mytelco/customerbff/controller/SimController.class
 com/mytelco/customerbff/family/FamilyRoleService.class
@@ -181,6 +188,7 @@ com/mytelco/customerbff/service/status/Incident.class
 com/mytelco/customerbff/events/KafkaDomainEventDispatcher.class
 com/mytelco/customerbff/config/StepUpSecurityProperties$Delivery.class
 com/mytelco/customerbff/config/NotificationDeliveryProperties.class
+com/mytelco/customerbff/travel/EmergencyTopupResult.class
 com/mytelco/customerbff/controller/CustomerDashboardController.class
 com/mytelco/customerbff/model/BillExplorerResponse.class
 com/mytelco/customerbff/service/NotificationDeliveryRequest.class
@@ -249,6 +257,7 @@ com/mytelco/customerbff/service/BillingExplorerService.class
 com/mytelco/customerbff/model/UsageThresholdCrossing.class
 com/mytelco/customerbff/device/DeviceController.class
 com/mytelco/customerbff/operator/OperatorAdapterErrorMapper.class
+com/mytelco/customerbff/travel/UpdateSpendCapRequest.class
 com/mytelco/customerbff/family/FamilyRoleService$FamilyContext.class
 com/mytelco/customerbff/model/AlertThresholdConfig.class
 com/mytelco/customerbff/model/PaymentRetryResponse.class
