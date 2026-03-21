@@ -59,6 +59,42 @@ type OperatorAuditEntry = {
   changes: Record<string, unknown>;
 };
 
+type ContentState = 'DRAFT' | 'REVIEW' | 'PUBLISHED';
+
+type ContentLocaleSummary = {
+  locale: string;
+  version: number;
+  state: ContentState;
+  updatedAt: string;
+  author: string;
+  reviewer: string | null;
+};
+
+type ContentSummaryResponse = {
+  contentId: string;
+  locales: ContentLocaleSummary[];
+};
+
+type ContentVersionResponse = {
+  contentId: string;
+  locale: string;
+  version: number;
+  state: ContentState;
+  title: string;
+  body: string;
+  notes: string | null;
+  author: string;
+  reviewer: string | null;
+  updatedAt: string;
+};
+
+type ContentLocaleResponse = {
+  contentId: string;
+  locale: string;
+  current: ContentVersionResponse;
+  history: ContentVersionResponse[];
+};
+
 const styles: Record<string, CSSProperties> = {
   container: {
     minHeight: '100vh',
@@ -76,7 +112,7 @@ const styles: Record<string, CSSProperties> = {
   },
   twoCols: {
     display: 'grid',
-    gridTemplateColumns: '1.1fr 1fr',
+    gridTemplateColumns: '1fr 1.6fr 1.4fr',
     gap: 'var(--spacing-4)',
     alignItems: 'start',
   },
@@ -108,6 +144,17 @@ function App() {
   const [profile, setProfile] = useState<OperatorProfileResponse | null>(null);
   const [users, setUsers] = useState<OperatorUserResponse[]>([]);
   const [audit, setAudit] = useState<OperatorAuditEntry[]>([]);
+
+  const [contentItems, setContentItems] = useState<ContentSummaryResponse[]>([]);
+  const [selectedContentId, setSelectedContentId] = useState('');
+  const [selectedContentLocale, setSelectedContentLocale] = useState('');
+  const [contentDetail, setContentDetail] = useState<ContentLocaleResponse | null>(null);
+
+  const [contentTitleDraft, setContentTitleDraft] = useState('');
+  const [contentBodyDraft, setContentBodyDraft] = useState('');
+  const [contentNotesDraft, setContentNotesDraft] = useState('');
+  const [contentStateDraft, setContentStateDraft] = useState<ContentState>('DRAFT');
+  const [contentReviewerDraft, setContentReviewerDraft] = useState('');
 
   const [profileNameDraft, setProfileNameDraft] = useState('');
   const [profileLocalesDraft, setProfileLocalesDraft] = useState('');
@@ -157,19 +204,40 @@ function App() {
   };
 
   const loadOperatorDetails = async (operatorId: string) => {
-    const [profileResp, usersResp, auditResp] = await Promise.all([
+    const [profileResp, usersResp, auditResp, contentResp] = await Promise.all([
       authedFetch(`/api/v1/admin/operators/${operatorId}/profile`),
       authedFetch(`/api/v1/admin/operators/${operatorId}/users`),
       authedFetch(`/api/v1/admin/operators/${operatorId}/audit?limit=30`),
+      authedFetch(`/api/v1/admin/operators/${operatorId}/content`),
     ]);
 
     const profilePayload = (await profileResp.json()) as OperatorProfileResponse;
     const usersPayload = (await usersResp.json()) as OperatorUserResponse[];
     const auditPayload = (await auditResp.json()) as OperatorAuditEntry[];
+    const contentPayload = (await contentResp.json()) as ContentSummaryResponse[];
 
     setProfile(profilePayload);
     setUsers(usersPayload);
     setAudit(auditPayload);
+    setContentItems(contentPayload);
+    setContentDetail(null);
+
+    const hasSelectedContent =
+      selectedContentId && contentPayload.some((item) => item.contentId === selectedContentId);
+    const nextSelectedContentId = hasSelectedContent
+      ? selectedContentId
+      : contentPayload[0]?.contentId || '';
+    setSelectedContentId(nextSelectedContentId);
+
+    if (nextSelectedContentId) {
+      const selectedItem = contentPayload.find((item) => item.contentId === nextSelectedContentId);
+      const locales = selectedItem?.locales?.map((entry) => entry.locale) || [];
+      const preferred = profilePayload.locales.find((locale) => locales.includes(locale));
+      setSelectedContentLocale(preferred || locales[0] || '');
+    } else {
+      setSelectedContentLocale('');
+    }
+
     setProfileNameDraft(profilePayload.name);
     setProfileLocalesDraft(profilePayload.locales.join(', '));
     setProfileFeaturesDraft(structuredClone(profilePayload.featuresByChannel));
@@ -182,6 +250,32 @@ function App() {
     }
     setUserRoleDrafts(nextRoleDrafts);
     setUserEnabledDrafts(nextEnabledDrafts);
+  };
+
+  const contentStateBadgeVariant = (state: ContentState) => {
+    switch (state) {
+      case 'PUBLISHED':
+        return 'success';
+      case 'REVIEW':
+        return 'info';
+      case 'DRAFT':
+      default:
+        return 'warning';
+    }
+  };
+
+  const loadContentDetail = async (operatorId: string, contentId: string, locale: string) => {
+    const response = await authedFetch(
+      `/api/v1/admin/operators/${operatorId}/content/${contentId}?locale=${encodeURIComponent(locale)}`
+    );
+    const payload = (await response.json()) as ContentLocaleResponse;
+
+    setContentDetail(payload);
+    setContentTitleDraft(payload.current.title);
+    setContentBodyDraft(payload.current.body);
+    setContentNotesDraft(payload.current.notes || '');
+    setContentStateDraft(payload.current.state);
+    setContentReviewerDraft(payload.current.reviewer || '');
   };
 
   const refreshAll = async () => {
@@ -260,6 +354,56 @@ function App() {
     await loadOperatorDetails(selectedOperatorId);
   };
 
+  const saveContent = async () => {
+    if (!selectedOperatorId || !selectedContentId || !selectedContentLocale) return;
+
+    const response = await authedFetch(
+      `/api/v1/admin/operators/${selectedOperatorId}/content/${selectedContentId}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          locale: selectedContentLocale,
+          title: contentTitleDraft.trim(),
+          body: contentBodyDraft.trim(),
+          notes: contentNotesDraft.trim() ? contentNotesDraft.trim() : null,
+          state: contentStateDraft,
+          reviewer: contentReviewerDraft.trim() ? contentReviewerDraft.trim() : null,
+        }),
+      }
+    );
+
+    const payload = (await response.json()) as ContentVersionResponse;
+    setStatus(
+      `Content ${payload.contentId}/${payload.locale} saved (v${payload.version} ${payload.state})`
+    );
+
+    await loadOperatorDetails(selectedOperatorId);
+    await loadContentDetail(selectedOperatorId, payload.contentId, payload.locale);
+  };
+
+  const rollbackContent = async (targetVersion: number | null) => {
+    if (!selectedOperatorId || !selectedContentId || !selectedContentLocale) return;
+
+    const response = await authedFetch(
+      `/api/v1/admin/operators/${selectedOperatorId}/content/${selectedContentId}/rollback`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          locale: selectedContentLocale,
+          version: targetVersion,
+        }),
+      }
+    );
+
+    const payload = (await response.json()) as ContentVersionResponse;
+    setStatus(`Rolled back ${payload.contentId}/${payload.locale} (new v${payload.version})`);
+
+    await loadOperatorDetails(selectedOperatorId);
+    await loadContentDetail(selectedOperatorId, payload.contentId, payload.locale);
+  };
+
   const toggleFeature = (channel: string, flag: string, value: boolean) => {
     setProfileFeaturesDraft((prev) => ({
       ...prev,
@@ -291,6 +435,10 @@ function App() {
       setProfile(null);
       setUsers([]);
       setAudit([]);
+      setContentItems([]);
+      setSelectedContentId('');
+      setSelectedContentLocale('');
+      setContentDetail(null);
       return;
     }
 
@@ -499,6 +647,144 @@ function App() {
                     </Button>
                   </div>
                 </>
+              )}
+            </Panel>
+
+            <Panel title="Content (CMS)" subtitle="Manage localized content versions and rollback">
+              {contentItems.length === 0 && (
+                <Typography variant="small">No content items yet.</Typography>
+              )}
+              {contentItems.map((item) => (
+                <div key={item.contentId} style={{ marginBottom: 6 }}>
+                  <Button
+                    size="sm"
+                    variant={selectedContentId === item.contentId ? 'primary' : 'outline'}
+                    onClick={() => {
+                      setSelectedContentId(item.contentId);
+                      const locales = item.locales.map((e) => e.locale);
+                      const preferred = profile?.locales.find((l) => locales.includes(l));
+                      setSelectedContentLocale(preferred || locales[0] || '');
+                    }}
+                  >
+                    {item.contentId}
+                  </Button>
+                  <span style={{ marginLeft: 6, fontSize: 12 }}>
+                    {item.locales.map((l) => (
+                      <Badge key={l.locale} variant="neutral" style={{ marginRight: 4 }}>
+                        {l.locale}:v{l.version} {l.state}
+                      </Badge>
+                    ))}
+                  </span>
+                </div>
+              ))}
+
+              {contentDetail && selectedContentLocale && (
+                <div style={{ marginTop: 12, borderTop: '1px solid #e5e7eb', paddingTop: 10 }}>
+                  <div style={styles.row}>
+                    <Field label="Locale">
+                      <select
+                        style={styles.input}
+                        value={selectedContentLocale}
+                        onChange={(e) => setSelectedContentLocale(e.target.value)}
+                      >
+                        {contentDetail.history
+                          .map((v) => v.locale)
+                          .filter((v, i, arr) => arr.indexOf(v) === i)
+                          .map((loc) => (
+                            <option key={loc} value={loc}>
+                              {loc}
+                            </option>
+                          ))}
+                      </select>
+                    </Field>
+                    <Badge variant={contentStateBadgeVariant(contentDetail.current.state)}>
+                      {contentDetail.current.state}
+                    </Badge>
+                    <Typography variant="caption" color="secondary">
+                      v{contentDetail.current.version} by {contentDetail.current.author}
+                    </Typography>
+                  </div>
+
+                  <Field label="Title">
+                    <input
+                      style={{ ...styles.input, width: '100%' }}
+                      value={contentTitleDraft}
+                      onChange={(e) => setContentTitleDraft(e.target.value)}
+                    />
+                  </Field>
+
+                  <Field label="Body (markdown)">
+                    <textarea
+                      style={{
+                        ...styles.input,
+                        width: '100%',
+                        minHeight: 120,
+                        fontFamily: 'monospace',
+                        resize: 'vertical',
+                      }}
+                      value={contentBodyDraft}
+                      onChange={(e) => setContentBodyDraft(e.target.value)}
+                    />
+                  </Field>
+
+                  <Field label="Notes (optional)">
+                    <input
+                      style={{ ...styles.input, width: '100%' }}
+                      value={contentNotesDraft}
+                      onChange={(e) => setContentNotesDraft(e.target.value)}
+                    />
+                  </Field>
+
+                  <Field label="State">
+                    <div style={styles.row}>
+                      {(['DRAFT', 'REVIEW', 'PUBLISHED'] as ContentState[]).map((st) => (
+                        <Button
+                          key={st}
+                          size="sm"
+                          variant={contentStateDraft === st ? 'primary' : 'outline'}
+                          onClick={() => setContentStateDraft(st)}
+                        >
+                          {st}
+                        </Button>
+                      ))}
+                    </div>
+                  </Field>
+
+                  <Field label="Reviewer (optional)">
+                    <input
+                      style={styles.input}
+                      value={contentReviewerDraft}
+                      onChange={(e) => setContentReviewerDraft(e.target.value)}
+                    />
+                  </Field>
+
+                  <div style={styles.row}>
+                    <Button
+                      size="sm"
+                      onClick={() => saveContent().catch((err) => setError(String(err)))}
+                    >
+                      Save content
+                    </Button>
+                    {contentDetail.history.length > 1 && (
+                      <select
+                        style={styles.input}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v) rollbackContent(Number(v));
+                        }}
+                      >
+                        <option value="">Rollback to...</option>
+                        {contentDetail.history
+                          .filter((h) => h.version !== contentDetail.current.version)
+                          .map((h) => (
+                            <option key={h.version} value={h.version}>
+                              v{h.version} ({h.state})
+                            </option>
+                          ))}
+                      </select>
+                    )}
+                  </div>
+                </div>
               )}
             </Panel>
           </div>
