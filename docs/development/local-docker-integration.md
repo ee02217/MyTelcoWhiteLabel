@@ -174,7 +174,6 @@ The local stack now includes Prometheus, Grafana, Jaeger/OTel, OpenSearch, and F
 
 You can confirm observability health with the smoke checker or manually: `curl http://localhost:${PROMETHEUS_PORT:-9090}/-/ready`, `curl http://localhost:${GRAFANA_PORT:-3005}/api/health`, `curl http://localhost:${OPENSEARCH_PORT:-9200}/_cluster/health?wait_for_status=yellow`, `curl http://localhost:${JAEGER_UI_PORT:-16686}/api/services`, and `curl http://localhost:4318/health` for the collector.
 
-
 ## Troubleshooting
 
 - **Port conflicts**: change values in `.env.local`.

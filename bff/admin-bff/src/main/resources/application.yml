@@ -49,7 +49,7 @@ admin:
 # Logging
 logging:
   pattern:
-    level: "%5p [trace=%X{traceId:-},span=%X{spanId:-},corr=%X{correlationId:-na}]"
+    level: '%5p [trace=%X{traceId:-},span=%X{spanId:-},corr=%X{correlationId:-na}]'
   level:
     com.mytelco: DEBUG
     org.springframework.web: INFO
