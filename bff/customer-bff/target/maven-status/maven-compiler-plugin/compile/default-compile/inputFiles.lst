@@ -214,4 +214,12 @@
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/persistence/DurableStateStore.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/persistence/JsonFileDurableStateStore.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/persistence/NoopDurableStateStore.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/status/Incident.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/status/IncidentNotificationPreference.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/status/IncidentNotificationService.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/status/IncidentUpdate.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/status/RegionStatus.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/status/ServiceStatusController.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/status/ServiceStatusService.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/status/ServiceType.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/service/tmf/TmfFacadeMappingService.java

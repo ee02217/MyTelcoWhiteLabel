@@ -21,6 +21,7 @@ com/mytelco/customerbff/model/StepUpVerifyRequest.class
 com/mytelco/customerbff/model/AccountSummary.class
 com/mytelco/customerbff/service/CustomerAggregationService.class
 com/mytelco/customerbff/config/StepUpSecurityProperties.class
+com/mytelco/customerbff/service/status/ServiceStatusService.class
 com/mytelco/customerbff/family/controls/SharedControlOverrideRequest.class
 com/mytelco/customerbff/device/DeviceInfo.class
 com/mytelco/customerbff/model/LineStructure.class
@@ -41,6 +42,7 @@ com/mytelco/customerbff/events/EventBackboneProperties$Retry.class
 com/mytelco/customerbff/model/OrderState.class
 com/mytelco/customerbff/service/SupportCaseService.class
 com/mytelco/customerbff/controller/PaymentHistoryController.class
+com/mytelco/customerbff/service/status/IncidentNotificationService.class
 com/mytelco/customerbff/model/SimStatus.class
 com/mytelco/customerbff/operator/OperatorAdapterRegistry.class
 com/mytelco/customerbff/controller/RoamingController.class
@@ -89,6 +91,7 @@ com/mytelco/customerbff/model/CatalogTermsAcknowledgement.class
 com/mytelco/customerbff/service/LoggingStepUpAuditPublisher.class
 com/mytelco/customerbff/family/controls/SharedControlUsage.class
 com/mytelco/customerbff/model/CustomerUsageResponse.class
+com/mytelco/customerbff/service/status/ServiceStatusController.class
 com/mytelco/customerbff/events/DomainEventEnvelope.class
 com/mytelco/customerbff/analytics/ProductAnalyticsDashboardResponse.class
 com/mytelco/customerbff/model/NotificationCategoryPreferenceUpdate.class
@@ -97,6 +100,7 @@ com/mytelco/customerbff/model/NotificationCategory.class
 com/mytelco/customerbff/provider/AccountProvider.class
 com/mytelco/customerbff/controller/SupportCaseController.class
 com/mytelco/customerbff/model/TroubleshootingOutcomeEvent.class
+com/mytelco/customerbff/service/status/IncidentNotificationPreference.class
 com/mytelco/customerbff/config/OperatorAdapterProperties.class
 com/mytelco/customerbff/service/StepUpAuditPublisher.class
 com/mytelco/customerbff/service/CatalogEligibilityService.class
@@ -166,12 +170,14 @@ com/mytelco/customerbff/service/persistence/DurableStateStore.class
 com/mytelco/customerbff/model/CustomerOrderResponse.class
 com/mytelco/customerbff/model/EsimActivationResponse.class
 com/mytelco/customerbff/device/DiagnosticRunRequest.class
+com/mytelco/customerbff/service/status/ServiceType.class
 com/mytelco/customerbff/family/controls/SharedControlService.class
 com/mytelco/customerbff/model/StepUpChallengeRequest.class
 com/mytelco/customerbff/model/RoamingPackPurchaseRequest.class
 com/mytelco/customerbff/service/EsimService$1.class
 com/mytelco/customerbff/model/NotificationChannelDelivery.class
 com/mytelco/customerbff/device/DiagnosticController.class
+com/mytelco/customerbff/service/status/Incident.class
 com/mytelco/customerbff/events/KafkaDomainEventDispatcher.class
 com/mytelco/customerbff/config/StepUpSecurityProperties$Delivery.class
 com/mytelco/customerbff/config/NotificationDeliveryProperties.class
@@ -208,11 +214,13 @@ com/mytelco/customerbff/controller/BillingExplorerController.class
 com/mytelco/customerbff/model/NotificationTestSendRequest.class
 com/mytelco/customerbff/model/SupportCaseMessageRequest.class
 com/mytelco/customerbff/service/NotificationCenterService$1.class
+com/mytelco/customerbff/service/status/IncidentUpdate.class
 com/mytelco/customerbff/service/NotificationCenterService.class
 com/mytelco/customerbff/analytics/ProductAnalyticsEvent.class
 com/mytelco/customerbff/family/FamilyRolesResponse.class
 com/mytelco/customerbff/events/DomainEventBackboneService$1.class
 com/mytelco/customerbff/model/NotificationChannel.class
+com/mytelco/customerbff/service/status/CreatePreferenceRequest.class
 com/mytelco/customerbff/family/FamilyPermission.class
 com/mytelco/customerbff/model/SimActionResponse.class
 com/mytelco/customerbff/model/SimActionRequest.class
@@ -236,6 +244,7 @@ com/mytelco/customerbff/device/DeviceService.class
 com/mytelco/customerbff/events/EventBackboneProperties$Dispatch.class
 com/mytelco/customerbff/model/TroubleshootingSessionStartRequest.class
 com/mytelco/customerbff/service/NotificationDeliveryResult.class
+com/mytelco/customerbff/service/status/RegionStatus.class
 com/mytelco/customerbff/service/BillingExplorerService.class
 com/mytelco/customerbff/model/UsageThresholdCrossing.class
 com/mytelco/customerbff/device/DeviceController.class

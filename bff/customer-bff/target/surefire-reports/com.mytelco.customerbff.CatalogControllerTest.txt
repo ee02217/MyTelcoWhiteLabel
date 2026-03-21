@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 Test set: com.mytelco.customerbff.CatalogControllerTest
 -------------------------------------------------------------------------------
-Tests run: 2, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.125 s <<< FAILURE! -- in com.mytelco.customerbff.CatalogControllerTest
-com.mytelco.customerbff.CatalogControllerTest.confirmSelection_shouldReturnTotalAndTerms -- Time elapsed: 0.018 s <<< FAILURE!
+Tests run: 2, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.097 s <<< FAILURE! -- in com.mytelco.customerbff.CatalogControllerTest
+com.mytelco.customerbff.CatalogControllerTest.confirmSelection_shouldReturnTotalAndTerms -- Time elapsed: 0.014 s <<< FAILURE!
 Argument(s) are different! Wanted:
 com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackPlanChangeConfirmed(
     "cust-1",
