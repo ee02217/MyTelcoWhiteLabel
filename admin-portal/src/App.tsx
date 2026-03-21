@@ -176,6 +176,7 @@ function App() {
   const [session, setSession] = useState<OidcSession | null>(() => readSession());
   const [status, setStatus] = useState('Idle');
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics' | 'users' | 'journeys' | 'audit' | 'cms'>('dashboard');
 
   const [operators, setOperators] = useState<OperatorSummaryResponse[]>([]);
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>('');
@@ -650,6 +651,30 @@ function App() {
     <DesignSystemProvider>
       <div style={styles.container}>
         <Typography variant="h2">MyTelco Admin Portal</Typography>
+        
+        {/* Tab Navigation */}
+        {session && (
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+            {[
+              ['dashboard', 'Dashboard'],
+              ['analytics', 'Analytics'],
+              ['users', 'Users'],
+              ['journeys', 'Journeys'],
+              ['audit', 'Audit Log'],
+              ['cms', 'CMS Content']
+            ].map(([key, label]) => (
+              <Button
+                key={key}
+                variant={activeTab === key ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setActiveTab(key as any)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        )}
+
         <Typography variant="body" color="secondary">
           Operator metadata management (backend-first): profile, channel flags, users/roles and
           audit.
@@ -711,7 +736,8 @@ function App() {
           )}
         </Panel>
 
-        {session && (
+        {/* Dashboard Tab */}
+        {session && activeTab === 'dashboard' && (
           <div style={styles.twoCols}>
             <Panel
               title="Operators"
@@ -1212,6 +1238,26 @@ function App() {
               </div>
             ))}
           </Panel>
+        )}
+        )}
+
+        {/* Analytics Tab */}
+        {session && activeTab === 'analytics' && <AnalyticsPanel />}
+
+        {/* Users Tab */}
+        {session && activeTab === 'users' && <UsersPanel />}
+
+        {/* Journeys Tab */}
+        {session && activeTab === 'journeys' && <JourneysPanel />}
+
+        {/* Audit Tab */}
+        {session && activeTab === 'audit' && <AuditPanel />}
+
+        {/* CMS Tab */}
+        {session && activeTab === 'cms' && (
+          <>
+            {/* CMS content is rendered in the dashboard view when cms is selected */}
+          </>
         )}
       </div>
     </DesignSystemProvider>
