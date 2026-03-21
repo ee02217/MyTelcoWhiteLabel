@@ -1,8 +1,8 @@
 package com.mytelco.customerbff.analytics;
 
+import com.mytelco.customerbff.config.OperatorAdapterProperties;
 import com.mytelco.customerbff.events.DomainEventPublisher;
 import com.mytelco.customerbff.events.EventTopic;
-import com.mytelco.customerbff.operator.OperatorAdapterProperties;
 import com.mytelco.customerbff.operator.OperatorContextResolver;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;

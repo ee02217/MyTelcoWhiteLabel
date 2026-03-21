@@ -87,8 +87,14 @@ fi
 echo "== Docker dashboard load evidence (constrained profile) =="
 echo "runs=${RUNS}, target=${TARGET_SECONDS}s, rate=${RATE_KBPS}KB/s, rtt=${RTT_MS}ms"
 
+SKIP_COMPOSE_UP="${SKIP_COMPOSE_UP:-0}"
+
 echo "[1/5] Ensure stack is up"
-compose up -d --build
+if [[ "$SKIP_COMPOSE_UP" == "1" ]]; then
+  echo "[info] SKIP_COMPOSE_UP=1 -> reusing current stack"
+else
+  compose up -d --build
+fi
 wait_http_200 "${WEB_BASE_URL}/" 180
 
 API_PROBE_CODE="$(curl -sS -o /tmp/docker-dashboard-api-probe.txt -w '%{http_code}' "${WEB_BASE_URL}${CUSTOMER_API_PATH}" || true)"

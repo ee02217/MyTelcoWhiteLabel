@@ -2,7 +2,7 @@
   "realm": "mytelco-white-label",
   "enabled": true,
   "displayName": "MyTelco White-Label Platform (Dev)",
-  "sslRequired": "external",
+  "sslRequired": "none",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
