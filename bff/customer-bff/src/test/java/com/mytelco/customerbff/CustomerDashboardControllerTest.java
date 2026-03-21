@@ -14,8 +14,10 @@ import com.mytelco.customerbff.model.ServiceUsageBreakdown;
 import com.mytelco.customerbff.model.UsageSummary;
 import com.mytelco.customerbff.model.UsageThresholdCrossing;
 import com.mytelco.customerbff.model.UsageView;
+import com.mytelco.customerbff.operator.OperatorContextResolver;
 import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.CustomerAggregationService;
+import com.mytelco.customerbff.analytics.ProductAnalyticsService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -52,6 +57,12 @@ class CustomerDashboardControllerTest {
     @MockBean
     private CustomerIdentityResolver customerIdentityResolver;
 
+    @MockBean
+    private OperatorContextResolver operatorContextResolver;
+
+    @MockBean
+    private ProductAnalyticsService productAnalyticsService;
+
     @Test
     @WithMockUser(username = "cust-1", roles = "CUSTOMER")
     void getDashboard_shouldReturnAggregatedData() throws Exception {
@@ -63,6 +74,7 @@ class CustomerDashboardControllerTest {
         );
 
         when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(operatorContextResolver.resolveOperatorId(anyString())).thenReturn("operator-stub-pt");
         when(aggregationService.getDashboard("cust-1")).thenReturn(mockResponse);
 
         mockMvc.perform(get("/api/v1/customer/dashboard"))
@@ -70,6 +82,13 @@ class CustomerDashboardControllerTest {
             .andExpect(jsonPath("$.accountSummary.accountId").value("ACC-123"))
             .andExpect(jsonPath("$.usageSummary.dataUsedMb").value(4500))
             .andExpect(jsonPath("$.billingSummary.currentBalance").value(29.99));
+
+        verify(productAnalyticsService, times(1)).trackLoginSuccess(
+            anyString(),
+            eq("operator-stub-pt"),
+            eq("web"),
+            anyString()
+        );
     }
 
     @Test
@@ -89,11 +108,19 @@ class CustomerDashboardControllerTest {
         );
 
         when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(operatorContextResolver.resolveOperatorId(anyString())).thenReturn("operator-stub-pt");
         when(aggregationService.getAccountOverview("cust-1")).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/customer/account-overview"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.activeLineCount").value(2));
+
+        verify(productAnalyticsService, times(1)).trackLoginSuccess(
+            anyString(),
+            eq("operator-stub-pt"),
+            eq("web"),
+            anyString()
+        );
     }
 
     @Test
@@ -111,11 +138,19 @@ class CustomerDashboardControllerTest {
         );
 
         when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(operatorContextResolver.resolveOperatorId(anyString())).thenReturn("operator-stub-pt");
         when(aggregationService.getUsageDetails("cust-1", UsageView.DAILY, null)).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/customer/usage?view=daily"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.thresholdCrossings[0].thresholdPercent").value(80));
+
+        verify(productAnalyticsService, times(1)).trackLoginSuccess(
+            anyString(),
+            eq("operator-stub-pt"),
+            eq("web"),
+            anyString()
+        );
     }
 
     @TestConfiguration

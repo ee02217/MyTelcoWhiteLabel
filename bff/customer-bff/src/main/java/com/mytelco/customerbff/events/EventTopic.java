@@ -7,7 +7,8 @@ public enum EventTopic {
     BILLING("mytelco.billing.events.v1"),
     PAYMENT("mytelco.payment.events.v1"),
     ORDERS("mytelco.orders.events.v1"),
-    NOTIFICATIONS("mytelco.notifications.events.v1");
+    NOTIFICATIONS("mytelco.notifications.events.v1"),
+    ANALYTICS("mytelco.analytics.events.v1");
 
     private final String topicName;
 
