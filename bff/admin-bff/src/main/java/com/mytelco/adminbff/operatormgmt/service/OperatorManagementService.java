@@ -243,6 +243,39 @@ public class OperatorManagementService {
         }
     }
 
+    public OperatorAuditEntry recordExternalAudit(
+        String operatorId,
+        String scope,
+        String targetId,
+        String action,
+        String actor,
+        Map<String, Object> changes
+    ) {
+        OperatorState state = resolve(operatorId);
+        String normalizedActor = normalizeActor(actor);
+        String normalizedScope = StringUtils.hasText(scope) ? scope.trim().toUpperCase(Locale.ROOT) : "UNKNOWN";
+        String normalizedAction = StringUtils.hasText(action) ? action.trim().toUpperCase(Locale.ROOT) : "EXTERNAL_EVENT";
+        String normalizedTarget = StringUtils.hasText(targetId) ? targetId.trim() : operatorId;
+
+        synchronized (state) {
+            Instant now = Instant.now();
+            state.version += 1;
+            state.updatedAt = now;
+            OperatorAuditEntry entry = new OperatorAuditEntry(
+                state.operatorId,
+                normalizedScope,
+                normalizedTarget,
+                normalizedAction,
+                normalizedActor,
+                state.version,
+                now,
+                changes == null ? Map.of() : changes
+            );
+            state.auditLog.add(entry);
+            return entry;
+        }
+    }
+
     private void loadOperator(Path operatorPath) {
         String operatorId = operatorPath.getFileName().toString();
 
