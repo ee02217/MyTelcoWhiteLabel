@@ -267,6 +267,8 @@ services:
 # PLUGINS (Global)
 # ============================================
 plugins:
+  - name: prometheus
+
   - name: response-transformer
     config:
       add:

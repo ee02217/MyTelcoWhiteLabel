@@ -1,0 +1,130 @@
+{
+  "id": null,
+  "uid": "mytelco-overview",
+  "title": "MyTelco Observability Overview",
+  "tags": ["mytelco", "mvp", "observability"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Service Availability (up)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(up{job=~\"admin-bff|customer-bff|keycloak|kong\"})",
+          "legendFormat": "healthy targets",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value"
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP Requests / sec by application",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{application=~\"admin-bff|customer-bff\"}[5m])) by (application)",
+          "legendFormat": "{{application}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "P95 HTTP latency (seconds)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, application) (rate(http_server_requests_seconds_bucket{application=~\"admin-bff|customer-bff\"}[5m])))",
+          "legendFormat": "{{application}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "JVM Memory Used (MB)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(jvm_memory_used_bytes{application=~\"admin-bff|customer-bff\", area=\"heap\"}) by (application) / 1024 / 1024",
+          "legendFormat": "{{application}} heap",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "OTel Traces Received / sec",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(otelcol_receiver_accepted_spans{receiver=\"otlp\"}[5m]))",
+          "legendFormat": "accepted spans/sec",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
