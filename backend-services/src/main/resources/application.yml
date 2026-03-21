@@ -21,6 +21,12 @@ management:
       enabled: true
     readinessState:
       enabled: true
+  tracing:
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      endpoint: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
 
 # Application info
 info:
@@ -28,3 +34,7 @@ info:
     name: Backend Service
     description: Core backend service for Telco Self-Care Platform
     version: 1.0.0-SNAPSHOT
+
+logging:
+  pattern:
+    level: "%5p [trace=%X{traceId:-},span=%X{spanId:-},corr=%X{correlationId:-na}]"

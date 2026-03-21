@@ -8,6 +8,10 @@ POSTGRES_PORT="${POSTGRES_PORT:-5432}"
 POSTGRES_USER="${POSTGRES_USER:-mytelco}"
 POSTGRES_DB="${POSTGRES_DB:-mytelco}"
 KEYCLOAK_PORT="${KEYCLOAK_PORT:-8080}"
+PROMETHEUS_PORT="${PROMETHEUS_PORT:-9090}"
+GRAFANA_PORT="${GRAFANA_PORT:-3005}"
+OPENSEARCH_PORT="${OPENSEARCH_PORT:-9200}"
+JAEGER_UI_PORT="${JAEGER_UI_PORT:-16686}"
 KONG_PROXY_PORT="${KONG_PROXY_PORT:-8000}"
 KONG_ADMIN_PORT="${KONG_ADMIN_PORT:-8001}"
 KONG_ADMIN_TLS_PORT="${KONG_ADMIN_TLS_PORT:-8444}"
@@ -135,6 +139,11 @@ check_http "Admin BFF" "http://localhost:${ADMIN_BFF_PORT}/actuator/health" 90 3
 check_http_contains "Web portal real SPA" "http://localhost:${WEB_PORTAL_PORT}/" "<title>MyTelco - Customer Portal</title>" 60 3 || failures=$((failures + 1))
 check_http_contains "Admin portal real SPA" "http://localhost:${ADMIN_PORTAL_PORT}/" "<title>MyTelco - Admin Portal</title>" 60 3 || failures=$((failures + 1))
 check_http "Web portal API proxy" "http://localhost:${WEB_PORTAL_PORT}/api/v1/customer/account-overview" 90 3 || failures=$((failures + 1))
+
+check_http "Prometheus ready" "http://localhost:${PROMETHEUS_PORT}/-/ready" 90 3 || failures=$((failures + 1))
+check_http "Grafana health" "http://localhost:${GRAFANA_PORT}/api/health" 90 3 || failures=$((failures + 1))
+check_http "OpenSearch cluster" "http://localhost:${OPENSEARCH_PORT}/_cluster/health?wait_for_status=yellow&timeout=1s" 30 3 || failures=$((failures + 1))
+check_http "Jaeger UI" "http://localhost:${JAEGER_UI_PORT}/api/services" 60 3 || failures=$((failures + 1))
 
 if (( failures > 0 )); then
   echo "Smoke check failed: ${failures} check(s) failed"

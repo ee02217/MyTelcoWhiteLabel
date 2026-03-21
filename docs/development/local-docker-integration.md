@@ -163,6 +163,18 @@ For docker-only environments, run the hardening evidence scripts below after the
 
 Artifacts are written under `evidence/YYYY-MM-DD/` with timestamped filenames (raw logs + summary markdown + csv).
 
+## Observability stack (F-11.1)
+
+The local stack now includes Prometheus, Grafana, Jaeger/OTel, OpenSearch, and Fluent Bit for metrics, traces, and centralized logs.
+
+- **Prometheus** (`http://localhost:${PROMETHEUS_PORT:-9090}`) scrapes all services via `infra/observability/prometheus/prometheus.yml`.
+- **Grafana** (`http://localhost:${GRAFANA_PORT:-3005}`) is provisioned with dashboards in `infra/observability/grafana/dashboards/`.
+- **OpenSearch + Fluent Bit** collect container logs. Results land under index `mytelco-logs-*` on `http://localhost:${OPENSEARCH_PORT:-9200}`.
+- **Jaeger + OpenTelemetry Collector** (`http://localhost:${JAEGER_UI_PORT:-16686}`) surfaces request traces, and the collector exports traces to Jaeger via `infra/observability/otel-collector/config.yml`.
+
+You can confirm observability health with the smoke checker or manually: `curl http://localhost:${PROMETHEUS_PORT:-9090}/-/ready`, `curl http://localhost:${GRAFANA_PORT:-3005}/api/health`, `curl http://localhost:${OPENSEARCH_PORT:-9200}/_cluster/health?wait_for_status=yellow`, `curl http://localhost:${JAEGER_UI_PORT:-16686}/api/services`, and `curl http://localhost:4318/health` for the collector.
+
+
 ## Troubleshooting
 
 - **Port conflicts**: change values in `.env.local`.
