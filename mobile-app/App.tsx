@@ -15,6 +15,9 @@ import { FamilyControlsPanel } from './src/features/family-controls';
 import { DevicePanel } from './src/features/device';
 import { StatusPanel } from './src/features/status';
 import { TravelPanel } from './src/features/travel';
+import { SettingsPanel } from './src/features/settings';
+import { useLocalization } from './src/features/i18n';
+import { useExperiments } from './src/features/experiment';
 import { rnTokens } from '../platform-config/design-system/tokens';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -683,6 +686,10 @@ export default function App() {
 
         <Card padding="md" shadow="md" style={styles.card}>
           <TravelPanel />
+        </Card>
+
+        <Card padding="md" shadow="md" style={styles.card}>
+          <SettingsPanel />
         </Card>
 
         <StatusBar style="auto" />
