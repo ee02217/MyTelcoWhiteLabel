@@ -1,6 +1,8 @@
 package com.mytelco.customerbff.controller;
 
 import com.mytelco.customerbff.analytics.ProductAnalyticsService;
+import com.mytelco.customerbff.family.FamilyPermission;
+import com.mytelco.customerbff.family.FamilyRoleService;
 import com.mytelco.customerbff.model.CheckoutRequest;
 import com.mytelco.customerbff.model.CheckoutResponse;
 import com.mytelco.customerbff.model.PaymentMethodRegistrationRequest;
@@ -30,25 +32,38 @@ public class PaymentJourneyController {
     private final CustomerIdentityResolver customerIdentityResolver;
     private final OperatorContextResolver operatorContextResolver;
     private final ProductAnalyticsService productAnalyticsService;
+    private final FamilyRoleService familyRoleService;
 
     public PaymentJourneyController(
         PaymentJourneyService paymentJourneyService,
         CustomerIdentityResolver customerIdentityResolver,
         OperatorContextResolver operatorContextResolver,
-        ProductAnalyticsService productAnalyticsService
+        ProductAnalyticsService productAnalyticsService,
+        FamilyRoleService familyRoleService
     ) {
         this.paymentJourneyService = paymentJourneyService;
         this.customerIdentityResolver = customerIdentityResolver;
         this.operatorContextResolver = operatorContextResolver;
         this.productAnalyticsService = productAnalyticsService;
+        this.familyRoleService = familyRoleService;
     }
 
     @PostMapping("/methods")
     @Operation(summary = "Register payment method")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Payment method registered")})
     public ResponseEntity<PaymentMethodRegistrationResponse> registerPaymentMethod(
+        Authentication authentication,
+        @RequestHeader(value = "X-Family-Acting-Line-ID", required = false) String actingLineId,
         @Valid @RequestBody PaymentMethodRegistrationRequest request
     ) {
+        String customerId = customerIdentityResolver.resolveCustomerId(authentication);
+        familyRoleService.requirePermission(
+            customerId,
+            actingLineId,
+            null,
+            FamilyPermission.MANAGE_PAYMENTS
+        );
+
         return ResponseEntity.ok(paymentJourneyService.registerPaymentMethod(request));
     }
 
@@ -64,6 +79,7 @@ public class PaymentJourneyController {
         @RequestHeader(value = "X-Operator-ID", required = false) String operatorId,
         @RequestHeader(value = "X-Channel", required = false) String channel,
         @RequestHeader(value = "X-Correlation-ID", required = false) String correlationId,
+        @RequestHeader(value = "X-Family-Acting-Line-ID", required = false) String actingLineId,
         @Valid @RequestBody CheckoutRequest request
     ) {
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
@@ -74,6 +90,13 @@ public class PaymentJourneyController {
         String customerId = customerIdentityResolver.resolveCustomerId(authentication);
         String resolvedOperatorId = resolveOperatorId(customerId, operatorId);
         String resolvedChannel = resolveChannel(channel);
+
+        familyRoleService.requirePermission(
+            customerId,
+            actingLineId,
+            null,
+            FamilyPermission.MANAGE_PAYMENTS
+        );
 
         productAnalyticsService.trackBillPayCheckoutStarted(
             customerId,

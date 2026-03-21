@@ -1,6 +1,8 @@
 package com.mytelco.customerbff.controller;
 
 import com.mytelco.customerbff.analytics.ProductAnalyticsService;
+import com.mytelco.customerbff.family.FamilyPermission;
+import com.mytelco.customerbff.family.FamilyRoleService;
 import com.mytelco.customerbff.model.CatalogConfirmSelectionRequest;
 import com.mytelco.customerbff.model.CatalogConfirmSelectionResponse;
 import com.mytelco.customerbff.model.CatalogResponse;
@@ -31,17 +33,20 @@ public class CatalogController {
     private final CustomerIdentityResolver customerIdentityResolver;
     private final OperatorContextResolver operatorContextResolver;
     private final ProductAnalyticsService productAnalyticsService;
+    private final FamilyRoleService familyRoleService;
 
     public CatalogController(
         CatalogService catalogService,
         CustomerIdentityResolver customerIdentityResolver,
         OperatorContextResolver operatorContextResolver,
-        ProductAnalyticsService productAnalyticsService
+        ProductAnalyticsService productAnalyticsService,
+        FamilyRoleService familyRoleService
     ) {
         this.catalogService = catalogService;
         this.customerIdentityResolver = customerIdentityResolver;
         this.operatorContextResolver = operatorContextResolver;
         this.productAnalyticsService = productAnalyticsService;
+        this.familyRoleService = familyRoleService;
     }
 
     @GetMapping
@@ -51,10 +56,20 @@ public class CatalogController {
         @ApiResponse(responseCode = "400", description = "Invalid query parameters")
     })
     public ResponseEntity<CatalogResponse> getCatalog(
+        Authentication authentication,
         @RequestParam String lineId,
         @RequestParam String operatorId,
-        @RequestParam(required = false) String type
+        @RequestParam(required = false) String type,
+        @RequestHeader(value = "X-Family-Acting-Line-ID", required = false) String actingLineId
     ) {
+        String customerId = customerIdentityResolver.resolveCustomerId(authentication);
+        familyRoleService.requirePermission(
+            customerId,
+            actingLineId,
+            lineId,
+            FamilyPermission.VIEW_USAGE
+        );
+
         return ResponseEntity.ok(catalogService.getCatalog(lineId, operatorId, type));
     }
 
@@ -69,11 +84,19 @@ public class CatalogController {
         @RequestHeader(value = "X-Operator-ID", required = false) String operatorId,
         @RequestHeader(value = "X-Channel", required = false) String channel,
         @RequestHeader(value = "X-Correlation-ID", required = false) String correlationId,
+        @RequestHeader(value = "X-Family-Acting-Line-ID", required = false) String actingLineId,
         @Valid @RequestBody CatalogConfirmSelectionRequest request
     ) {
         String customerId = customerIdentityResolver.resolveCustomerId(authentication);
         String resolvedOperatorId = resolveOperatorId(customerId, operatorId);
         String resolvedChannel = resolveChannel(channel);
+
+        familyRoleService.requirePermission(
+            customerId,
+            actingLineId,
+            request.lineId(),
+            FamilyPermission.MANAGE_PLAN
+        );
 
         CatalogConfirmSelectionResponse response = catalogService.confirmSelection(request);
 

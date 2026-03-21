@@ -10,6 +10,7 @@ import {
   type OidcSession,
 } from './auth-oidc';
 import { CatalogPanel } from './features/catalog/CatalogPanel';
+import { FamilyRolesPanel } from './features/family/FamilyRolesPanel';
 import { TroubleshootingPanel } from './features/troubleshooting/TroubleshootingPanel';
 import { SupportCasesPanel } from './features/support/SupportCasesPanel';
 import { NotificationCenterPanel } from './features/notifications/NotificationCenterPanel';
@@ -969,6 +970,7 @@ function App() {
         </Card>
 
         <CatalogPanel authedFetch={authedFetch} />
+        <FamilyRolesPanel authedFetch={authedFetch} />
 
         <Card padding="md" shadow="md" style={{ marginBottom: 12 }}>
           <Typography variant="h4">Payment history (Issue #36)</Typography>
