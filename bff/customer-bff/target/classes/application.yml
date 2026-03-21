@@ -1,0 +1,112 @@
+# Customer BFF Configuration
+server:
+  port: 8081
+
+spring:
+  application:
+    name: customer-bff
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Configure via environment variables for local dev:
+          # export SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://localhost:8080/realms/mytelco-white-label
+          # export SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://localhost:8080/realms/mytelco-white-label/protocol/openid-connect/certs
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:8080/realms/mytelco-white-label}
+          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI:http://localhost:8080/realms/mytelco-white-label/protocol/openid-connect/certs}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        max.block.ms: ${SPRING_KAFKA_PRODUCER_MAX_BLOCK_MS:3000}
+        request.timeout.ms: ${SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS:2000}
+        delivery.timeout.ms: ${SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS:5000}
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    enable:
+      all: true
+  tracing:
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      endpoint: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:http://localhost:4318/v1/traces}
+
+# OpenAPI/Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+mytelco:
+  state:
+    storage-dir: ${MYTELCO_STATE_STORAGE_DIR:data/customer-bff}
+  step-up:
+    challenge-ttl: ${MYTELCO_STEP_UP_CHALLENGE_TTL:PT5M}
+    verification-token-ttl: ${MYTELCO_STEP_UP_TOKEN_TTL:PT10M}
+    max-attempts: ${MYTELCO_STEP_UP_MAX_ATTEMPTS:3}
+    lockout-duration: ${MYTELCO_STEP_UP_LOCKOUT_DURATION:PT15M}
+    otp-length: ${MYTELCO_STEP_UP_OTP_LENGTH:6}
+    delivery:
+      provider: ${MYTELCO_STEP_UP_DELIVERY_PROVIDER:stub}
+      channel: ${MYTELCO_STEP_UP_DELIVERY_CHANNEL:SMS}
+      masked-destination: ${MYTELCO_STEP_UP_MASKED_DESTINATION:+*** *** *42}
+      webhook-url: ${MYTELCO_STEP_UP_DELIVERY_WEBHOOK_URL:}
+  notifications:
+    test-send-enabled: ${MYTELCO_NOTIFICATIONS_TEST_SEND_ENABLED:true}
+    delivery:
+      provider: ${MYTELCO_NOTIFICATIONS_DELIVERY_PROVIDER:stub}
+      max-attempts: ${MYTELCO_NOTIFICATIONS_DELIVERY_MAX_ATTEMPTS:3}
+      retry-backoff: ${MYTELCO_NOTIFICATIONS_DELIVERY_RETRY_BACKOFF:PT1S}
+      webhook-url: ${MYTELCO_NOTIFICATIONS_DELIVERY_WEBHOOK_URL:}
+  operator:
+    default-operator-id: ${MYTELCO_OPERATOR_DEFAULT_ID:operator-stub-pt}
+    # Optional overrides as map-like property binding when needed,
+    # e.g. MYTELCO_OPERATOR_CUSTOMER_OPERATOR_OVERRIDES_customer1=operator-acme
+    customer-operator-overrides: {}
+    retry:
+      max-attempts: ${MYTELCO_OPERATOR_RETRY_MAX_ATTEMPTS:3}
+      initial-backoff: ${MYTELCO_OPERATOR_RETRY_INITIAL_BACKOFF:80ms}
+      multiplier: ${MYTELCO_OPERATOR_RETRY_MULTIPLIER:2.0}
+      max-backoff: ${MYTELCO_OPERATOR_RETRY_MAX_BACKOFF:PT1S}
+  events:
+    enabled: ${MYTELCO_EVENTS_ENABLED:true}
+    max-delivered-events: ${MYTELCO_EVENTS_MAX_DELIVERED_EVENTS:2000}
+    retry:
+      max-attempts: ${MYTELCO_EVENTS_RETRY_MAX_ATTEMPTS:3}
+      initial-backoff: ${MYTELCO_EVENTS_RETRY_INITIAL_BACKOFF:75ms}
+      multiplier: ${MYTELCO_EVENTS_RETRY_MULTIPLIER:2.0}
+      max-backoff: ${MYTELCO_EVENTS_RETRY_MAX_BACKOFF:PT1S}
+    schema:
+      default-version: ${MYTELCO_EVENTS_SCHEMA_DEFAULT_VERSION:1}
+      versions: {}
+    dispatch:
+      # Dispatcher mode: stub | kafka
+      mode: ${MYTELCO_EVENTS_DISPATCH_MODE:stub}
+      send-timeout: ${MYTELCO_EVENTS_DISPATCH_SEND_TIMEOUT:PT3S}
+      # Optional fault-injection for DLQ/replay testing.
+      fail-on-topics: []
+      fail-on-event-types: []
+
+# Logging
+logging:
+  pattern:
+    level: '%5p [trace=%X{traceId:-},span=%X{spanId:-},corr=%X{correlationId:-na}]'
+  level:
+    com.mytelco: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: DEBUG

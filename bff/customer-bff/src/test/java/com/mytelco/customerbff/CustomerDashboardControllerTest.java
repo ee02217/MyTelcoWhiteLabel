@@ -14,6 +14,7 @@ import com.mytelco.customerbff.model.ServiceUsageBreakdown;
 import com.mytelco.customerbff.model.UsageSummary;
 import com.mytelco.customerbff.model.UsageThresholdCrossing;
 import com.mytelco.customerbff.model.UsageView;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.operator.OperatorContextResolver;
 import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.CustomerAggregationService;
@@ -63,6 +64,9 @@ class CustomerDashboardControllerTest {
 
     @MockBean
     private ProductAnalyticsService productAnalyticsService;
+
+    @MockBean
+    private SharedControlService sharedControlService;
 
     @Test
     @WithMockUser(username = "cust-1", roles = "CUSTOMER")

@@ -5,6 +5,7 @@ import com.mytelco.customerbff.controller.EsimController;
 import com.mytelco.customerbff.controller.RoamingController;
 import com.mytelco.customerbff.controller.SimController;
 import com.mytelco.customerbff.family.FamilyRoleService;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.model.EsimActivationResponse;
 import com.mytelco.customerbff.model.EsimActivationStatus;
 import com.mytelco.customerbff.model.RoamingPack;
@@ -67,6 +68,9 @@ class SimEsimRoamingControllerContractTest {
 
     @MockBean
     private FamilyRoleService familyRoleService;
+
+    @MockBean
+    private SharedControlService sharedControlService;
 
     @Test
     @WithMockUser(roles = "CUSTOMER")

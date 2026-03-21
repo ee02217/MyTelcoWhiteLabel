@@ -1,6 +1,7 @@
 package com.mytelco.customerbff.controller;
 
 import com.mytelco.customerbff.analytics.ProductAnalyticsService;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.model.AccountOverviewResponse;
 import com.mytelco.customerbff.model.CustomerDashboardResponse;
 import com.mytelco.customerbff.model.CustomerUsageResponse;
@@ -38,19 +39,22 @@ public class CustomerDashboardController {
     private final CustomerIdentityResolver customerIdentityResolver;
     private final OperatorContextResolver operatorContextResolver;
     private final ProductAnalyticsService productAnalyticsService;
+    private final SharedControlService sharedControlService;
 
     public CustomerDashboardController(
         CustomerAggregationService aggregationService,
         MeterRegistry meterRegistry,
         CustomerIdentityResolver customerIdentityResolver,
         OperatorContextResolver operatorContextResolver,
-        ProductAnalyticsService productAnalyticsService
+        ProductAnalyticsService productAnalyticsService,
+        SharedControlService sharedControlService
     ) {
         this.aggregationService = aggregationService;
         this.meterRegistry = meterRegistry;
         this.customerIdentityResolver = customerIdentityResolver;
         this.operatorContextResolver = operatorContextResolver;
         this.productAnalyticsService = productAnalyticsService;
+        this.sharedControlService = sharedControlService;
     }
 
     /**

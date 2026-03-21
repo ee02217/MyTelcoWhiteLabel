@@ -3,6 +3,8 @@ package com.mytelco.customerbff.controller;
 import com.mytelco.customerbff.analytics.ProductAnalyticsService;
 import com.mytelco.customerbff.family.FamilyPermission;
 import com.mytelco.customerbff.family.FamilyRoleService;
+import com.mytelco.customerbff.family.controls.SharedControlCategory;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.model.CheckoutRequest;
 import com.mytelco.customerbff.model.CheckoutResponse;
 import com.mytelco.customerbff.model.PaymentMethodRegistrationRequest;
@@ -33,19 +35,22 @@ public class PaymentJourneyController {
     private final OperatorContextResolver operatorContextResolver;
     private final ProductAnalyticsService productAnalyticsService;
     private final FamilyRoleService familyRoleService;
+    private final SharedControlService sharedControlService;
 
     public PaymentJourneyController(
         PaymentJourneyService paymentJourneyService,
         CustomerIdentityResolver customerIdentityResolver,
         OperatorContextResolver operatorContextResolver,
         ProductAnalyticsService productAnalyticsService,
-        FamilyRoleService familyRoleService
+        FamilyRoleService familyRoleService,
+        SharedControlService sharedControlService
     ) {
         this.paymentJourneyService = paymentJourneyService;
         this.customerIdentityResolver = customerIdentityResolver;
         this.operatorContextResolver = operatorContextResolver;
         this.productAnalyticsService = productAnalyticsService;
         this.familyRoleService = familyRoleService;
+        this.sharedControlService = sharedControlService;
     }
 
     @PostMapping("/methods")
@@ -98,6 +103,18 @@ public class PaymentJourneyController {
             FamilyPermission.MANAGE_PAYMENTS
         );
 
+        String effectiveLineId = familyRoleService.getRoles(customerId, actingLineId).actingLineId();
+
+        sharedControlService.assertWithinCap(
+            customerId,
+            actingLineId,
+            effectiveLineId,
+            SharedControlCategory.SPEND_EUR,
+            request.amount().doubleValue(),
+            "Bill payment checkout",
+            correlationId
+        );
+
         productAnalyticsService.trackBillPayCheckoutStarted(
             customerId,
             resolvedOperatorId,
@@ -110,6 +127,17 @@ public class PaymentJourneyController {
         );
 
         CheckoutResponse response = paymentJourneyService.checkout(request, idempotencyKey);
+
+        if ("SUCCESS".equalsIgnoreCase(response.status())) {
+            sharedControlService.recordUsage(
+                customerId,
+                effectiveLineId,
+                SharedControlCategory.SPEND_EUR,
+                request.amount().doubleValue(),
+                correlationId,
+                "payments.checkout"
+            );
+        }
 
         productAnalyticsService.trackBillPayCheckoutCompleted(
             customerId,

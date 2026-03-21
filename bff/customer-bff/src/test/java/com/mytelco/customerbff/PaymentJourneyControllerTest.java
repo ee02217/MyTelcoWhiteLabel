@@ -3,7 +3,12 @@ package com.mytelco.customerbff;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mytelco.customerbff.analytics.ProductAnalyticsService;
 import com.mytelco.customerbff.controller.PaymentJourneyController;
+import com.mytelco.customerbff.family.FamilyPermission;
+import com.mytelco.customerbff.family.FamilyRole;
+import com.mytelco.customerbff.family.FamilyRoleEntry;
 import com.mytelco.customerbff.family.FamilyRoleService;
+import com.mytelco.customerbff.family.FamilyRolesResponse;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.model.CheckoutRequest;
 import com.mytelco.customerbff.model.CheckoutResponse;
 import com.mytelco.customerbff.model.PaymentMethodRegistrationRequest;
@@ -20,6 +25,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -55,6 +63,9 @@ class PaymentJourneyControllerTest {
     @MockBean
     private FamilyRoleService familyRoleService;
 
+    @MockBean
+    private SharedControlService sharedControlService;
+
     @Test
     @WithMockUser(roles = "CUSTOMER")
     void registerPaymentMethod_shouldReturnToken() throws Exception {
@@ -78,6 +89,7 @@ class PaymentJourneyControllerTest {
 
         when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
         when(operatorContextResolver.resolveOperatorId(anyString())).thenReturn("operator-stub-pt");
+        when(familyRoleService.getRoles(eq("cust-1"), any())).thenReturn(sampleFamilyRoles());
         when(paymentJourneyService.checkout(eq(payload), eq("idem-1"))).thenReturn(replay);
 
         mockMvc.perform(post("/api/v1/customer/payments/checkout")
@@ -119,6 +131,7 @@ class PaymentJourneyControllerTest {
 
         when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
         when(operatorContextResolver.resolveOperatorId(anyString())).thenReturn("operator-stub-pt");
+        when(familyRoleService.getRoles(eq("cust-1"), any())).thenReturn(sampleFamilyRoles());
         when(paymentJourneyService.checkout(eq(payload), eq("idem-fail"))).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/customer/payments/checkout")
@@ -147,6 +160,20 @@ class PaymentJourneyControllerTest {
             eq("FAIL"),
             eq("FAILED"),
             eq("tx_2")
+        );
+    }
+
+    private FamilyRolesResponse sampleFamilyRoles() {
+        return new FamilyRolesResponse(
+            "cust-1",
+            "line-1",
+            FamilyRole.OWNER,
+            List.of(FamilyPermission.MANAGE_PAYMENTS),
+            List.of(
+                new FamilyRoleEntry("line-1", "3515000001", "Primary", "ACTIVE", FamilyRole.OWNER, List.of(FamilyPermission.MANAGE_PAYMENTS))
+            ),
+            Map.of(FamilyRole.OWNER, List.of(FamilyPermission.MANAGE_PAYMENTS)),
+            Instant.now()
         );
     }
 }
