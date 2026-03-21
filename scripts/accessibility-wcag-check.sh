@@ -44,13 +44,35 @@ require_cmd npx
 
 wait_http_200 "${WEB_PORTAL_BASE_URL}/" "$A11Y_TIMEOUT"
 
+echo "[INFO] Installing browser + driver pair for axe"
+install_output="$(npx browser-driver-manager install chrome 2>&1 || true)"
+if [[ -n "$install_output" ]]; then
+  echo "$install_output"
+fi
+
+which_output="$(npx browser-driver-manager which 2>&1 || true)"
+chrome_path="$(echo "$which_output" | sed -n 's/^CHROME_TEST_PATH="\([^"]*\)"$/\1/p' | head -1)"
+chromedriver_path="$(echo "$which_output" | sed -n 's/^CHROMEDRIVER_TEST_PATH="\([^"]*\)"$/\1/p' | head -1)"
+
 for page in "${PAGES[@]}"; do
   echo "[INFO] Running axe accessibility scan for ${page}"
-  npx @axe-core/cli "$page" \
-    --tags "$A11Y_TAGS" \
-    --timeout "$A11Y_TIMEOUT" \
-    --chrome-options "no-sandbox,disable-dev-shm-usage" \
-    --exit
+
+  if [[ -n "$chrome_path" && -x "$chrome_path" && -n "$chromedriver_path" && -x "$chromedriver_path" ]]; then
+    npx @axe-core/cli "$page" \
+      --tags "$A11Y_TAGS" \
+      --timeout "$A11Y_TIMEOUT" \
+      --chrome-path "$chrome_path" \
+      --chromedriver-path "$chromedriver_path" \
+      --chrome-options "no-sandbox,disable-dev-shm-usage" \
+      --exit
+  else
+    npx @axe-core/cli "$page" \
+      --tags "$A11Y_TAGS" \
+      --timeout "$A11Y_TIMEOUT" \
+      --chrome-options "no-sandbox,disable-dev-shm-usage" \
+      --exit
+  fi
+
   ok "Accessibility baseline passed for ${page}"
 done
 

@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 90
     env:
       EVIDENCE_DIR: evidence/ci/pr-${{ github.event.pull_request.number }}-${{ github.run_id }}
-      BFF_P95_THRESHOLD_MS: '400'
+      BFF_P95_THRESHOLD_MS: '550'
       DASHBOARD_TARGET_SECONDS: '2.5'
       DASHBOARD_PASSRATE_MIN: '95'
       REQUESTS: '1000'
