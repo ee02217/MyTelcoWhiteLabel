@@ -66,12 +66,14 @@ com/mytelco/customerbff/service/SupportCaseSlaService.class
 com/mytelco/customerbff/events/EventTopic.class
 com/mytelco/customerbff/events/DomainEventBackboneService$EventBackboneState.class
 com/mytelco/customerbff/events/EventBackboneProperties.class
+com/mytelco/customerbff/i18n/LocalizationService.class
 com/mytelco/customerbff/model/TroubleshootingSessionResponse.class
 com/mytelco/customerbff/model/CatalogResponse.class
 com/mytelco/customerbff/model/BillCategoryGroup.class
 com/mytelco/customerbff/family/controls/SharedControlOverrideStatus.class
 com/mytelco/customerbff/provider/BillingProvider.class
 com/mytelco/customerbff/controller/CustomerAlertsController.class
+com/mytelco/customerbff/experiment/Experiment.class
 com/mytelco/customerbff/family/FamilyRoleUpdateRequest.class
 com/mytelco/customerbff/events/DomainEventBackboneService$ReplayResult.class
 com/mytelco/customerbff/operator/OperatorContextResolver.class
@@ -119,6 +121,7 @@ com/mytelco/customerbff/service/RoamingService.class
 com/mytelco/customerbff/model/tmf/TmfProductRef.class
 com/mytelco/customerbff/model/NotificationPreferencesResponse.class
 com/mytelco/customerbff/model/ServiceUsageBreakdown.class
+com/mytelco/customerbff/experiment/ExperimentAssignment.class
 com/mytelco/customerbff/CustomerBffApplication.class
 com/mytelco/customerbff/model/UsageSummary.class
 com/mytelco/customerbff/analytics/ProductAnalyticsService.class
@@ -132,6 +135,7 @@ com/mytelco/customerbff/model/CustomerOrderCreateRequest.class
 com/mytelco/customerbff/operator/OperatorAdapterException.class
 com/mytelco/customerbff/config/NotificationDeliveryProperties$Delivery.class
 com/mytelco/customerbff/model/CatalogOfferType.class
+com/mytelco/customerbff/experiment/ExperimentController.class
 com/mytelco/customerbff/operator/OperatorAdapter.class
 com/mytelco/customerbff/model/BillingSummary.class
 com/mytelco/customerbff/events/EventSchemaVersionPolicy.class
@@ -160,6 +164,7 @@ com/mytelco/customerbff/events/DomainEventBackboneService$BulkReplayResult.class
 com/mytelco/customerbff/events/DomainEventBackboneService.class
 com/mytelco/customerbff/controller/TroubleshootingController.class
 com/mytelco/customerbff/model/CheckoutResponse.class
+com/mytelco/customerbff/experiment/ExperimentService.class
 com/mytelco/customerbff/service/CustomerOrderService$1.class
 com/mytelco/customerbff/provider/StepUpAuthProvider.class
 com/mytelco/customerbff/controller/CatalogController.class
@@ -172,6 +177,7 @@ com/mytelco/customerbff/analytics/ProductAnalyticsTaxonomyEntry.class
 com/mytelco/customerbff/service/CustomerOrderService.class
 com/mytelco/customerbff/events/StubKafkaEventDispatcher.class
 com/mytelco/customerbff/service/TroubleshootingService.class
+com/mytelco/customerbff/i18n/LocaleInfo.class
 com/mytelco/customerbff/controller/CustomerOrdersController.class
 com/mytelco/customerbff/service/persistence/DurableStateStore.class
 com/mytelco/customerbff/model/CustomerOrderResponse.class
@@ -222,6 +228,7 @@ com/mytelco/customerbff/controller/BillingExplorerController.class
 com/mytelco/customerbff/model/NotificationTestSendRequest.class
 com/mytelco/customerbff/model/SupportCaseMessageRequest.class
 com/mytelco/customerbff/service/NotificationCenterService$1.class
+com/mytelco/customerbff/i18n/LocaleController.class
 com/mytelco/customerbff/service/status/IncidentUpdate.class
 com/mytelco/customerbff/service/NotificationCenterService.class
 com/mytelco/customerbff/analytics/ProductAnalyticsEvent.class
