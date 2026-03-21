@@ -12,16 +12,19 @@ processors:
     timeout: 5s
 
 exporters:
-  debug:
-    verbosity: basic
+  logging: {}
   otlp/jaeger:
     endpoint: jaeger:4317
     tls:
       insecure: true
 
 service:
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888
+
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp/jaeger, debug]
+      exporters: [otlp/jaeger, logging]
