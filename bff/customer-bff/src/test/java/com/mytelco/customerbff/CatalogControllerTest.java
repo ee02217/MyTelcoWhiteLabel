@@ -1,6 +1,7 @@
 package com.mytelco.customerbff;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mytelco.customerbff.analytics.ProductAnalyticsService;
 import com.mytelco.customerbff.controller.CatalogController;
 import com.mytelco.customerbff.model.CatalogConfirmSelectionRequest;
 import com.mytelco.customerbff.model.CatalogConfirmSelectionResponse;
@@ -11,6 +12,8 @@ import com.mytelco.customerbff.model.CatalogOfferType;
 import com.mytelco.customerbff.model.CatalogResponse;
 import com.mytelco.customerbff.model.CatalogSelectedItem;
 import com.mytelco.customerbff.model.CatalogTermsAcknowledgement;
+import com.mytelco.customerbff.operator.OperatorContextResolver;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.CatalogService;
 import java.math.BigDecimal;
 import java.util.List;
@@ -23,7 +26,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -42,6 +47,15 @@ class CatalogControllerTest {
 
     @MockBean
     private CatalogService catalogService;
+
+    @MockBean
+    private CustomerIdentityResolver customerIdentityResolver;
+
+    @MockBean
+    private OperatorContextResolver operatorContextResolver;
+
+    @MockBean
+    private ProductAnalyticsService productAnalyticsService;
 
     @Test
     @WithMockUser(roles = "CUSTOMER")
@@ -77,6 +91,8 @@ class CatalogControllerTest {
     @Test
     @WithMockUser(roles = "CUSTOMER")
     void confirmSelection_shouldReturnTotalAndTerms() throws Exception {
+        when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        when(operatorContextResolver.resolveOperatorId(anyString())).thenReturn("operator-stub-pt");
         when(catalogService.confirmSelection(any())).thenReturn(new CatalogConfirmSelectionResponse(
             "line-22",
             "vodafone-pt",
@@ -105,5 +121,15 @@ class CatalogControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.totalPrice.amount").value(19.98))
             .andExpect(jsonPath("$.termsAcknowledgement.accepted").value(true));
+
+        verify(productAnalyticsService).trackPlanChangeConfirmed(
+            eq("cust-1"),
+            eq("operator-stub-pt"),
+            eq("web"),
+            anyString(),
+            eq("line-22"),
+            eq(1),
+            eq(true)
+        );
     }
 }
