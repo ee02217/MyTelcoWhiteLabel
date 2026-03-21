@@ -650,10 +650,7 @@ function App() {
               )}
             </Panel>
 
-            <Panel
-              title="Content (CMS)"
-              subtitle="Manage localized content versions and rollback"
-            >
+            <Panel title="Content (CMS)" subtitle="Manage localized content versions and rollback">
               {contentItems.length === 0 && (
                 <Typography variant="small">No content items yet.</Typography>
               )}
@@ -762,7 +759,10 @@ function App() {
                   </Field>
 
                   <div style={styles.row}>
-                    <Button size="sm" onClick={() => saveContent().catch((err) => setError(String(err)))}>
+                    <Button
+                      size="sm"
+                      onClick={() => saveContent().catch((err) => setError(String(err)))}
+                    >
                       Save content
                     </Button>
                     {contentDetail.history.length > 1 && (
