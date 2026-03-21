@@ -11,6 +11,7 @@ import { CatalogPanel } from './src/features/catalog/CatalogPanel';
 import { TroubleshootingPanel } from './src/features/troubleshooting/TroubleshootingPanel';
 import { SupportCasesPanel } from './src/features/support/SupportCasesPanel';
 import { NotificationCenterPanel } from './src/features/notifications/NotificationCenterPanel';
+import { FamilyControlsPanel } from './src/features/family-controls';
 import { rnTokens } from '../platform-config/design-system/tokens';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -663,6 +664,10 @@ export default function App() {
 
         <Card padding="md" shadow="md" style={styles.card}>
           <SupportCasesPanel authedFetch={authedFetch} />
+        </Card>
+
+        <Card padding="md" shadow="md" style={styles.card}>
+          <FamilyControlsPanel />
         </Card>
 
         <StatusBar style="auto" />
