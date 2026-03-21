@@ -1,3 +1,6 @@
+com/mytelco/customerbff/billing/Invoice.class
+com/mytelco/customerbff/billing/BillingController.class
+com/mytelco/customerbff/billing/BillingService.class
 com/mytelco/customerbff/config/OperatorAdapterProperties$Retry.class
 com/mytelco/customerbff/provider/EsimProvider$EsimActivationState.class
 com/mytelco/customerbff/travel/TravelRecommendation.class
@@ -16,6 +19,7 @@ com/mytelco/customerbff/events/NoopDomainEventPublisher.class
 com/mytelco/customerbff/model/EsimActivationStatus.class
 com/mytelco/customerbff/model/tmf/TmfProductOrderCreateRequest.class
 com/mytelco/customerbff/service/StepUpChallengeDeliveryResult.class
+com/mytelco/customerbff/billing/AddAddressRequest.class
 com/mytelco/customerbff/service/NotificationDeliveryAdapter.class
 com/mytelco/customerbff/model/RoamingPackPurchaseResponse.class
 com/mytelco/customerbff/events/DomainEventPublisher.class
@@ -95,6 +99,7 @@ com/mytelco/customerbff/model/StepUpAction.class
 com/mytelco/customerbff/model/SupportCaseStatus.class
 com/mytelco/customerbff/model/ActiveLine.class
 com/mytelco/customerbff/profile/CustomerProfile.class
+com/mytelco/customerbff/billing/PaymentMethod.class
 com/mytelco/customerbff/config/SecurityConfig.class
 com/mytelco/customerbff/model/CatalogTermsAcknowledgement.class
 com/mytelco/customerbff/service/LoggingStepUpAuditPublisher.class
@@ -113,6 +118,7 @@ com/mytelco/customerbff/model/TroubleshootingOutcomeEvent.class
 com/mytelco/customerbff/service/status/IncidentNotificationPreference.class
 com/mytelco/customerbff/config/OperatorAdapterProperties.class
 com/mytelco/customerbff/service/StepUpAuditPublisher.class
+com/mytelco/customerbff/billing/AutoPayConfig.class
 com/mytelco/customerbff/service/CatalogEligibilityService.class
 com/mytelco/customerbff/service/CatalogEligibilityService$EligibilityResult.class
 com/mytelco/customerbff/controller/ProductAnalyticsController.class
@@ -139,12 +145,14 @@ com/mytelco/customerbff/config/NotificationDeliveryProperties$Delivery.class
 com/mytelco/customerbff/model/CatalogOfferType.class
 com/mytelco/customerbff/experiment/ExperimentController.class
 com/mytelco/customerbff/operator/OperatorAdapter.class
+com/mytelco/customerbff/billing/UpdateAutoPayRequest.class
 com/mytelco/customerbff/model/BillingSummary.class
 com/mytelco/customerbff/events/EventSchemaVersionPolicy.class
 com/mytelco/customerbff/operator/OperatorAdapterExecutor.class
 com/mytelco/customerbff/model/tmf/TmfBill.class
 com/mytelco/customerbff/service/ThresholdConfigService.class
 com/mytelco/customerbff/operator/StubPortugalOperatorAdapter.class
+com/mytelco/customerbff/billing/BillingAddress.class
 com/mytelco/customerbff/profile/AccountSession.class
 com/mytelco/customerbff/service/ThresholdConfigService$1.class
 com/mytelco/customerbff/service/PushNotificationDispatcher.class
@@ -176,6 +184,7 @@ com/mytelco/customerbff/device/DiagnosticRunResponse.class
 com/mytelco/customerbff/service/NumericStepUpCodeGenerator.class
 com/mytelco/customerbff/family/controls/SharedControlCap.class
 com/mytelco/customerbff/service/PaymentJourneyService.class
+com/mytelco/customerbff/billing/AddPaymentMethodRequest.class
 com/mytelco/customerbff/analytics/ProductAnalyticsTaxonomyEntry.class
 com/mytelco/customerbff/service/CustomerOrderService.class
 com/mytelco/customerbff/events/StubKafkaEventDispatcher.class

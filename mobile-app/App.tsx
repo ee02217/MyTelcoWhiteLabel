@@ -17,6 +17,7 @@ import { StatusPanel } from './src/features/status';
 import { TravelPanel } from './src/features/travel';
 import { SettingsPanel } from './src/features/settings';
 import { ProfilePanel } from './src/features/profile';
+import { BillingPanel } from './src/features/billing';
 import { useLocalization } from './src/features/i18n';
 import { useExperiments } from './src/features/experiment';
 import { rnTokens } from '../platform-config/design-system/tokens';
@@ -687,6 +688,10 @@ export default function App() {
 
         <Card padding="md" shadow="md" style={styles.card}>
           <TravelPanel />
+        </Card>
+
+        <Card padding="md" shadow="md" style={styles.card}>
+          <BillingPanel authedFetch={authedFetch} />
         </Card>
 
         <Card padding="md" shadow="md" style={styles.card}>
