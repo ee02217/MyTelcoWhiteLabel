@@ -14,6 +14,7 @@ import { NotificationCenterPanel } from './src/features/notifications/Notificati
 import { FamilyControlsPanel } from './src/features/family-controls';
 import { DevicePanel } from './src/features/device';
 import { StatusPanel } from './src/features/status';
+import { TravelPanel } from './src/features/travel';
 import { rnTokens } from '../platform-config/design-system/tokens';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -678,6 +679,10 @@ export default function App() {
 
         <Card padding="md" shadow="md" style={styles.card}>
           <StatusPanel />
+        </Card>
+
+        <Card padding="md" shadow="md" style={styles.card}>
+          <TravelPanel />
         </Card>
 
         <StatusBar style="auto" />
