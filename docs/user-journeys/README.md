@@ -279,6 +279,29 @@ This document provides visual documentation of all user journeys implemented in 
 
 ## Admin Portal - Operator Features
 
+### Dashboard
+
+**Feature ID:** #158  
+**Path:** Admin Portal → Dashboard Tab
+
+#### Journey Steps
+
+| Step | Screen | Description |
+|------|--------|-------------|
+| 1 | **Session Management** | View auth status, refresh token, logout |
+| 2 | **Operators List** | Select operator to manage |
+| 3 | **Profile Editor** | Edit operator metadata, locales, branding, channel flags |
+| 4 | **CMS Content** | Manage localized content versions |
+| 5 | **Offers** | Manage offer lifecycle (draft, approval, publish, retire) |
+| 6 | **Users & Roles** | Manage operator users and roles |
+| 7 | **Audit Timeline** | View versioned audit trail |
+
+#### Screenshot
+
+![Dashboard](./screenshots/admin-dashboard.png)
+
+---
+
 ### Analytics Dashboard
 
 **Feature ID:** #158  
@@ -295,28 +318,9 @@ This document provides visual documentation of all user journeys implemented in 
 | 5 | **Geographic** | Top countries by users |
 | 6 | **Export** | Download reports (CSV/JSON) |
 
-#### Screen Descriptions
+#### Screenshot
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  📊 Analytics Dashboard                    [7d|30d|90d]   │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
-│  │ 12,458   │ │ 8,234    │ │€456,789  │ │ €36.72   │    │
-│  │ Total    │ │ Active   │ │ Revenue   │ │ ARPU     │    │
-│  │ Users 📈 │ │ Users 📈 │ │ Revenue 📈│ │          │    │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘    │
-├─────────────────────────────────────────────────────────────┤
-│  Revenue Trend (Last 30 Days)                              │
-│  ▁▂▃▅▆▇████████▅▆▅▃▂▁▂▃▅▆                               │
-│  ──────────────────────────────────────                   │
-│  ┌──────────────────┐ ┌──────────────────┐                │
-│  │ Top Plans        │ │ Usage by Hour    │                │
-│  │ ████ Premium 5K  │ │ ▃▃▅▅████▅▅▃▃    │                │
-│  │ ███ Basic   4K   │ │ 00    12    24  │                │
-│  └──────────────────┘ └──────────────────┘                │
-└─────────────────────────────────────────────────────────────┘
-```
+![Analytics](./screenshots/admin-analytics.png)
 
 ---
 
@@ -336,25 +340,9 @@ This document provides visual documentation of all user journeys implemented in 
 | 5 | **Invite User** | Send email invitation |
 | 6 | **Export** | Download user list |
 
-#### Screen Descriptions
+#### Screenshot
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  👥 User Management              [+Invite] [Export CSV]    │
-├─────────────────────────────────────────────────────────────┤
-│  [Search...] [Role▾] [Status▾] [Sort▾] [Table|Cards]      │
-├─────────────────────────────────────────────────────────────┤
-│  Stats: 125 Total | 98 Active | 5 Suspended | 12 Admins   │
-├─────────────────────────────────────────────────────────────┤
-│  ☐ │ Name         │ Role    │ Status  │ Created │ Login  │
-│  ──┼──────────────┼─────────┼─────────┼─────────┼────────│
-│  ☐ │ John Doe     │ Admin   │ Active  │ Jan 15  │ Today  │
-│  ☐ │ Jane Smith   │ User    │ Active  │ Feb 01  │ Yesterday│
-│  ☐ │ Bob Wilson   │ Operator│ Active  │ Mar 10  │ Mar 20 │
-│  ──┴──────────────┴─────────┴─────────┴─────────┴────────│
-│  [Activate] [Suspend] [Delete]  (2 selected)              │
-└─────────────────────────────────────────────────────────────┘
-```
+![Users](./screenshots/admin-users.png)
 
 ---
 
@@ -374,39 +362,9 @@ This document provides visual documentation of all user journeys implemented in 
 | 5 | **Publish** | Activate journey |
 | 6 | **Edit/Pause** | Manage active journeys |
 
-#### Screen Descriptions
+#### Screenshot
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  🔀 Journeys & Flows                    [+Create Journey]  │
-├─────────────────────────────────────────────────────────────┤
-│  Stats: 3 Total | 2 Active | 1 Draft | 1,250 Triggered    │
-├──────────────────────────────┬──────────────────────────────┤
-│  All Journeys               │ Flow Visualization           │
-│  ─────────────────────      │ ───────────────────────────   │
-│  ┌────────────────────┐    │  ┌─────────────┐             │
-│  │ Welcome Series     │    │  │  TRIGGER    │             │
-│  │ ● Active  📧 4stp │    │  │ USER_CREATED│             │
-│  │ [View Details]    │    │  └──────┬──────┘             │
-│  └────────────────────┘    │         ↓                   │
-│  ┌────────────────────┐    │  ┌─────────────┐             │
-│  │ Churn Prevention   │    │  │  📧 Email   │             │
-│  │ ● Active  ⚠️ 4stp │    │  │ Welcome!    │             │
-│  └────────────────────┘    │  └──────┬──────┘             │
-│  ┌────────────────────┐    │         ↓                   │
-│  │ Plan Upgrade       │    │  ┌─────────────┐             │
-│  │ ○ Draft    📈 3stp│    │  │  📱 SMS     │             │
-│  └────────────────────┘    │  │ Verify      │             │
-│                             │  └──────┬──────┘             │
-│                             │         ↓                   │
-│                             │  ┌─────────────┐             │
-│                             │  │    END     │             │
-│                             │  └─────────────┘             │
-├──────────────────────────────┴──────────────────────────────┤
-│  Triggered: 1,250 | Completed: 1,100 | Rate: 88%          │
-│  [▶ Publish] [⏸ Pause] [✏️ Edit] [🗑 Delete]              │
-└─────────────────────────────────────────────────────────────┘
-```
+![Journeys](./screenshots/admin-journeys.png)
 
 ---
 
@@ -425,32 +383,9 @@ This document provides visual documentation of all user journeys implemented in 
 | 4 | **Live Refresh** | Auto-refresh toggle |
 | 5 | **Export** | Download audit logs |
 
-#### Screen Descriptions
+#### Screenshot
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  📋 Audit Log                    [🔴 Live] [Export]         │
-├─────────────────────────────────────────────────────────────┤
-│  Stats: 1,247 Events | Today: 45 | Users: 12 | Types: 15  │
-├─────────────────────────────────────────────────────────────┤
-│  [Action▾] [User...] [Today|7d|30d]                        │
-├─────────────────────────────────────────────────────────────┤
-│  Time       │ Action       │ User      │ IP        │ Details│
-│  ───────────┼──────────────┼───────────┼───────────┼────────│
-│  10:30:45  │ USER_CREATE  │ admin     │ 192.168.x│  ▶     │
-│  10:29:12  │ PLAN_CHANGE  │ operator1 │ 192.168.x│  ▶     │
-│  10:28:33  │ LOGIN        │ user5     │ 192.168.x│  ▶     │
-│  10:27:01  │ LINE_CANCEL  │ admin     │ 192.168.x│  ▶     │
-├─────────────────────────────────────────────────────────────┤
-│  Showing 20 of 1,247 | [← Prev] Page 1 [Next →]           │
-├─────────────────────────────────────────────────────────────┤
-│  Sidebar:                                                   │
-│  Top Actions:           Most Active Users:                 │
-│  • USER_CREATE (45)     1. admin (234)                    │
-│  • PLAN_CHANGE (38)     2. operator1 (189)                │
-│  • LINE_ADD (27)        3. support (156)                  │
-└─────────────────────────────────────────────────────────────┘
-```
+![Audit Log](./screenshots/admin-audit.png)
 
 ---
 
