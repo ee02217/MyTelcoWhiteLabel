@@ -4,6 +4,14 @@
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/analytics/ProductAnalyticsFunnelMetric.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/analytics/ProductAnalyticsService.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/analytics/ProductAnalyticsTaxonomyEntry.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/billing/AddAddressRequest.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/billing/AddPaymentMethodRequest.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/billing/AutoPayConfig.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/billing/BillingAddress.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/billing/BillingController.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/billing/BillingService.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/billing/Invoice.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/billing/PaymentMethod.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/config/CorrelationIdFilter.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/config/NotificationDeliveryProperties.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/config/OperatorAdapterProperties.java
