@@ -21,13 +21,28 @@ export function AuditPanel() {
   const [page, setPage] = useState(0);
   const [actionTypes, setActionTypes] = useState<string[]>([]);
 
+  const useMockData = true;
+
   useEffect(() => {
+    if (useMockData) {
+      setActionTypes(['USER_CREATE', 'USER_UPDATE', 'LOGIN', 'LOGIN_FAILED', 'PLAN_CHANGE', 'LINE_ADD', 'LINE_CANCEL', 'PAYMENT']);
+      setLogs([
+        { id: '1', timestamp: '2026-03-21T10:30:45Z', action: 'USER_CREATE', user: 'admin@mytelco.com', ipAddress: '192.168.1.100', details: { resource: 'user-123' } },
+        { id: '2', timestamp: '2026-03-21T10:29:12Z', action: 'PLAN_CHANGE', user: 'operator@mytelco.com', ipAddress: '192.168.1.101', details: { resource: 'line-456', changes: { from: 'Basic', to: 'Premium' } } },
+        { id: '3', timestamp: '2026-03-21T10:28:33Z', action: 'LOGIN', user: 'user5@example.com', ipAddress: '192.168.1.102', details: { resource: 'session-789' } },
+        { id: '4', timestamp: '2026-03-21T10:27:01Z', action: 'LINE_CANCEL', user: 'admin@mytelco.com', ipAddress: '192.168.1.100', details: { resource: 'line-789' } },
+        { id: '5', timestamp: '2026-03-21T10:25:22Z', action: 'PAYMENT', user: 'user2@example.com', ipAddress: '192.168.1.105', details: { resource: 'invoice-001', amount: 35.99 } },
+      ]);
+      setTotal(1247);
+      setLoading(false);
+      return;
+    }
     fetchActionTypes();
   }, []);
 
   useEffect(() => {
-    fetchLogs();
-  }, [actionFilter, userFilter, page]);
+    if (!useMockData) fetchLogs();
+  }, [actionFilter, userFilter, page, useMockData]);
 
   const fetchActionTypes = async () => {
     const res = await fetch(API_BASE + '/actions');

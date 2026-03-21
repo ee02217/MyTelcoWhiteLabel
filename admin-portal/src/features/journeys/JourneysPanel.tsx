@@ -20,7 +20,26 @@ export function JourneysPanel() {
   const [showCreate, setShowCreate] = useState(false);
   const [newJourney, setNewJourney] = useState({ name: '', description: '', trigger: '' });
 
+  const useMockData = true;
+
   useEffect(() => {
+    if (useMockData) {
+      setJourneys([
+        { id: '1', name: 'Welcome Series', description: 'Onboard new users', status: 'ACTIVE', trigger: 'USER_CREATED', steps: [
+          { id: 's1', type: 'WELCOME_EMAIL', order: 1 }, { id: 's2', type: 'SMS_VERIFICATION', order: 2 },
+          { id: 's3', type: 'PLAN_SELECTION', order: 3 }, { id: 's4', type: 'PAYMENT_SETUP', order: 4 }
+        ], stats: { triggered: 1250, completed: 1100, abandoned: 150 } },
+        { id: '2', name: 'Churn Prevention', description: 'Win back at-risk customers', status: 'ACTIVE', trigger: 'LOW_USAGE_DETECTED', steps: [
+          { id: 's1', type: 'USAGE_INSIGHT', order: 1 }, { id: 's2', type: 'RETENTION_OFFER', order: 2 }, { id: 's3', type: 'SURVEY', order: 3 }
+        ], stats: { triggered: 89, completed: 45, abandoned: 44 } },
+        { id: '3', name: 'Plan Upgrade', description: 'Promote premium plans', status: 'DRAFT', trigger: 'USAGE_THRESHOLD', steps: [
+          { id: 's1', type: 'USAGE_INSIGHT', order: 1 }, { id: 's2', type: 'PLAN_COMPARISON', order: 2 },
+          { id: 's3', type: 'OFFER_PRESENTATION', order: 3 }, { id: 's4', type: 'CHECKOUT', order: 4 }
+        ], stats: { triggered: 0, completed: 0, abandoned: 0 } }
+      ]);
+      setLoading(false);
+      return;
+    }
     fetchJourneys();
   }, []);
 

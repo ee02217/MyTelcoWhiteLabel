@@ -173,7 +173,9 @@ const styles: Record<string, CSSProperties> = {
   },
 };
 function App() {
-  const [session, setSession] = useState<OidcSession | null>(() => readSession());
+  // Dev mode: bypass auth for demo screenshots
+  const DEV_MODE = true;
+  const [session, setSession] = useState<OidcSession | null>(() => DEV_MODE ? { access_token: 'demo', expires_at: 9999999999, profile: {} } as any : readSession());
   const [status, setStatus] = useState('Idle');
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics' | 'users' | 'journeys' | 'audit' | 'cms'>('dashboard');
@@ -652,28 +654,26 @@ function App() {
       <div style={styles.container}>
         <Typography variant="h2">MyTelco Admin Portal</Typography>
         
-        {/* Tab Navigation */}
-        {session && (
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-            {[
-              ['dashboard', 'Dashboard'],
-              ['analytics', 'Analytics'],
-              ['users', 'Users'],
-              ['journeys', 'Journeys'],
-              ['audit', 'Audit Log'],
-              ['cms', 'CMS Content']
-            ].map(([key, label]) => (
-              <Button
-                key={key}
-                variant={activeTab === key ? 'primary' : 'secondary'}
-                size="sm"
-                onClick={() => setActiveTab(key as any)}
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
-        )}
+        {/* Tab Navigation - always visible for demo */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          {[
+            ['dashboard', 'Dashboard'],
+            ['analytics', 'Analytics'],
+            ['users', 'Users'],
+            ['journeys', 'Journeys'],
+            ['audit', 'Audit Log'],
+            ['cms', 'CMS Content']
+          ].map(([key, label]) => (
+            <Button
+              key={key}
+              variant={activeTab === key ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={() => setActiveTab(key as any)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
 
         <Typography variant="body" color="secondary">
           Operator metadata management (backend-first): profile, channel flags, users/roles and
@@ -1238,7 +1238,6 @@ function App() {
               </div>
             ))}
           </Panel>
-        )}
         )}
 
         {/* Analytics Tab */}

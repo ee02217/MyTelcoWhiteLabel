@@ -30,7 +30,54 @@ export function AnalyticsPanel() {
   const [activeMetric, setActiveMetric] = useState<'revenue' | 'users' | 'usage'>('revenue');
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Dev mode mock data
+  const useMockData = true;
+
   useEffect(() => {
+    if (useMockData) {
+      // Mock data for demo
+      setOverview({
+        totalUsers: 12458,
+        activeUsers: 8234,
+        totalRevenue: 456789.50,
+        arpu: 36.72,
+        churnRate: 2.3,
+        newUsersThisMonth: 342,
+        revenueGrowth: 12.5,
+        userGrowth: 8.2
+      });
+      // Generate mock revenue data
+      const mockRevenue = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        mockRevenue.push({
+          date: d.toISOString().split('T')[0],
+          revenue: Math.floor(Math.random() * 50000) + 10000,
+          newSubscriptions: Math.floor(Math.random() * 50) + 10,
+          cancellations: Math.floor(Math.random() * 10) + 1
+        });
+      }
+      setRevenueData(mockRevenue);
+      setUserAnalytics({
+        topPlans: [
+          { name: 'Premium 50GB', count: 5123 },
+          { name: 'Basic 10GB', count: 4231 },
+          { name: 'Unlimited', count: 3104 }
+        ],
+        usage: {
+          dataUsageByHour: Array.from({ length: 24 }, (_, h) => ({ hour: h, mbUsed: Math.random() * 3000 }))
+        },
+        topCountries: [
+          { country: 'Portugal', users: 5234 },
+          { country: 'Spain', users: 3123 },
+          { country: 'UK', users: 2101 }
+        ]
+      });
+      setLoading(false);
+      return;
+    }
+
     const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
     Promise.all([
       fetch(API_BASE + '/overview').then(r => r.json()),
@@ -43,7 +90,7 @@ export function AnalyticsPanel() {
       setUserAnalytics({ ...users, usage });
       setLoading(false);
     });
-  }, [dateRange, refreshKey]);
+  }, [dateRange, refreshKey, useMockData]);
 
   const handleRefresh = () => {
     setLoading(true);

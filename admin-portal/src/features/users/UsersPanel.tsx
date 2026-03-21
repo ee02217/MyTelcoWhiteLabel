@@ -21,7 +21,20 @@ export function UsersPanel() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('USER');
 
+  const useMockData = true;
+
   useEffect(() => {
+    if (useMockData) {
+      setUsers([
+        { id: '1', email: 'john.doe@example.com', name: 'John Doe', role: 'ADMIN', status: 'ACTIVE', createdAt: '2026-01-15', lastLogin: '2026-03-21' },
+        { id: '2', email: 'jane.smith@example.com', name: 'Jane Smith', role: 'USER', status: 'ACTIVE', createdAt: '2026-02-01', lastLogin: '2026-03-20' },
+        { id: '3', email: 'bob.wilson@example.com', name: 'Bob Wilson', role: 'OPERATOR', status: 'ACTIVE', createdAt: '2026-03-10', lastLogin: '2026-03-19' },
+        { id: '4', email: 'alice@example.com', name: 'Alice Brown', role: 'USER', status: 'SUSPENDED', createdAt: '2025-12-05', lastLogin: '2026-02-15' },
+        { id: '5', email: 'charlie@example.com', name: 'Charlie Davis', role: 'USER', status: 'ACTIVE', createdAt: '2026-03-01', lastLogin: '2026-03-21' },
+      ]);
+      setLoading(false);
+      return;
+    }
     fetchUsers();
   }, []);
 
