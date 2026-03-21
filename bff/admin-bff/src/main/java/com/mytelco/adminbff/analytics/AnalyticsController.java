@@ -19,8 +19,6 @@ public class AnalyticsController {
         overview.put("arpu", 36.72);
         overview.put("churnRate", 2.3);
         overview.put("newUsersThisMonth", 342);
-        overview.put("revenueGrowth", 12.5);
-        overview.put("userGrowth", 8.2);
         return ResponseEntity.ok(overview);
     }
 
