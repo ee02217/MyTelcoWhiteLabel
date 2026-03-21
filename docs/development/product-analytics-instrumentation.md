@@ -4,9 +4,9 @@ This delivery instruments the customer journey with a lightweight analytics serv
 
 ## APIs
 
-| Endpoint | Description |
-| --- | --- |
-| `GET /api/v1/customer/analytics/taxonomy` | Returns the approved event taxonomy, including funnels, steps, and owners. Rendering UI components should map cards to these entries. |
+| Endpoint                                   | Description                                                                                                                                                            |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/customer/analytics/taxonomy`  | Returns the approved event taxonomy, including funnels, steps, and owners. Rendering UI components should map cards to these entries.                                  |
 | `GET /api/v1/customer/analytics/dashboard` | Returns recent analytics events (default 200), funnel counts, and aggregates by operator/channel. Supports optional `operatorId`, `channel`, and `limit` query params. |
 
 ## Instrumentation points
