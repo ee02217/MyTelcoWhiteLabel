@@ -2,19 +2,55 @@
 set -euo pipefail
 
 ISSUER="${OIDC_ISSUER:-http://localhost:8080/realms/mytelco-white-label}"
-CLIENT_ID="${OIDC_CLIENT_ID:-mobile-app}"
+CLIENT_ID="${OIDC_CLIENT_ID:-web-portal}"
 BFF_BASE="${CUSTOMER_BFF_BASE_URL:-http://localhost:8081}"
+OIDC_SCOPE="${OIDC_SCOPE:-openid roles}"
 ACCESS_TOKEN="${ACCESS_TOKEN:-}"
 REFRESH_TOKEN="${REFRESH_TOKEN:-}"
 FORBIDDEN_TOKEN="${FORBIDDEN_TOKEN:-}"
+CUSTOMER_USERNAME="${CUSTOMER_USERNAME:-customer1}"
+CUSTOMER_PASSWORD="${CUSTOMER_PASSWORD:-customer123}"
+FORBIDDEN_USERNAME="${FORBIDDEN_USERNAME:-support1}"
+FORBIDDEN_PASSWORD="${FORBIDDEN_PASSWORD:-support123}"
 
 ok(){ echo "[OK] $1"; }
 warn(){ echo "[WARN] $1"; }
 fail(){ echo "[FAIL] $1"; exit 1; }
 
+require_cmd(){
+  command -v "$1" >/dev/null 2>&1 || fail "missing required command: $1"
+}
+
+request_token_payload(){
+  local username="$1"
+  local password="$2"
+
+  curl -sS -X POST "${ISSUER}/protocol/openid-connect/token" \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    --data-urlencode "grant_type=password" \
+    --data-urlencode "client_id=${CLIENT_ID}" \
+    --data-urlencode "username=${username}" \
+    --data-urlencode "password=${password}" \
+    --data-urlencode "scope=${OIDC_SCOPE}"
+}
+
 code(){
   curl -sS -o /tmp/oidc-e2e-body.txt -w "%{http_code}" "$@"
 }
+
+require_cmd curl
+require_cmd jq
+
+if [[ -z "$ACCESS_TOKEN" || -z "$REFRESH_TOKEN" ]]; then
+  customer_token_payload="$(request_token_payload "$CUSTOMER_USERNAME" "$CUSTOMER_PASSWORD")"
+  [[ -z "$ACCESS_TOKEN" ]] && ACCESS_TOKEN="$(echo "$customer_token_payload" | jq -r '.access_token // empty')"
+  [[ -z "$REFRESH_TOKEN" ]] && REFRESH_TOKEN="$(echo "$customer_token_payload" | jq -r '.refresh_token // empty')"
+fi
+
+if [[ -z "$FORBIDDEN_TOKEN" ]]; then
+  forbidden_token_payload="$(request_token_payload "$FORBIDDEN_USERNAME" "$FORBIDDEN_PASSWORD")"
+  FORBIDDEN_TOKEN="$(echo "$forbidden_token_payload" | jq -r '.access_token // empty')"
+fi
 
 echo "== OIDC endpoint reachability =="
 [[ "$(code "${ISSUER}/.well-known/openid-configuration")" == "200" ]] || fail "well-known endpoint unavailable"
