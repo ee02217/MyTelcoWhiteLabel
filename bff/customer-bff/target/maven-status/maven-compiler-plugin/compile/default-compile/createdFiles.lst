@@ -10,6 +10,7 @@ com/mytelco/customerbff/model/CatalogOfferTerms.class
 com/mytelco/customerbff/model/StepUpVerifyResponse.class
 com/mytelco/customerbff/service/StubPushNotificationDispatcher.class
 com/mytelco/customerbff/model/PaymentHistoryItem.class
+com/mytelco/customerbff/profile/UpdateProfileRequest.class
 com/mytelco/customerbff/service/SupportCaseService$SupportCaseRecord.class
 com/mytelco/customerbff/events/NoopDomainEventPublisher.class
 com/mytelco/customerbff/model/EsimActivationStatus.class
@@ -93,6 +94,7 @@ com/mytelco/customerbff/model/tmf/TmfRelatedParty.class
 com/mytelco/customerbff/model/StepUpAction.class
 com/mytelco/customerbff/model/SupportCaseStatus.class
 com/mytelco/customerbff/model/ActiveLine.class
+com/mytelco/customerbff/profile/CustomerProfile.class
 com/mytelco/customerbff/config/SecurityConfig.class
 com/mytelco/customerbff/model/CatalogTermsAcknowledgement.class
 com/mytelco/customerbff/service/LoggingStepUpAuditPublisher.class
@@ -143,6 +145,7 @@ com/mytelco/customerbff/operator/OperatorAdapterExecutor.class
 com/mytelco/customerbff/model/tmf/TmfBill.class
 com/mytelco/customerbff/service/ThresholdConfigService.class
 com/mytelco/customerbff/operator/StubPortugalOperatorAdapter.class
+com/mytelco/customerbff/profile/AccountSession.class
 com/mytelco/customerbff/service/ThresholdConfigService$1.class
 com/mytelco/customerbff/service/PushNotificationDispatcher.class
 com/mytelco/customerbff/family/FamilyRoleEntry.class
@@ -177,6 +180,7 @@ com/mytelco/customerbff/analytics/ProductAnalyticsTaxonomyEntry.class
 com/mytelco/customerbff/service/CustomerOrderService.class
 com/mytelco/customerbff/events/StubKafkaEventDispatcher.class
 com/mytelco/customerbff/service/TroubleshootingService.class
+com/mytelco/customerbff/profile/ProfileService.class
 com/mytelco/customerbff/i18n/LocaleInfo.class
 com/mytelco/customerbff/controller/CustomerOrdersController.class
 com/mytelco/customerbff/service/persistence/DurableStateStore.class
@@ -226,6 +230,7 @@ com/mytelco/customerbff/model/SupportCaseResponse.class
 com/mytelco/customerbff/security/CustomerIdentityResolver.class
 com/mytelco/customerbff/controller/BillingExplorerController.class
 com/mytelco/customerbff/model/NotificationTestSendRequest.class
+com/mytelco/customerbff/profile/NotificationPreferences.class
 com/mytelco/customerbff/model/SupportCaseMessageRequest.class
 com/mytelco/customerbff/service/NotificationCenterService$1.class
 com/mytelco/customerbff/i18n/LocaleController.class
@@ -261,6 +266,7 @@ com/mytelco/customerbff/model/TroubleshootingSessionStartRequest.class
 com/mytelco/customerbff/service/NotificationDeliveryResult.class
 com/mytelco/customerbff/service/status/RegionStatus.class
 com/mytelco/customerbff/service/BillingExplorerService.class
+com/mytelco/customerbff/profile/ProfileController.class
 com/mytelco/customerbff/model/UsageThresholdCrossing.class
 com/mytelco/customerbff/device/DeviceController.class
 com/mytelco/customerbff/operator/OperatorAdapterErrorMapper.class

@@ -174,6 +174,9 @@
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/operator/OperatorAdapterRegistry.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/operator/OperatorContextResolver.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/operator/StubPortugalOperatorAdapter.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/profile/CustomerProfile.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/profile/ProfileController.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/profile/ProfileService.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/provider/AccountProvider.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/provider/BillingProvider.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/provider/EsimProvider.java
