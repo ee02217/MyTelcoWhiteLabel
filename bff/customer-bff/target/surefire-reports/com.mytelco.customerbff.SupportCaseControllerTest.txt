@@ -1,0 +1,34 @@
+-------------------------------------------------------------------------------
+Test set: com.mytelco.customerbff.SupportCaseControllerTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.087 s <<< FAILURE! -- in com.mytelco.customerbff.SupportCaseControllerTest
+com.mytelco.customerbff.SupportCaseControllerTest.create_shouldReturnContractWithSlaAndTimeline -- Time elapsed: 0.009 s <<< FAILURE!
+Argument(s) are different! Wanted:
+com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackSupportCaseCreated(
+    "cust-1",
+    "operator-stub-pt",
+    "web",
+    <any string>,
+    "sc_1",
+    "OUTAGE",
+    "HIGH"
+);
+-> at com.mytelco.customerbff.analytics.ProductAnalyticsService.trackSupportCaseCreated(ProductAnalyticsService.java:186)
+Actual invocations have different arguments at position [3]:
+com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackSupportCaseCreated(
+    "cust-1",
+    "operator-stub-pt",
+    "web",
+    null,
+    "sc_1",
+    "OUTAGE",
+    "HIGH"
+);
+-> at com.mytelco.customerbff.controller.SupportCaseController.create(SupportCaseController.java:65)
+
+	at com.mytelco.customerbff.analytics.ProductAnalyticsService.trackSupportCaseCreated(ProductAnalyticsService.java:186)
+	at com.mytelco.customerbff.SupportCaseControllerTest.create_shouldReturnContractWithSlaAndTimeline(SupportCaseControllerTest.java:98)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+

@@ -2,6 +2,8 @@ package com.mytelco.customerbff.controller;
 
 import com.mytelco.customerbff.family.FamilyPermission;
 import com.mytelco.customerbff.family.FamilyRoleService;
+import com.mytelco.customerbff.family.controls.SharedControlCategory;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.model.RoamingPack;
 import com.mytelco.customerbff.model.RoamingPackPurchaseRequest;
 import com.mytelco.customerbff.model.RoamingPackPurchaseResponse;
@@ -27,15 +29,18 @@ public class RoamingController {
     private final RoamingService roamingService;
     private final CustomerIdentityResolver customerIdentityResolver;
     private final FamilyRoleService familyRoleService;
+    private final SharedControlService sharedControlService;
 
     public RoamingController(
         RoamingService roamingService,
         CustomerIdentityResolver customerIdentityResolver,
-        FamilyRoleService familyRoleService
+        FamilyRoleService familyRoleService,
+        SharedControlService sharedControlService
     ) {
         this.roamingService = roamingService;
         this.customerIdentityResolver = customerIdentityResolver;
         this.familyRoleService = familyRoleService;
+        this.sharedControlService = sharedControlService;
     }
 
     @GetMapping
@@ -60,8 +65,27 @@ public class RoamingController {
         String customerId = customerIdentityResolver.resolveCustomerId(authentication);
         familyRoleService.requirePermission(customerId, actingLineId, request.lineId(), FamilyPermission.MANAGE_ROAMING);
 
+        sharedControlService.assertWithinCap(
+            customerId,
+            actingLineId,
+            request.lineId(),
+            SharedControlCategory.ADDON_PURCHASES,
+            1d,
+            "Roaming pack purchase",
+            null
+        );
+
         try {
-            return ResponseEntity.ok(roamingService.purchase(request));
+            RoamingPackPurchaseResponse response = roamingService.purchase(request);
+            sharedControlService.recordUsage(
+                customerId,
+                request.lineId(),
+                SharedControlCategory.ADDON_PURCHASES,
+                1d,
+                null,
+                "roaming.purchase"
+            );
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }

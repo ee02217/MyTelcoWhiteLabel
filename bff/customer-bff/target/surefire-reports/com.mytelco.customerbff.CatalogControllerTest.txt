@@ -1,0 +1,34 @@
+-------------------------------------------------------------------------------
+Test set: com.mytelco.customerbff.CatalogControllerTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.125 s <<< FAILURE! -- in com.mytelco.customerbff.CatalogControllerTest
+com.mytelco.customerbff.CatalogControllerTest.confirmSelection_shouldReturnTotalAndTerms -- Time elapsed: 0.018 s <<< FAILURE!
+Argument(s) are different! Wanted:
+com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackPlanChangeConfirmed(
+    "cust-1",
+    "operator-stub-pt",
+    "web",
+    <any string>,
+    "line-22",
+    1,
+    true
+);
+-> at com.mytelco.customerbff.analytics.ProductAnalyticsService.trackPlanChangeConfirmed(ProductAnalyticsService.java:162)
+Actual invocations have different arguments at position [3]:
+com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackPlanChangeConfirmed(
+    "cust-1",
+    "operator-stub-pt",
+    "web",
+    null,
+    "line-22",
+    1,
+    true
+);
+-> at com.mytelco.customerbff.controller.CatalogController.confirmSelection(CatalogController.java:127)
+
+	at com.mytelco.customerbff.analytics.ProductAnalyticsService.trackPlanChangeConfirmed(ProductAnalyticsService.java:162)
+	at com.mytelco.customerbff.CatalogControllerTest.confirmSelection_shouldReturnTotalAndTerms(CatalogControllerTest.java:133)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+

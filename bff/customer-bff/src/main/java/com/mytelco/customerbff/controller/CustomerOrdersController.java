@@ -2,6 +2,8 @@ package com.mytelco.customerbff.controller;
 
 import com.mytelco.customerbff.family.FamilyPermission;
 import com.mytelco.customerbff.family.FamilyRoleService;
+import com.mytelco.customerbff.family.controls.SharedControlCategory;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.model.CustomerOrderCreateRequest;
 import com.mytelco.customerbff.model.CustomerOrderResponse;
 import com.mytelco.customerbff.security.CustomerIdentityResolver;
@@ -32,15 +34,18 @@ public class CustomerOrdersController {
     private final CustomerOrderService customerOrderService;
     private final CustomerIdentityResolver customerIdentityResolver;
     private final FamilyRoleService familyRoleService;
+    private final SharedControlService sharedControlService;
 
     public CustomerOrdersController(
         CustomerOrderService customerOrderService,
         CustomerIdentityResolver customerIdentityResolver,
-        FamilyRoleService familyRoleService
+        FamilyRoleService familyRoleService,
+        SharedControlService sharedControlService
     ) {
         this.customerOrderService = customerOrderService;
         this.customerIdentityResolver = customerIdentityResolver;
         this.familyRoleService = familyRoleService;
+        this.sharedControlService = sharedControlService;
     }
 
     @PostMapping
@@ -63,7 +68,27 @@ public class CustomerOrdersController {
                 request.lineId(),
                 FamilyPermission.MANAGE_PLAN
             );
-            return ResponseEntity.ok(customerOrderService.create(request, idempotencyKey, customerId));
+
+            sharedControlService.assertWithinCap(
+                customerId,
+                actingLineId,
+                request.lineId(),
+                SharedControlCategory.ADDON_PURCHASES,
+                1d,
+                "Customer order creation",
+                null
+            );
+
+            CustomerOrderResponse response = customerOrderService.create(request, idempotencyKey, customerId);
+            sharedControlService.recordUsage(
+                customerId,
+                request.lineId(),
+                SharedControlCategory.ADDON_PURCHASES,
+                1d,
+                null,
+                "orders.create"
+            );
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }

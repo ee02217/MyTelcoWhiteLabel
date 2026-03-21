@@ -3,6 +3,8 @@ package com.mytelco.customerbff.controller;
 import com.mytelco.customerbff.analytics.ProductAnalyticsService;
 import com.mytelco.customerbff.family.FamilyPermission;
 import com.mytelco.customerbff.family.FamilyRoleService;
+import com.mytelco.customerbff.family.controls.SharedControlCategory;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.model.CatalogConfirmSelectionRequest;
 import com.mytelco.customerbff.model.CatalogConfirmSelectionResponse;
 import com.mytelco.customerbff.model.CatalogResponse;
@@ -34,19 +36,22 @@ public class CatalogController {
     private final OperatorContextResolver operatorContextResolver;
     private final ProductAnalyticsService productAnalyticsService;
     private final FamilyRoleService familyRoleService;
+    private final SharedControlService sharedControlService;
 
     public CatalogController(
         CatalogService catalogService,
         CustomerIdentityResolver customerIdentityResolver,
         OperatorContextResolver operatorContextResolver,
         ProductAnalyticsService productAnalyticsService,
-        FamilyRoleService familyRoleService
+        FamilyRoleService familyRoleService,
+        SharedControlService sharedControlService
     ) {
         this.catalogService = catalogService;
         this.customerIdentityResolver = customerIdentityResolver;
         this.operatorContextResolver = operatorContextResolver;
         this.productAnalyticsService = productAnalyticsService;
         this.familyRoleService = familyRoleService;
+        this.sharedControlService = sharedControlService;
     }
 
     @GetMapping
@@ -98,7 +103,26 @@ public class CatalogController {
             FamilyPermission.MANAGE_PLAN
         );
 
+        sharedControlService.assertWithinCap(
+            customerId,
+            actingLineId,
+            request.lineId(),
+            SharedControlCategory.ADDON_PURCHASES,
+            request.selectedOfferIds() == null ? 0d : request.selectedOfferIds().size(),
+            "Catalog confirm selection",
+            correlationId
+        );
+
         CatalogConfirmSelectionResponse response = catalogService.confirmSelection(request);
+
+        sharedControlService.recordUsage(
+            customerId,
+            request.lineId(),
+            SharedControlCategory.ADDON_PURCHASES,
+            request.selectedOfferIds() == null ? 0d : request.selectedOfferIds().size(),
+            correlationId,
+            "catalog.confirm-selection"
+        );
 
         productAnalyticsService.trackPlanChangeConfirmed(
             customerId,
