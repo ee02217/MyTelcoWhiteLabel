@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Badge, Button, DesignSystemProvider, Field, Panel, Typography } from './design-system';
+import { AnalyticsPanel } from './features/analytics/AnalyticsPanel';
+import { AuditPanel } from './features/audit/AuditPanel';
+import { JourneysPanel } from './features/journeys/JourneysPanel';
+import { UsersPanel } from './features/users/UsersPanel';
 import {
   beginLogin,
   completeLoginIfCallback,
