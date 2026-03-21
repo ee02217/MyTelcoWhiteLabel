@@ -37,6 +37,7 @@ com/mytelco/customerbff/provider/RoamingProvider.class
 com/mytelco/customerbff/service/StepUpAuthException.class
 com/mytelco/customerbff/model/StepUpChallengeResponse.class
 com/mytelco/customerbff/controller/EventBackboneController.class
+com/mytelco/customerbff/lines/Usage.class
 com/mytelco/customerbff/model/DataFreshness.class
 com/mytelco/customerbff/service/LoggingStepUpChallengeDeliveryAdapter.class
 com/mytelco/customerbff/service/WebhookNotificationDeliveryAdapter.class
@@ -82,6 +83,7 @@ com/mytelco/customerbff/experiment/Experiment.class
 com/mytelco/customerbff/family/FamilyRoleUpdateRequest.class
 com/mytelco/customerbff/events/DomainEventBackboneService$ReplayResult.class
 com/mytelco/customerbff/operator/OperatorContextResolver.class
+com/mytelco/customerbff/lines/PortNumberRequest.class
 com/mytelco/customerbff/model/NotificationPreferencesUpdateRequest.class
 com/mytelco/customerbff/service/WebhookStepUpChallengeDeliveryAdapter.class
 com/mytelco/customerbff/service/SimService.class
@@ -150,6 +152,8 @@ com/mytelco/customerbff/model/BillingSummary.class
 com/mytelco/customerbff/events/EventSchemaVersionPolicy.class
 com/mytelco/customerbff/operator/OperatorAdapterExecutor.class
 com/mytelco/customerbff/model/tmf/TmfBill.class
+com/mytelco/customerbff/lines/NumberPorting.class
+com/mytelco/customerbff/lines/LineService.class
 com/mytelco/customerbff/service/ThresholdConfigService.class
 com/mytelco/customerbff/operator/StubPortugalOperatorAdapter.class
 com/mytelco/customerbff/billing/BillingAddress.class
@@ -158,6 +162,7 @@ com/mytelco/customerbff/service/ThresholdConfigService$1.class
 com/mytelco/customerbff/service/PushNotificationDispatcher.class
 com/mytelco/customerbff/family/FamilyRoleEntry.class
 com/mytelco/customerbff/travel/SpendCap.class
+com/mytelco/customerbff/lines/ProrationPreview.class
 com/mytelco/customerbff/family/controls/SharedControlAlertLevel.class
 com/mytelco/customerbff/controller/SimController.class
 com/mytelco/customerbff/family/FamilyRoleService.class
@@ -170,6 +175,7 @@ com/mytelco/customerbff/controller/TmfFacadeController.class
 com/mytelco/customerbff/device/DiagnosticService$1.class
 com/mytelco/customerbff/model/CatalogConfirmSelectionRequest.class
 com/mytelco/customerbff/service/StepUpCodeGenerator.class
+com/mytelco/customerbff/lines/ChangePlanRequest.class
 com/mytelco/customerbff/device/DiagnosticService.class
 com/mytelco/customerbff/events/DomainEventBackboneService$BulkReplayResult.class
 com/mytelco/customerbff/events/DomainEventBackboneService.class
@@ -177,6 +183,7 @@ com/mytelco/customerbff/controller/TroubleshootingController.class
 com/mytelco/customerbff/model/CheckoutResponse.class
 com/mytelco/customerbff/experiment/ExperimentService.class
 com/mytelco/customerbff/service/CustomerOrderService$1.class
+com/mytelco/customerbff/lines/LineDetails.class
 com/mytelco/customerbff/provider/StepUpAuthProvider.class
 com/mytelco/customerbff/controller/CatalogController.class
 com/mytelco/customerbff/family/controls/SharedControlCategory.class
@@ -220,6 +227,8 @@ com/mytelco/customerbff/model/CustomerDashboardResponse.class
 com/mytelco/customerbff/service/tmf/TmfFacadeMappingService.class
 com/mytelco/customerbff/model/LineUsageEntry.class
 com/mytelco/customerbff/controller/StepUpAuthController.class
+com/mytelco/customerbff/lines/LineController.class
+com/mytelco/customerbff/lines/Line.class
 com/mytelco/customerbff/device/DiagnosticTestType.class
 com/mytelco/customerbff/service/CatalogService.class
 com/mytelco/customerbff/model/StepUpErrorResponse.class
@@ -229,6 +238,7 @@ com/mytelco/customerbff/model/TroubleshootingFlow.class
 com/mytelco/customerbff/device/DiagnosticSeverity.class
 com/mytelco/customerbff/service/StepUpChallengeDeliveryAdapter.class
 com/mytelco/customerbff/service/NotificationCenterService$NotificationCenterState.class
+com/mytelco/customerbff/lines/AddLineRequest.class
 com/mytelco/customerbff/family/FamilyRole.class
 com/mytelco/customerbff/events/DeadLetterEvent.class
 com/mytelco/customerbff/model/NotificationChannelPreference.class
@@ -279,6 +289,7 @@ com/mytelco/customerbff/profile/ProfileController.class
 com/mytelco/customerbff/model/UsageThresholdCrossing.class
 com/mytelco/customerbff/device/DeviceController.class
 com/mytelco/customerbff/operator/OperatorAdapterErrorMapper.class
+com/mytelco/customerbff/lines/CancelLineRequest.class
 com/mytelco/customerbff/travel/UpdateSpendCapRequest.class
 com/mytelco/customerbff/family/FamilyRoleService$FamilyContext.class
 com/mytelco/customerbff/model/AlertThresholdConfig.class

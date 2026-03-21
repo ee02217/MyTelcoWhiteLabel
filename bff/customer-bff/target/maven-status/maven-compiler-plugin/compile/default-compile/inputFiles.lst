@@ -83,6 +83,17 @@
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/i18n/LocaleController.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/i18n/LocaleInfo.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/i18n/LocalizationService.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/AddLineRequest.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/CancelLineRequest.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/ChangePlanRequest.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/Line.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/LineController.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/LineDetails.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/LineService.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/NumberPorting.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/PortNumberRequest.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/ProrationPreview.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/lines/Usage.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/model/AccountOverviewResponse.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/model/AccountSummary.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/model/ActiveLine.java
