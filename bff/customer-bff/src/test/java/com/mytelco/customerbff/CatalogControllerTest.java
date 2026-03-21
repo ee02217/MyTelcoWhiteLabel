@@ -3,6 +3,7 @@ package com.mytelco.customerbff;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mytelco.customerbff.analytics.ProductAnalyticsService;
 import com.mytelco.customerbff.controller.CatalogController;
+import com.mytelco.customerbff.family.FamilyRoleService;
 import com.mytelco.customerbff.model.CatalogConfirmSelectionRequest;
 import com.mytelco.customerbff.model.CatalogConfirmSelectionResponse;
 import com.mytelco.customerbff.model.CatalogOffer;
@@ -56,6 +57,9 @@ class CatalogControllerTest {
 
     @MockBean
     private ProductAnalyticsService productAnalyticsService;
+
+    @MockBean
+    private FamilyRoleService familyRoleService;
 
     @Test
     @WithMockUser(roles = "CUSTOMER")

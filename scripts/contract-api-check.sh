@@ -76,6 +76,7 @@ curl -sS "${ADMIN_BFF_BASE_URL}/api-docs" > /tmp/admin-api-docs.json
 assert_path_exists /tmp/customer-api-docs.json "/api/v1/customer/account-overview"
 assert_path_exists /tmp/customer-api-docs.json "/api/v1/customer/dashboard"
 assert_path_exists /tmp/customer-api-docs.json "/api/v1/customer/catalog/confirm-selection"
+assert_path_exists /tmp/customer-api-docs.json "/api/v1/customer/family/roles"
 assert_path_exists /tmp/customer-api-docs.json "/api/v1/customer/analytics/taxonomy"
 
 assert_path_exists /tmp/admin-api-docs.json "/api/v1/admin/operators"

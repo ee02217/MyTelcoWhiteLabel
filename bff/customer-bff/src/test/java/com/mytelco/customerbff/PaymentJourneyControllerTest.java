@@ -3,6 +3,7 @@ package com.mytelco.customerbff;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mytelco.customerbff.analytics.ProductAnalyticsService;
 import com.mytelco.customerbff.controller.PaymentJourneyController;
+import com.mytelco.customerbff.family.FamilyRoleService;
 import com.mytelco.customerbff.model.CheckoutRequest;
 import com.mytelco.customerbff.model.CheckoutResponse;
 import com.mytelco.customerbff.model.PaymentMethodRegistrationRequest;
@@ -50,6 +51,9 @@ class PaymentJourneyControllerTest {
 
     @MockBean
     private ProductAnalyticsService productAnalyticsService;
+
+    @MockBean
+    private FamilyRoleService familyRoleService;
 
     @Test
     @WithMockUser(roles = "CUSTOMER")

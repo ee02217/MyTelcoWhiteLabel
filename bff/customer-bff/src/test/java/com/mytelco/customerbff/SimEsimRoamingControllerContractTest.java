@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mytelco.customerbff.controller.EsimController;
 import com.mytelco.customerbff.controller.RoamingController;
 import com.mytelco.customerbff.controller.SimController;
+import com.mytelco.customerbff.family.FamilyRoleService;
 import com.mytelco.customerbff.model.EsimActivationResponse;
 import com.mytelco.customerbff.model.EsimActivationStatus;
 import com.mytelco.customerbff.model.RoamingPack;
@@ -13,6 +14,7 @@ import com.mytelco.customerbff.model.SimActionRequest;
 import com.mytelco.customerbff.model.SimActionResponse;
 import com.mytelco.customerbff.model.SimStatus;
 import com.mytelco.customerbff.model.StepUpAction;
+import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.EsimService;
 import com.mytelco.customerbff.service.RoamingService;
 import com.mytelco.customerbff.service.SimService;
@@ -59,6 +61,12 @@ class SimEsimRoamingControllerContractTest {
 
     @MockBean
     private RoamingService roamingService;
+
+    @MockBean
+    private CustomerIdentityResolver customerIdentityResolver;
+
+    @MockBean
+    private FamilyRoleService familyRoleService;
 
     @Test
     @WithMockUser(roles = "CUSTOMER")
