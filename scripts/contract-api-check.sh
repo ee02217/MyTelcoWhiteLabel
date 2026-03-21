@@ -4,7 +4,7 @@ set -euo pipefail
 CUSTOMER_BFF_BASE_URL="${CUSTOMER_BFF_BASE_URL:-http://localhost:8081}"
 ADMIN_BFF_BASE_URL="${ADMIN_BFF_BASE_URL:-http://localhost:8082}"
 OIDC_ISSUER="${OIDC_ISSUER:-http://localhost:8080/realms/mytelco-white-label}"
-OIDC_CLIENT_ID="${OIDC_CLIENT_ID:-web-portal}"
+OIDC_CLIENT_ID="${OIDC_CLIENT_ID:-mobile-app}"
 CUSTOMER_USERNAME="${CUSTOMER_USERNAME:-customer1}"
 CUSTOMER_PASSWORD="${CUSTOMER_PASSWORD:-customer123}"
 ADMIN_USERNAME="${ADMIN_USERNAME:-admin1}"

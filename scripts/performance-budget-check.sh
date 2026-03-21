@@ -18,6 +18,9 @@ export EVIDENCE_DIR
 export REQUESTS
 export CONCURRENCY
 export RUNS
+export BFF_P95_THRESHOLD_MS
+export DASHBOARD_TARGET_SECONDS
+export DASHBOARD_PASSRATE_MIN
 export SKIP_COMPOSE_UP
 
 echo "== Performance budget gate =="

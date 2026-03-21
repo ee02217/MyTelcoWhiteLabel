@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ISSUER="${OIDC_ISSUER:-http://localhost:8080/realms/mytelco-white-label}"
-CLIENT_ID="${OIDC_CLIENT_ID:-web-portal}"
+CLIENT_ID="${OIDC_CLIENT_ID:-mobile-app}"
 BFF_BASE="${CUSTOMER_BFF_BASE_URL:-http://localhost:8081}"
 OIDC_SCOPE="${OIDC_SCOPE:-openid roles}"
 ACCESS_TOKEN="${ACCESS_TOKEN:-}"
