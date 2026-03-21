@@ -1,0 +1,39 @@
+{
+  "offerId": "addon-roaming-weekly",
+  "operatorId": "default",
+  "updatedAt": "2026-03-12T00:00:00Z",
+  "versions": [
+    {
+      "version": 1,
+      "state": "PUBLISHED",
+      "name": "Roaming Weekly 5GB",
+      "description": "5GB roaming bundle valid for 7 days in Zone 1 destinations.",
+      "eligibilityRules": {
+        "segment": "all",
+        "lineStatus": ["ACTIVE"],
+        "roamingEnabled": true
+      },
+      "visibleChannels": ["admin", "web", "mobile"],
+      "notes": "Legacy weekly bundle",
+      "author": "catalog-admin",
+      "reviewer": "commercial-manager",
+      "updatedAt": "2026-03-08T10:00:00Z"
+    },
+    {
+      "version": 2,
+      "state": "RETIRED",
+      "name": "Roaming Weekly 5GB",
+      "description": "5GB roaming bundle valid for 7 days in Zone 1 destinations.",
+      "eligibilityRules": {
+        "segment": "all",
+        "lineStatus": ["ACTIVE"],
+        "roamingEnabled": true
+      },
+      "visibleChannels": ["admin"],
+      "notes": "Retired and replaced by new roaming pass family",
+      "author": "catalog-admin",
+      "reviewer": "commercial-manager",
+      "updatedAt": "2026-03-12T00:00:00Z"
+    }
+  ]
+}
