@@ -12,6 +12,7 @@ import { TroubleshootingPanel } from './src/features/troubleshooting/Troubleshoo
 import { SupportCasesPanel } from './src/features/support/SupportCasesPanel';
 import { NotificationCenterPanel } from './src/features/notifications/NotificationCenterPanel';
 import { FamilyControlsPanel } from './src/features/family-controls';
+import { DevicePanel } from './src/features/device';
 import { rnTokens } from '../platform-config/design-system/tokens';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -668,6 +669,10 @@ export default function App() {
 
         <Card padding="md" shadow="md" style={styles.card}>
           <FamilyControlsPanel />
+        </Card>
+
+        <Card padding="md" shadow="md" style={styles.card}>
+          <DevicePanel />
         </Card>
 
         <StatusBar style="auto" />

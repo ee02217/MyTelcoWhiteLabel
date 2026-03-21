@@ -26,6 +26,16 @@
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/controller/SupportCaseController.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/controller/TmfFacadeController.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/controller/TroubleshootingController.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/device/DeviceCompatibilityCheck.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/device/DeviceController.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/device/DeviceInfo.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/device/DeviceService.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/device/DiagnosticController.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/device/DiagnosticResult.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/device/DiagnosticRunResponse.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/device/DiagnosticService.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/device/DiagnosticSeverity.java
+/Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/device/DiagnosticTestType.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/events/DeadLetterEvent.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/events/DomainEventBackboneService.java
 /Users/ee02217/.openclaw/workspace-richard/MyTelcoWhiteLabel-e2e/bff/customer-bff/src/main/java/com/mytelco/customerbff/events/DomainEventDispatcher.java
