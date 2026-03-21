@@ -47,13 +47,17 @@
       "clientId": "admin-portal",
       "enabled": true,
       "protocol": "openid-connect",
-      "publicClient": false,
+      "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "redirectUris": ["*"],
       "webOrigins": ["*"],
       "defaultClientScopes": ["openid", "roles"],
-      "optionalClientScopes": []
+      "optionalClientScopes": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "fullScopeAllowed": true
     },
     {
       "clientId": "mobile-app",

@@ -24,9 +24,8 @@ _transform: true
 upstreams:
   - name: bff-upstream
     targets:
-      # TODO: Update targets for production cluster service names
-      # In Kubernetes: use cluster-internal service name
-      - target: bff:8080
+      # Local docker-compose service endpoint
+      - target: customer-bff:8081
         weight: 100
     healthchecks:
       active:
@@ -41,8 +40,8 @@ upstreams:
 
   - name: admin-bff-upstream
     targets:
-      # TODO: Update targets for production cluster service names
-      - target: admin-bff:8080
+      # Local docker-compose service endpoint
+      - target: admin-bff:8082
         weight: 100
     healthchecks:
       active:
@@ -210,21 +209,15 @@ services:
         strip_path: false
         preserve_host: false
         plugins:
-          # JWT Authentication with admin scope
-          - name: jwt
-            config:
-              key_claim_name: kid
-              claims_to_verify:
-                - exp
-              run_on_preflight: true
-          # Stricter rate limits for admin
+          # Admin auth is enforced by admin-bff (Spring Security + Keycloak JWT validation).
+          # Kong JWT plugin is disabled locally to avoid credential-kid coupling with Keycloak key rotation.
           - name: rate-limiting
             config:
               minute: 50
               policy: local
               fault_tolerant: true
               hide_client_headers: false
-              limit_by: consumer
+              limit_by: ip
           # CORS for admin portal
           - name: cors
             config:
@@ -274,12 +267,6 @@ services:
 # PLUGINS (Global)
 # ============================================
 plugins:
-  - name: request-transformer
-    config:
-      add:
-        headers:
-          - X-Kong-Upstream-Latency:$(latency.request)
-          - X-Kong-Proxy-Latency:$(latency.proxy)
   - name: response-transformer
     config:
       add:
