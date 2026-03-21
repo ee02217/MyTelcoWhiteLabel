@@ -46,6 +46,10 @@ admin:
     operators-path: ${ADMIN_CONFIG_OPERATORS_PATH:platform-config/operators}
     default-locales: ${ADMIN_CONFIG_DEFAULT_LOCALES:en-GB,pt-PT}
 
+app:
+  security:
+    dev-mode: ${APP_SECURITY_DEV_MODE:true}
+
 # Logging
 logging:
   pattern:

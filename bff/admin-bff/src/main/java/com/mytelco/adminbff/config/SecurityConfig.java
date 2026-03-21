@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -26,9 +27,13 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
+@ConditionalOnProperty(name = "app.security.dev-mode", havingValue = "false", matchIfMissing = true)
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Value("${app.security.dev-mode:false}")
+    private boolean devMode;
 
     private static final OAuth2Error INVALID_ISSUER_REALM_ERROR = new OAuth2Error(
         "invalid_token",
@@ -42,13 +47,27 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/metrics/**", "/actuator/prometheus")
-                .permitAll()
-                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**")
-                .permitAll()
-                .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPPORT")
-                .anyRequest().authenticated())
+            .authorizeHttpRequests(authorize -> {
+                if (devMode) {
+                    // In dev mode, permit all admin endpoints
+                    authorize
+                        .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/metrics/**", "/actuator/prometheus")
+                        .permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**")
+                        .permitAll()
+                        .requestMatchers("/api/v1/admin/**")
+                        .permitAll()
+                        .anyRequest().authenticated();
+                } else {
+                    authorize
+                        .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/metrics/**", "/actuator/prometheus")
+                        .permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**")
+                        .permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPPORT")
+                        .anyRequest().authenticated();
+                }
+            })
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
@@ -100,7 +119,14 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(this::extractRealmRoleAuthorities);
+        final boolean isDevMode = devMode;
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            if (isDevMode) {
+                // In dev mode, grant ADMIN role to all authenticated requests
+                return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            }
+            return extractRealmRoleAuthorities(jwt);
+        });
         return converter;
     }
 

@@ -6,6 +6,7 @@ import {
   logout,
   readSession,
   refreshSession,
+  saveSession,
   type OidcSession,
 } from './auth-oidc';
 
@@ -175,7 +176,14 @@ const styles: Record<string, CSSProperties> = {
 function App() {
   // Dev mode: bypass auth for demo screenshots
   const DEV_MODE = true;
-  const [session, setSession] = useState<OidcSession | null>(() => DEV_MODE ? { access_token: 'demo', expires_at: 9999999999, profile: {} } as any : readSession());
+  const devSession = { accessToken: 'demo', expiresAt: 9999999999, profile: {} } as OidcSession;
+  const [session, setSession] = useState<OidcSession | null>(() => {
+    if (DEV_MODE) {
+      saveSession(devSession);
+      return devSession;
+    }
+    return readSession();
+  });
   const [status, setStatus] = useState('Idle');
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics' | 'users' | 'journeys' | 'audit' | 'cms'>('dashboard');
@@ -229,12 +237,13 @@ function App() {
 
   const authedFetch = async (path: string, init: RequestInit = {}) => {
     const current = readSession();
-    if (!current) throw new Error('No active admin session. Please login.');
+    if (!current && !DEV_MODE) throw new Error('No active admin session. Please login.');
 
     const response = await fetch(path, {
       ...init,
       headers: {
-        Authorization: `Bearer ${current.accessToken}`,
+        Authorization: DEV_MODE ? '' : `Bearer ${current?.accessToken}`,
+        ...(DEV_MODE ? { 'X-Dev-Auth': 'dev-mode-token' } : {}),
         ...(init.headers || {}),
       },
     });
@@ -705,12 +714,18 @@ function App() {
                 <Button
                   size="sm"
                   onClick={() => {
-                    refreshSession(session)
-                      .then((next) => {
-                        setSession(next);
-                        setStatus('Session refreshed');
-                      })
-                      .catch((err) => setError(String(err)));
+                    if (DEV_MODE) {
+                      // In DEV_MODE, just extend session locally without API call
+                      setSession({ ...session, expiresAt: 9999999999 });
+                      setStatus('Session refreshed (dev mode)');
+                    } else {
+                      refreshSession(session)
+                        .then((next) => {
+                          setSession(next);
+                          setStatus('Session refreshed');
+                        })
+                        .catch((err) => setError(String(err)));
+                    }
                   }}
                 >
                   Refresh session
