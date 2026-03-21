@@ -1,4 +1,4 @@
-import { Button, Card, Typography } from '../design-system';
+import { Button, Card, Typography } from '../../design-system';
 import { useEffect, useMemo, useState } from 'react';
 
 export type FamilyRolesResponse = {
@@ -109,12 +109,20 @@ export function FamilyRolesPanel({ authedFetch }: Props) {
       </Typography>
       <div style={{ marginTop: 12 }}>
         {error && (
-          <Typography variant="small" color="danger" style={{ marginBottom: 6 }}>
+          <Typography
+            variant="small"
+            color="primary"
+            style={{ marginBottom: 6, color: 'var(--color-error-500)' }}
+          >
             {error}
           </Typography>
         )}
         {status && (
-          <Typography variant="small" color="success" style={{ marginBottom: 6 }}>
+          <Typography
+            variant="small"
+            color="primary"
+            style={{ marginBottom: 6, color: 'var(--color-success-500)' }}
+          >
             {status}
           </Typography>
         )}
