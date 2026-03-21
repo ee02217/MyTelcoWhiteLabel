@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 Test set: com.mytelco.customerbff.CustomerDashboardControllerTest
 -------------------------------------------------------------------------------
-Tests run: 3, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.135 s <<< FAILURE! -- in com.mytelco.customerbff.CustomerDashboardControllerTest
-com.mytelco.customerbff.CustomerDashboardControllerTest.getUsageDetails_daily_shouldReturnThresholdCrossings -- Time elapsed: 0.023 s <<< FAILURE!
+Tests run: 3, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.074 s <<< FAILURE! -- in com.mytelco.customerbff.CustomerDashboardControllerTest
+com.mytelco.customerbff.CustomerDashboardControllerTest.getUsageDetails_daily_shouldReturnThresholdCrossings -- Time elapsed: 0.005 s <<< FAILURE!
 Wanted but not invoked:
 com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackLoginSuccess(
     <any string>,
@@ -19,7 +19,7 @@ Actually, there were zero interactions with this mock.
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
 
-com.mytelco.customerbff.CustomerDashboardControllerTest.getAccountOverview_shouldReturnMultiLinePayload -- Time elapsed: 0.006 s <<< FAILURE!
+com.mytelco.customerbff.CustomerDashboardControllerTest.getAccountOverview_shouldReturnMultiLinePayload -- Time elapsed: 0.003 s <<< FAILURE!
 Argument(s) are different! Wanted:
 com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackLoginSuccess(
     <any string>,
@@ -43,7 +43,7 @@ com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackLoginSucce
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
 
-com.mytelco.customerbff.CustomerDashboardControllerTest.getDashboard_shouldReturnAggregatedData -- Time elapsed: 0.006 s <<< FAILURE!
+com.mytelco.customerbff.CustomerDashboardControllerTest.getDashboard_shouldReturnAggregatedData -- Time elapsed: 0.003 s <<< FAILURE!
 Argument(s) are different! Wanted:
 com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackLoginSuccess(
     <any string>,
