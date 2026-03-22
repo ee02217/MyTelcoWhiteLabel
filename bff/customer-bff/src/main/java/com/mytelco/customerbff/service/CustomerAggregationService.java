@@ -3,6 +3,7 @@ package com.mytelco.customerbff.service;
 import com.mytelco.customerbff.events.DomainEventPublisher;
 import com.mytelco.customerbff.events.EventTopic;
 import com.mytelco.customerbff.events.NoopDomainEventPublisher;
+import com.mytelco.customerbff.mock.MockCustomerDataProvider;
 import com.mytelco.customerbff.model.*;
 import com.mytelco.customerbff.provider.AccountProvider;
 import com.mytelco.customerbff.provider.BillingProvider;
@@ -18,6 +19,8 @@ import java.util.Map;
 /**
  * Service that aggregates data from multiple providers for the customer dashboard.
  * Includes performance instrumentation for p95 response time tracking.
+ * 
+ * When mock profile is active, uses MockCustomerDataProvider instead of real providers.
  */
 @Service
 public class CustomerAggregationService {
@@ -26,6 +29,8 @@ public class CustomerAggregationService {
     private final UsageProvider usageProvider;
     private final BillingProvider billingProvider;
     private final UsageThresholdAlertService usageThresholdAlertService;
+    private final MockCustomerDataProvider mockDataProvider;
+    private final boolean isMockMode;
     private final Timer dashboardTimer;
     private final Timer accountOverviewTimer;
     private final Timer usageDetailsTimer;
@@ -36,11 +41,14 @@ public class CustomerAggregationService {
             UsageProvider usageProvider,
             BillingProvider billingProvider,
             UsageThresholdAlertService usageThresholdAlertService,
-            MeterRegistry meterRegistry) {
+            MeterRegistry meterRegistry,
+            @Autowired(required = false) MockCustomerDataProvider mockDataProvider) {
         this.accountProvider = accountProvider;
         this.usageProvider = usageProvider;
         this.billingProvider = billingProvider;
         this.usageThresholdAlertService = usageThresholdAlertService;
+        this.mockDataProvider = mockDataProvider;
+        this.isMockMode = mockDataProvider != null;
 
         // Timer for tracking dashboard aggregation performance
         this.dashboardTimer = Timer.builder("customer.dashboard.aggregation")
@@ -70,9 +78,19 @@ public class CustomerAggregationService {
      */
     public CustomerDashboardResponse getDashboard(String customerId) {
         return dashboardTimer.record(() -> {
-            AccountSummary accountSummary = accountProvider.getAccountSummary(customerId);
-            UsageSummary usageSummary = usageProvider.getUsageSummary(customerId);
-            BillingSummary billingSummary = billingProvider.getBillingSummary(customerId);
+            AccountSummary accountSummary;
+            UsageSummary usageSummary;
+            BillingSummary billingSummary;
+
+            if (isMockMode) {
+                accountSummary = mockDataProvider.getAccountSummary(customerId);
+                usageSummary = mockDataProvider.getUsageSummary(customerId);
+                billingSummary = mockDataProvider.getBillingSummary(customerId);
+            } else {
+                accountSummary = accountProvider.getAccountSummary(customerId);
+                usageSummary = usageProvider.getUsageSummary(customerId);
+                billingSummary = billingProvider.getBillingSummary(customerId);
+            }
 
             return new CustomerDashboardResponse(
                 accountSummary,
@@ -87,12 +105,23 @@ public class CustomerAggregationService {
      * Returns account overview data for account dashboard surfaces.
      */
     public AccountOverviewResponse getAccountOverview(String customerId) {
-        return accountOverviewTimer.record(() -> accountProvider.getAccountOverview(customerId));
+        return accountOverviewTimer.record(() -> {
+            if (isMockMode) {
+                return mockDataProvider.getAccountOverview(customerId);
+            }
+            return accountProvider.getAccountOverview(customerId);
+        });
     }
 
     public CustomerUsageResponse getUsageDetails(String customerId, UsageView view, String lineId) {
         return usageDetailsTimer.record(() -> {
-            CustomerUsageResponse usage = usageProvider.getUsageDetails(customerId, view, lineId);
+            CustomerUsageResponse usage;
+            if (isMockMode) {
+                usage = mockDataProvider.getUsageDetails(customerId, view, lineId);
+            } else {
+                usage = usageProvider.getUsageDetails(customerId, view, lineId);
+            }
+            
             var crossings = usageThresholdAlertService.evaluateAndDispatch(customerId, usage);
             CustomerUsageResponse response = new CustomerUsageResponse(
                 usage.view(),
