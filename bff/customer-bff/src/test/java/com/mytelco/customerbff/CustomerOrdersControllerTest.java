@@ -2,6 +2,8 @@ package com.mytelco.customerbff;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mytelco.customerbff.controller.CustomerOrdersController;
+import com.mytelco.customerbff.family.FamilyRoleService;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.model.CustomerOrderCreateRequest;
 import com.mytelco.customerbff.model.CustomerOrderResponse;
 import com.mytelco.customerbff.model.OrderState;
@@ -40,6 +42,12 @@ class CustomerOrdersControllerTest {
 
     @MockBean
     private CustomerIdentityResolver customerIdentityResolver;
+
+    @MockBean
+    private FamilyRoleService familyRoleService;
+
+    @MockBean
+    private SharedControlService sharedControlService;
 
     @Test
     @WithMockUser(username = "cust-1", roles = "CUSTOMER")

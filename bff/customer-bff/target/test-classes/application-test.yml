@@ -1,0 +1,14 @@
+# Test profile configuration - disables security for unit tests
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/test
+          jwk-set-uri: http://localhost:8080/realms/test/protocol/openid-connect/certs
+
+# Disable security for tests by allowing all requests
+management:
+  endpoint:
+    health:
+      show-details: always

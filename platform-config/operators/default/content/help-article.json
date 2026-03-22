@@ -1,0 +1,39 @@
+{
+  "contentId": "help-article",
+  "versions": [
+    {
+      "locale": "en-GB",
+      "version": 1,
+      "state": "PUBLISHED",
+      "title": "How to restart your router",
+      "body": "Unplug the router for 30 seconds, plug it back in, and wait for the lights to settle.",
+      "notes": "Legacy help article.",
+      "author": "support",
+      "reviewer": "support",
+      "updatedAt": "2026-03-08T09:30:00Z"
+    },
+    {
+      "locale": "en-GB",
+      "version": 2,
+      "state": "DRAFT",
+      "title": "Tips for restarting your router",
+      "body": "Use the dedicated restart button or unplug for 30 seconds. When lights blink, the router is booting.",
+      "notes": "Draft with safety mentions.",
+      "author": "support",
+      "reviewer": null,
+      "updatedAt": "2026-03-19T09:00:00Z"
+    },
+    {
+      "locale": "pt-PT",
+      "version": 1,
+      "state": "PUBLISHED",
+      "title": "Como reiniciar o seu router",
+      "body": "Desligue o router durante 30 segundos e ligue novamente. Aguarde as luzes estabilizarem.",
+      "notes": "Portuguese support article.",
+      "author": "support",
+      "reviewer": "support",
+      "updatedAt": "2026-03-08T09:40:00Z"
+    }
+  ],
+  "updatedAt": "2026-03-19T09:00:00Z"
+}

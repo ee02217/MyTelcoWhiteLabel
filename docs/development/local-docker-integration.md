@@ -13,6 +13,7 @@ The local compose stack includes:
 - admin-bff
 - web-portal (built from `web-portal/` and served by nginx)
 - admin-portal (built from `admin-portal/` and served by nginx)
+- optional Kafka broker (profile `kafka`, for integration day)
 
 Compose file:
 
@@ -26,6 +27,7 @@ Kong profile used by local compose:
 
 - Docker Engine + Docker Compose plugin
 - Available local ports: `5432`, `8080`, `8000`, `8001`, `8443`, `8444`, `8081`, `8082`, `3000`, `3001`
+- Optional Kafka mode port: `9092`
 
 ## Startup
 
@@ -57,6 +59,38 @@ Kong profile used by local compose:
 
    ```bash
    bash scripts/local-smoke-check.sh
+   ```
+
+## Integration day: enable real Kafka dispatch
+
+By default, event backbone runs in `stub` mode (no real broker publish). For integration validation day, enable Kafka in the same compose stack.
+
+1. Enable Kafka dispatch in `.env.local`:
+
+   ```bash
+   MYTELCO_EVENTS_DISPATCH_MODE=kafka
+   SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+   ```
+
+2. Start stack with Kafka profile:
+
+   ```bash
+   docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml --profile kafka up -d --build
+   ```
+
+3. Verify dispatcher mode:
+
+   ```bash
+   # (with bearer token)
+   curl -s -H "Authorization: Bearer <TOKEN>" \
+     http://localhost:8081/api/v1/customer/events/dispatch-status
+   ```
+
+4. Return to default lightweight mode after integration day:
+
+   ```bash
+   # set MYTELCO_EVENTS_DISPATCH_MODE=stub in .env.local
+   docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml up -d --build
    ```
 
 ## Frontend API wiring strategy
@@ -128,6 +162,17 @@ For docker-only environments, run the hardening evidence scripts below after the
    ```
 
 Artifacts are written under `evidence/YYYY-MM-DD/` with timestamped filenames (raw logs + summary markdown + csv).
+
+## Observability stack (F-11.1)
+
+The local stack now includes Prometheus, Grafana, Jaeger/OTel, OpenSearch, and Fluent Bit for metrics, traces, and centralized logs.
+
+- **Prometheus** (`http://localhost:${PROMETHEUS_PORT:-9090}`) scrapes all services via `infra/observability/prometheus/prometheus.yml`.
+- **Grafana** (`http://localhost:${GRAFANA_PORT:-3005}`) is provisioned with dashboards in `infra/observability/grafana/dashboards/`.
+- **OpenSearch + Fluent Bit** collect container logs. Results land under index `mytelco-logs-*` on `http://localhost:${OPENSEARCH_PORT:-9200}`.
+- **Jaeger + OpenTelemetry Collector** (`http://localhost:${JAEGER_UI_PORT:-16686}`) surfaces request traces, and the collector exports traces to Jaeger via `infra/observability/otel-collector/config.yml`.
+
+You can confirm observability health with the smoke checker or manually: `curl http://localhost:${PROMETHEUS_PORT:-9090}/-/ready`, `curl http://localhost:${GRAFANA_PORT:-3005}/api/health`, `curl http://localhost:${OPENSEARCH_PORT:-9200}/_cluster/health?wait_for_status=yellow`, `curl http://localhost:${JAEGER_UI_PORT:-16686}/api/services`, and `curl http://localhost:4318/health` for the collector.
 
 ## Troubleshooting
 

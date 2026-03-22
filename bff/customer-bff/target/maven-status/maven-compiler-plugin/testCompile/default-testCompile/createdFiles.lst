@@ -1,4 +1,7 @@
+com/mytelco/customerbff/analytics/ProductAnalyticsServiceTest.class
+com/mytelco/customerbff/DurableStatePersistenceTest.class
 com/mytelco/customerbff/BillingExplorerServiceTest.class
+com/mytelco/customerbff/family/FamilyRoleServiceTest.class
 com/mytelco/customerbff/CustomerBffSecurityTest.class
 com/mytelco/customerbff/CustomerOrdersControllerTest.class
 com/mytelco/customerbff/CustomerDashboardControllerTest$MetricsTestConfig.class
@@ -7,6 +10,7 @@ com/mytelco/customerbff/PaymentHistoryServiceTest.class
 com/mytelco/customerbff/BillingExplorerControllerTest.class
 com/mytelco/customerbff/StepUpAndSimServiceTest.class
 com/mytelco/customerbff/SimEsimRoamingControllerContractTest.class
+com/mytelco/customerbff/analytics/ProductAnalyticsServiceTest$InMemoryEventPublisher.class
 com/mytelco/customerbff/EsimServiceTest.class
 com/mytelco/customerbff/BillingExplorerControllerTest$TestMeterRegistryConfig.class
 com/mytelco/customerbff/CustomerDashboardControllerTest.class
@@ -17,11 +21,13 @@ com/mytelco/customerbff/NotificationCenterServiceTest.class
 com/mytelco/customerbff/TroubleshootingServiceTest.class
 com/mytelco/customerbff/CustomerAlertsControllerTest.class
 com/mytelco/customerbff/SupportCaseServiceTest.class
+com/mytelco/customerbff/family/FamilyRolesControllerTest.class
 com/mytelco/customerbff/PaymentJourneyServiceTest.class
 com/mytelco/customerbff/PaymentJourneyControllerTest.class
 com/mytelco/customerbff/CatalogControllerTest.class
 com/mytelco/customerbff/NotificationCenterControllerTest.class
 com/mytelco/customerbff/CatalogServiceTest.class
+com/mytelco/customerbff/StepUpAuthServiceTest.class
 com/mytelco/customerbff/RoamingServiceTest.class
 com/mytelco/customerbff/TmfFacadeControllerContractTest.class
 com/mytelco/customerbff/CatalogEligibilityServiceTest.class

@@ -1,5 +1,9 @@
 package com.mytelco.customerbff.controller;
 
+import com.mytelco.customerbff.family.FamilyPermission;
+import com.mytelco.customerbff.family.FamilyRoleService;
+import com.mytelco.customerbff.family.controls.SharedControlCategory;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.model.CustomerOrderCreateRequest;
 import com.mytelco.customerbff.model.CustomerOrderResponse;
 import com.mytelco.customerbff.security.CustomerIdentityResolver;
@@ -29,13 +33,19 @@ public class CustomerOrdersController {
 
     private final CustomerOrderService customerOrderService;
     private final CustomerIdentityResolver customerIdentityResolver;
+    private final FamilyRoleService familyRoleService;
+    private final SharedControlService sharedControlService;
 
     public CustomerOrdersController(
         CustomerOrderService customerOrderService,
-        CustomerIdentityResolver customerIdentityResolver
+        CustomerIdentityResolver customerIdentityResolver,
+        FamilyRoleService familyRoleService,
+        SharedControlService sharedControlService
     ) {
         this.customerOrderService = customerOrderService;
         this.customerIdentityResolver = customerIdentityResolver;
+        this.familyRoleService = familyRoleService;
+        this.sharedControlService = sharedControlService;
     }
 
     @PostMapping
@@ -47,11 +57,38 @@ public class CustomerOrdersController {
     public ResponseEntity<CustomerOrderResponse> createOrder(
         Authentication authentication,
         @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+        @RequestHeader(value = "X-Family-Acting-Line-ID", required = false) String actingLineId,
         @Valid @RequestBody CustomerOrderCreateRequest request
     ) {
         try {
             String customerId = customerIdentityResolver.resolveCustomerId(authentication);
-            return ResponseEntity.ok(customerOrderService.create(request, idempotencyKey, customerId));
+            familyRoleService.requirePermission(
+                customerId,
+                actingLineId,
+                request.lineId(),
+                FamilyPermission.MANAGE_PLAN
+            );
+
+            sharedControlService.assertWithinCap(
+                customerId,
+                actingLineId,
+                request.lineId(),
+                SharedControlCategory.ADDON_PURCHASES,
+                1d,
+                "Customer order creation",
+                null
+            );
+
+            CustomerOrderResponse response = customerOrderService.create(request, idempotencyKey, customerId);
+            sharedControlService.recordUsage(
+                customerId,
+                request.lineId(),
+                SharedControlCategory.ADDON_PURCHASES,
+                1d,
+                null,
+                "orders.create"
+            );
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }
@@ -60,20 +97,42 @@ public class CustomerOrdersController {
     @GetMapping("/{orderId}")
     @Operation(summary = "Get order by id")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Order found")})
-    public ResponseEntity<CustomerOrderResponse> getOrder(Authentication authentication, @PathVariable String orderId) {
+    public ResponseEntity<CustomerOrderResponse> getOrder(
+        Authentication authentication,
+        @PathVariable String orderId,
+        @RequestHeader(value = "X-Family-Acting-Line-ID", required = false) String actingLineId
+    ) {
         String customerId = customerIdentityResolver.resolveCustomerId(authentication);
         CustomerOrderResponse order = customerOrderService.getById(customerId, orderId);
         if (order == null) {
             return ResponseEntity.notFound().build();
         }
+
+        familyRoleService.requirePermission(
+            customerId,
+            actingLineId,
+            order.lineId(),
+            FamilyPermission.VIEW_USAGE
+        );
+
         return ResponseEntity.ok(order);
     }
 
     @GetMapping
     @Operation(summary = "List orders by line id")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Orders returned")})
-    public ResponseEntity<List<CustomerOrderResponse>> listOrders(Authentication authentication, @RequestParam String lineId) {
+    public ResponseEntity<List<CustomerOrderResponse>> listOrders(
+        Authentication authentication,
+        @RequestParam String lineId,
+        @RequestHeader(value = "X-Family-Acting-Line-ID", required = false) String actingLineId
+    ) {
         String customerId = customerIdentityResolver.resolveCustomerId(authentication);
+        familyRoleService.requirePermission(
+            customerId,
+            actingLineId,
+            lineId,
+            FamilyPermission.VIEW_USAGE
+        );
         return ResponseEntity.ok(customerOrderService.listByLineId(customerId, lineId));
     }
 }

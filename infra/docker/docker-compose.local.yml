@@ -30,6 +30,7 @@ services:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_HEALTH_ENABLED: 'true'
+      KC_METRICS_ENABLED: 'true'
       KC_DB: dev-file
     ports:
       - '${KEYCLOAK_PORT:-8080}:8080'
@@ -61,11 +62,14 @@ services:
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      KONG_STATUS_LISTEN: 0.0.0.0:8100
+      KONG_PLUGINS: bundled,prometheus
     ports:
       - '${KONG_PROXY_PORT:-8000}:8000'
       - '${KONG_ADMIN_PORT:-8001}:8001'
       - '${KONG_PROXY_TLS_PORT:-8443}:8443'
       - '${KONG_ADMIN_TLS_PORT:-8444}:8444'
+      - '${KONG_STATUS_PORT:-8100}:8100'
     volumes:
       - ../kong/kong.local.yml:/usr/local/kong/declarative/kong.yml:ro
     healthcheck:
@@ -74,6 +78,38 @@ services:
       timeout: 5s
       retries: 10
       start_period: 15s
+    networks:
+      - mytelco-network
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: mytelco-kafka
+    profiles: ['kafka']
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      CLUSTER_ID: ${KAFKA_KRAFT_CLUSTER_ID:-MkU3OEVBNTcwNTJENDM2Qk}
+    ports:
+      - '${KAFKA_PORT:-9092}:9092'
+    volumes:
+      - kafka-local-data:/var/lib/kafka/data
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1']
+      interval: 20s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
     networks:
       - mytelco-network
 
@@ -86,6 +122,13 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${INTERNAL_OIDC_ISSUER:-http://keycloak:8080/realms/mytelco-white-label}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${INTERNAL_OIDC_JWKS_URI:-http://keycloak:8080/realms/mytelco-white-label/protocol/openid-connect/certs}
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:-1.0}
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:-http://otel-collector:4318/v1/traces}
+      MYTELCO_EVENTS_DISPATCH_MODE: ${MYTELCO_EVENTS_DISPATCH_MODE:-stub}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      SPRING_KAFKA_PRODUCER_MAX_BLOCK_MS: ${SPRING_KAFKA_PRODUCER_MAX_BLOCK_MS:-3000}
+      SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS: ${SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS:-2000}
+      SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS: ${SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS:-5000}
     volumes:
       - ../../platform-config:/app/platform-config:ro
     ports:
@@ -115,6 +158,8 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${INTERNAL_OIDC_ISSUER:-http://keycloak:8080/realms/mytelco-white-label}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${INTERNAL_OIDC_JWKS_URI:-http://keycloak:8080/realms/mytelco-white-label/protocol/openid-connect/certs}
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:-1.0}
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: ${MANAGEMENT_OTLP_TRACING_ENDPOINT:-http://otel-collector:4318/v1/traces}
     volumes:
       - ../../platform-config:/app/platform-config:ro
     ports:
@@ -156,7 +201,7 @@ services:
       kong:
         condition: service_healthy
     healthcheck:
-      test: ['CMD-SHELL', 'wget -q --spider http://localhost/ || exit 1']
+      test: ['CMD-SHELL', 'wget -q --spider http://127.0.0.1/ || exit 1']
       interval: 20s
       timeout: 5s
       retries: 8
@@ -185,11 +230,116 @@ services:
       kong:
         condition: service_healthy
     healthcheck:
-      test: ['CMD-SHELL', 'wget -q --spider http://localhost/ || exit 1']
+      test: ['CMD-SHELL', 'wget -q --spider http://127.0.0.1/ || exit 1']
       interval: 20s
       timeout: 5s
       retries: 8
       start_period: 15s
+    networks:
+      - mytelco-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mytelco-prometheus
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      kong:
+        condition: service_healthy
+      customer-bff:
+        condition: service_started
+      admin-bff:
+        condition: service_started
+    ports:
+      - '${PROMETHEUS_PORT:-9090}:9090'
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - mytelco-network
+
+  grafana:
+    image: grafana/grafana:10.0.8
+    container_name: mytelco-grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+    ports:
+      - '${GRAFANA_PORT:-3005}:3000'
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-grafana}
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - mytelco-network
+
+  opensearch:
+    image: opensearchproject/opensearch:2.8.0
+    container_name: mytelco-opensearch
+    environment:
+      cluster.name: mytelco-observability
+      node.name: mytelco-opensearch
+      discovery.type: single-node
+      bootstrap.memory_lock: 'false'
+      OPENSEARCH_JAVA_OPTS: '-Xms512m -Xmx512m'
+      plugins.security.disabled: 'true'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - '${OPENSEARCH_PORT:-9200}:9200'
+      - '9600:9600'
+    volumes:
+      - opensearch-local-data:/usr/share/opensearch/data
+    networks:
+      - mytelco-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.51
+    container_name: mytelco-jaeger
+    ports:
+      - '${JAEGER_UI_PORT:-16686}:16686'
+      - '14268:14268'
+      - '14250:14250'
+      - '14269:14269'
+    environment:
+      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+      COLLECTOR_OTLP_ENABLED: 'true'
+    networks:
+      - mytelco-network
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.82.0
+    container_name: mytelco-otel-collector
+    command:
+      - '--config=/etc/otel-collector-config.yml'
+    depends_on:
+      jaeger:
+        condition: service_started
+    ports:
+      - '4317:4317'
+      - '4318:4318'
+      - '8888:8888'
+    volumes:
+      - ../observability/otel-collector/config.yml:/etc/otel-collector-config.yml:ro
+    networks:
+      - mytelco-network
+
+  fluent-bit:
+    image: fluent/fluent-bit:2.0
+    container_name: mytelco-fluent-bit
+    depends_on:
+      opensearch:
+        condition: service_started
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ../observability/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ../observability/fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
     networks:
       - mytelco-network
 
@@ -198,4 +348,6 @@ networks:
     driver: bridge
 
 volumes:
+  opensearch-local-data:
   postgres-local-data:
+  kafka-local-data:

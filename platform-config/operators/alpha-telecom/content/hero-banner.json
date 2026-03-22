@@ -1,0 +1,17 @@
+{
+  "contentId": "hero-banner",
+  "versions": [
+    {
+      "locale": "en-GB",
+      "version": 1,
+      "state": "PUBLISHED",
+      "title": "Alpha Telecom Smart Network",
+      "body": "Alpha Telecom delivers ultra-fast fibre and private concierge for your business.",
+      "notes": "Default hero for alpha-telecom.",
+      "author": "system",
+      "reviewer": "system",
+      "updatedAt": "2026-03-12T07:00:00Z"
+    }
+  ],
+  "updatedAt": "2026-03-12T07:00:00Z"
+}

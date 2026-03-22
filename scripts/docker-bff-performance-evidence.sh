@@ -137,8 +137,14 @@ fi
 echo "== Docker BFF performance evidence =="
 echo "requests=${REQUESTS}, concurrency=${CONCURRENCY}, warmup=${WARMUP_REQUESTS}@${WARMUP_CONCURRENCY}"
 
+SKIP_COMPOSE_UP="${SKIP_COMPOSE_UP:-0}"
+
 echo "[1/4] Ensure stack is up"
-compose up -d --build
+if [[ "$SKIP_COMPOSE_UP" == "1" ]]; then
+  echo "[info] SKIP_COMPOSE_UP=1 -> reusing current stack"
+else
+  compose up -d --build
+fi
 wait_http_200 "${CUSTOMER_BFF_BASE_URL}/actuator/health" 180
 
 echo "[2/4] Acquire auth token"

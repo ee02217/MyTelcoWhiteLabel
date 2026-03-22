@@ -1,4 +1,69 @@
 -------------------------------------------------------------------------------
 Test set: com.mytelco.customerbff.CustomerDashboardControllerTest
 -------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.068 s -- in com.mytelco.customerbff.CustomerDashboardControllerTest
+Tests run: 3, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 0.074 s <<< FAILURE! -- in com.mytelco.customerbff.CustomerDashboardControllerTest
+com.mytelco.customerbff.CustomerDashboardControllerTest.getUsageDetails_daily_shouldReturnThresholdCrossings -- Time elapsed: 0.005 s <<< FAILURE!
+Wanted but not invoked:
+com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackLoginSuccess(
+    <any string>,
+    "operator-stub-pt",
+    "web",
+    <any string>
+);
+-> at com.mytelco.customerbff.analytics.ProductAnalyticsService.trackLoginSuccess(ProductAnalyticsService.java:92)
+Actually, there were zero interactions with this mock.
+
+	at com.mytelco.customerbff.analytics.ProductAnalyticsService.trackLoginSuccess(ProductAnalyticsService.java:92)
+	at com.mytelco.customerbff.CustomerDashboardControllerTest.getUsageDetails_daily_shouldReturnThresholdCrossings(CustomerDashboardControllerTest.java:153)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+com.mytelco.customerbff.CustomerDashboardControllerTest.getAccountOverview_shouldReturnMultiLinePayload -- Time elapsed: 0.003 s <<< FAILURE!
+Argument(s) are different! Wanted:
+com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackLoginSuccess(
+    <any string>,
+    "operator-stub-pt",
+    "web",
+    <any string>
+);
+-> at com.mytelco.customerbff.analytics.ProductAnalyticsService.trackLoginSuccess(ProductAnalyticsService.java:92)
+Actual invocations have different arguments at position [3]:
+com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackLoginSuccess(
+    "cust-1",
+    "operator-stub-pt",
+    "web",
+    null
+);
+-> at com.mytelco.customerbff.controller.CustomerDashboardController.getAccountOverview(CustomerDashboardController.java:178)
+
+	at com.mytelco.customerbff.analytics.ProductAnalyticsService.trackLoginSuccess(ProductAnalyticsService.java:92)
+	at com.mytelco.customerbff.CustomerDashboardControllerTest.getAccountOverview_shouldReturnMultiLinePayload(CustomerDashboardControllerTest.java:123)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+com.mytelco.customerbff.CustomerDashboardControllerTest.getDashboard_shouldReturnAggregatedData -- Time elapsed: 0.003 s <<< FAILURE!
+Argument(s) are different! Wanted:
+com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackLoginSuccess(
+    <any string>,
+    "operator-stub-pt",
+    "web",
+    <any string>
+);
+-> at com.mytelco.customerbff.analytics.ProductAnalyticsService.trackLoginSuccess(ProductAnalyticsService.java:92)
+Actual invocations have different arguments at position [3]:
+com.mytelco.customerbff.analytics.ProductAnalyticsService#0 bean.trackLoginSuccess(
+    "cust-1",
+    "operator-stub-pt",
+    "web",
+    null
+);
+-> at com.mytelco.customerbff.controller.CustomerDashboardController.getDashboard(CustomerDashboardController.java:85)
+
+	at com.mytelco.customerbff.analytics.ProductAnalyticsService.trackLoginSuccess(ProductAnalyticsService.java:92)
+	at com.mytelco.customerbff.CustomerDashboardControllerTest.getDashboard_shouldReturnAggregatedData(CustomerDashboardControllerTest.java:91)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+

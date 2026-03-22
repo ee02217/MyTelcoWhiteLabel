@@ -1,13 +1,113 @@
-name: Test Workflow
+name: Quality Gates - MVP
 
 on:
-  push:
-    branches: [main, feat/**]
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: quality-gates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: '21'
+  NODE_VERSION: '20'
 
 jobs:
   test:
+    name: test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - run: echo "Hello"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            admin-portal/package-lock.json
+            web-portal/package-lock.json
+            mobile-app/package-lock.json
+            platform-config/design-tokens/package-lock.json
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Bootstrap node modules
+        run: npm run bootstrap:node:skip-root
+
+      - name: Run Node unit tests
+        run: npm run test:all
+
+      - name: Run backend-services unit tests
+        working-directory: backend-services
+        run: mvn -q test
+
+      - name: Run BFF unit tests
+        working-directory: bff
+        run: mvn -q test
+
+  nfr-gates:
+    name: nfr-gates
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 120
+    env:
+      BFF_P95_THRESHOLD_MS: '550'
+      DASHBOARD_TARGET_SECONDS: '2.5'
+      DASHBOARD_PASSRATE_MIN: '95'
+      REQUESTS: '1000'
+      CONCURRENCY: '20'
+      RUNS: '30'
+      SKIP_COMPOSE_UP: '1'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install benchmark and JSON tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apache2-utils jq
+
+      - name: Prepare local env file
+        run: cp .env.local.example .env.local
+
+      - name: Start local stack for NFR gates
+        run: docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml up -d --build
+
+      - name: Run integration smoke checks
+        run: bash scripts/local-smoke-check.sh
+
+      - name: Run API contract checks
+        run: bash scripts/contract-api-check.sh
+
+      - name: Run OIDC E2E checks
+        run: bash scripts/oidc-e2e-check.sh
+
+      - name: Run accessibility baseline checks (WCAG 2.2 AA)
+        run: bash scripts/accessibility-wcag-check.sh
+
+      - name: Run performance budget gate
+        run: bash scripts/performance-budget-check.sh
+
+      - name: Teardown stack
+        if: always()
+        run: docker compose --env-file .env.local -f infra/docker/docker-compose.local.yml down -v

@@ -4,60 +4,16 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # Keycloak OIDC proxy (for login flow)
-    location /realms/ {
-        proxy_pass http://mytelco-keycloak:8080/realms/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $http_host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_pass_header Set-Cookie;
-        proxy_redirect off;
-    }
-
-    # Keycloak resources
-    location /js/ {
-        proxy_pass http://mytelco-keycloak:8080/js/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $http_host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_redirect off;
-    }
-
-    location /admin/ {
-        proxy_pass http://mytelco-keycloak:8080/admin/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $http_host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_redirect off;
-    }
-
-    # API proxy to Kong (same origin to avoid CORS)
     location /api/ {
         proxy_pass ${API_UPSTREAM};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_redirect off;
+        proxy_set_header X-Correlation-ID $request_id;
     }
 
-    # SPA fallback - serve index.html for routes
     location / {
         try_files $uri $uri/ /index.html;
-    }
-
-    # Deny access to hidden files
-    location ~ /\. {
-        deny all;
-        access_log off;
-        log_not_found off;
     }
 }

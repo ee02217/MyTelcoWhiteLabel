@@ -1,0 +1,40 @@
+{
+  "offerId": "plan-alpha-max",
+  "operatorId": "alpha-telecom",
+  "updatedAt": "2026-03-12T00:00:00Z",
+  "versions": [
+    {
+      "version": 1,
+      "state": "DRAFT",
+      "name": "Alpha Max",
+      "description": "Unlimited 5G with premium support and streaming bundle.",
+      "eligibilityRules": {
+        "segment": "postpaid",
+        "minTenureDays": 15,
+        "lineStatus": ["ACTIVE"]
+      },
+      "visibleChannels": ["admin", "web"],
+      "notes": "Initial launch draft",
+      "author": "alpha-product",
+      "reviewer": null,
+      "updatedAt": "2026-03-10T08:00:00Z"
+    },
+    {
+      "version": 2,
+      "state": "PUBLISHED",
+      "name": "Alpha Max",
+      "description": "Unlimited 5G with premium support and streaming bundle.",
+      "eligibilityRules": {
+        "segment": "postpaid",
+        "minTenureDays": 15,
+        "lineStatus": ["ACTIVE"],
+        "contractMonths": [12, 24]
+      },
+      "visibleChannels": ["admin", "web", "mobile"],
+      "notes": "Published for Alpha Telecom channels",
+      "author": "alpha-catalog",
+      "reviewer": "alpha-commercial",
+      "updatedAt": "2026-03-12T00:00:00Z"
+    }
+  ]
+}

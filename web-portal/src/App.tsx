@@ -1,175 +1,218 @@
+// New App.tsx - Production-ready with AppShell
+
 import { useEffect, useState } from 'react';
+import { Button, Card, DesignSystemProvider, Typography } from './design-system';
+import { AppShell } from './app/AppShell';
+import { Dashboard } from './app/routes/Dashboard';
+import { Usage } from './app/routes/Usage';
+import { Billing } from './app/routes/Billing';
+import { Lines } from './app/routes/Lines';
+import { LineDetail } from './app/routes/LineDetail';
 import {
   beginLogin,
   completeLoginIfCallback,
-  logout as oidcLogout,
+  logout,
   readSession,
-  refreshSession,
   type OidcSession,
 } from './auth-oidc';
-import { AppShell } from './components/AppShell';
-import { Dashboard } from './components/Dashboard';
-import { Usage } from './components/Usage';
-import { Billing } from './components/Billing';
-import { Lines } from './components/Lines';
-import { Roaming, Orders, Support, Notifications, Catalog, Settings } from './components/PlaceholderPages';
+import { setAuthFetch } from './services/api';
+
+type AppRoute = string;
 
 function App() {
+  const [route, setRoute] = useState<AppRoute>('/');
   const [session, setSession] = useState<OidcSession | null>(null);
-  const [activePage, setActivePage] = useState('dashboard');
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  // Check for existing session on mount
   useEffect(() => {
-    const existingSession = readSession();
-    setSession(existingSession);
-    setIsLoading(false);
-
-    // Handle callback if returning from OIDC
-    completeLoginIfCallback().then((newSession) => {
-      if (newSession) {
-        setSession(newSession);
-      }
-    });
+    // Check for OIDC callback
+    completeLoginIfCallback();
+    
+    // Read session
+    const stored = readSession();
+    setSession(stored);
+    setLoading(false);
   }, []);
 
-  // Auto-refresh token before expiry
+  // Set up API client with auth
   useEffect(() => {
-    if (!session) return;
-
-    const checkAndRefresh = async () => {
-      const expiresIn = session.expiresAt - Math.floor(Date.now() / 1000);
-      if (expiresIn < 60 && session.refreshToken) {
-        try {
-          const newSession = await refreshSession(session);
-          if (newSession) {
-            setSession(newSession);
-          }
-        } catch (e) {
-          console.error('Failed to refresh session:', e);
-          setSession(null);
-        }
-      }
-    };
-
-    const interval = setInterval(checkAndRefresh, 30000);
-    return () => clearInterval(interval);
+    if (session?.accessToken) {
+      setAuthFetch(async (path: string, init: RequestInit = {}) => {
+        const url = path.startsWith('http') ? path : `http://localhost:3000${path}`;
+        const response = await fetch(url, {
+          ...init,
+          headers: {
+            ...init.headers,
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+        });
+        return response;
+      });
+    }
   }, [session]);
 
+  const navigateTo = (nextRoute: string) => {
+    // Update URL without reload
+    window.history.pushState({}, '', nextRoute);
+    setRoute(nextRoute);
+  };
+
+  // Handle browser back/forward
+  useEffect(() => {
+    const handlePopState = () => {
+      setRoute(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const handleLogin = async () => {
-    await beginLogin();
+    try {
+      await beginLogin();
+    } catch (e) {
+      console.error('Login failed:', e);
+    }
   };
 
   const handleLogout = async () => {
-    await oidcLogout(session);
+    await logout(session);
     setSession(null);
-    setActivePage('dashboard');
+    navigateTo('/');
   };
 
-  if (isLoading) {
+  // Wait for initial load
+  if (loading) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#f5f7fa',
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '32px', marginBottom: '16px' }}>📱</div>
-          <div style={{ color: '#6b7280' }}>Loading...</div>
+      <DesignSystemProvider>
+        <div style={{ padding: '24px' }}>
+          <Typography>Loading...</Typography>
         </div>
-      </div>
+      </DesignSystemProvider>
     );
   }
 
-  // If not logged in, show login screen
+  // Show login if no session
   if (!session) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#f5f7fa',
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '16px',
-          padding: '48px',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-          textAlign: 'center',
-          maxWidth: '400px',
-          width: '100%',
-        }}>
-          <div style={{ fontSize: '48px', marginBottom: '24px' }}>📱</div>
-          <h1 style={{ margin: '0 0 12px', fontSize: '28px', fontWeight: 600, color: '#111827' }}>
-            MyTelco
-          </h1>
-          <p style={{ margin: '0 0 32px', color: '#6b7280' }}>
-            Sign in to manage your account
-          </p>
-          <button
-            onClick={handleLogin}
-            style={{
-              width: '100%',
-              padding: '14px 24px',
-              backgroundColor: '#6366f1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              fontSize: '16px',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            Sign In
-          </button>
+      <DesignSystemProvider>
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#f5f5f5',
+          }}
+        >
+          <Card padding="lg" shadow="lg" style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
+            <Typography variant="h3" style={{ marginBottom: '8px' }}>
+              MyTelco
+            </Typography>
+            <Typography variant="body" color="secondary" style={{ marginBottom: '24px' }}>
+              Sign in to manage your account
+            </Typography>
+            <Button onClick={handleLogin} style={{ width: '100%' }}>
+              Sign In
+            </Button>
+          </Card>
         </div>
-      </div>
+      </DesignSystemProvider>
+    );
+  }
+
+  // Token expiration warning
+  const tokenExpired = session.expiresAt * 1000 < Date.now();
+  if (tokenExpired) {
+    return (
+      <DesignSystemProvider>
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#f5f5f5',
+          }}
+        >
+          <Card padding="lg" shadow="lg" style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
+            <Typography variant="h4" style={{ marginBottom: '16px' }}>
+              Session Expired
+            </Typography>
+            <Typography variant="body" color="secondary" style={{ marginBottom: '24px' }}>
+              Your session has expired. Please sign in again.
+            </Typography>
+            <Button onClick={handleLogin} style={{ width: '100%' }}>
+              Sign In
+            </Button>
+          </Card>
+        </div>
+      </DesignSystemProvider>
     );
   }
 
   // Render the appropriate page
   const renderPage = () => {
-    switch (activePage) {
-      case 'dashboard':
-        return <Dashboard onNavigate={setActivePage} />;
-      case 'usage':
-        return <Usage />;
-      case 'billing':
-        return <Billing />;
-      case 'lines':
-        return <Lines />;
-      case 'roaming':
-        return <Roaming />;
-      case 'orders':
-        return <Orders />;
-      case 'support':
-        return <Support />;
-      case 'notifications':
-        return <Notifications />;
-      case 'catalog':
-        return <Catalog />;
-      case 'settings':
-        return <Settings />;
-      default:
-        return <Dashboard onNavigate={setActivePage} />;
+    const authedFetch = async (path: string, init?: RequestInit) => {
+      const url = path.startsWith('http') ? path : `http://localhost:3000${path}`;
+      const response = await fetch(url, {
+        ...init,
+        headers: {
+          ...init?.headers,
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+      return response;
+    };
+
+    // Dashboard
+    if (route === '/') {
+      return <Dashboard authedFetch={authedFetch} onNavigate={navigateTo} />;
     }
+
+    // Usage
+    if (route === '/usage') {
+      return <Usage />;
+    }
+
+    // Billing
+    if (route === '/billing') {
+      return <Billing />;
+    }
+
+    // Lines list
+    if (route === '/lines') {
+      return <Lines />;
+    }
+
+    // Line detail
+    if (route.startsWith('/lines/')) {
+      return <LineDetail />;
+    }
+
+    // Placeholder for other routes
+    return (
+      <Card padding="lg" shadow="md">
+        <Typography variant="h4" style={{ marginBottom: '16px' }}>
+          {route} - Coming Soon
+        </Typography>
+        <Typography variant="body" color="secondary">
+          This page is under construction. Check back soon!
+        </Typography>
+      </Card>
+    );
   };
 
-  // Get user name from session (decode JWT or use default)
-  const userName = session.scope || 'Customer';
-
   return (
-    <AppShell
-      activePage={activePage}
-      onNavigate={setActivePage}
-      userName={userName}
-      onLogout={handleLogout}
-    >
-      {renderPage()}
-    </AppShell>
+    <DesignSystemProvider>
+      <AppShell
+        currentPath={route}
+        onNavigate={navigateTo}
+        userName="Customer"
+        onLogout={handleLogout}
+      >
+        {renderPage()}
+      </AppShell>
+    </DesignSystemProvider>
   );
 }
 

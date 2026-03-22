@@ -1,9 +1,12 @@
 package com.mytelco.customerbff.controller;
 
+import com.mytelco.customerbff.analytics.ProductAnalyticsService;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import com.mytelco.customerbff.model.AccountOverviewResponse;
 import com.mytelco.customerbff.model.CustomerDashboardResponse;
 import com.mytelco.customerbff.model.CustomerUsageResponse;
 import com.mytelco.customerbff.model.UsageView;
+import com.mytelco.customerbff.operator.OperatorContextResolver;
 import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.CustomerAggregationService;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -17,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,15 +37,24 @@ public class CustomerDashboardController {
     private final CustomerAggregationService aggregationService;
     private final MeterRegistry meterRegistry;
     private final CustomerIdentityResolver customerIdentityResolver;
+    private final OperatorContextResolver operatorContextResolver;
+    private final ProductAnalyticsService productAnalyticsService;
+    private final SharedControlService sharedControlService;
 
     public CustomerDashboardController(
         CustomerAggregationService aggregationService,
         MeterRegistry meterRegistry,
-        CustomerIdentityResolver customerIdentityResolver
+        CustomerIdentityResolver customerIdentityResolver,
+        OperatorContextResolver operatorContextResolver,
+        ProductAnalyticsService productAnalyticsService,
+        SharedControlService sharedControlService
     ) {
         this.aggregationService = aggregationService;
         this.meterRegistry = meterRegistry;
         this.customerIdentityResolver = customerIdentityResolver;
+        this.operatorContextResolver = operatorContextResolver;
+        this.productAnalyticsService = productAnalyticsService;
+        this.sharedControlService = sharedControlService;
     }
 
     /**
@@ -60,8 +73,22 @@ public class CustomerDashboardController {
         @ApiResponse(responseCode = "400", description = "Invalid customer ID"),
         @ApiResponse(responseCode = "404", description = "Customer not found")
     })
-    public ResponseEntity<CustomerDashboardResponse> getDashboard(Authentication authentication) {
+    public ResponseEntity<CustomerDashboardResponse> getDashboard(
+        Authentication authentication,
+        @RequestHeader(value = "X-Operator-ID", required = false) String operatorId,
+        @RequestHeader(value = "X-Channel", required = false) String channel,
+        @RequestHeader(value = "X-Correlation-ID", required = false) String correlationId
+    ) {
         String customerId = customerIdentityResolver.resolveCustomerId(authentication);
+        String resolvedOperatorId = resolveOperatorId(customerId, operatorId);
+
+        productAnalyticsService.trackLoginSuccess(
+            customerId,
+            resolvedOperatorId,
+            resolveChannel(channel),
+            correlationId
+        );
+
         CustomerDashboardResponse response = aggregationService.getDashboard(customerId);
         return ResponseEntity.ok(response);
     }
@@ -134,17 +161,45 @@ public class CustomerDashboardController {
         @ApiResponse(responseCode = "400", description = "Invalid customer ID"),
         @ApiResponse(responseCode = "404", description = "Customer not found")
     })
-    public ResponseEntity<AccountOverviewResponse> getAccountOverview(Authentication authentication) {
+    public ResponseEntity<AccountOverviewResponse> getAccountOverview(
+        Authentication authentication,
+        @RequestHeader(value = "X-Operator-ID", required = false) String operatorId,
+        @RequestHeader(value = "X-Channel", required = false) String channel,
+        @RequestHeader(value = "X-Correlation-ID", required = false) String correlationId
+    ) {
         Timer timer = Timer.builder("customer.account.overview.endpoint")
             .description("Endpoint time for customer account overview")
             .publishPercentiles(0.50, 0.95, 0.99)
             .register(meterRegistry);
 
         String customerId = customerIdentityResolver.resolveCustomerId(authentication);
+        String resolvedOperatorId = resolveOperatorId(customerId, operatorId);
+
+        productAnalyticsService.trackLoginSuccess(
+            customerId,
+            resolvedOperatorId,
+            resolveChannel(channel),
+            correlationId
+        );
+
         AccountOverviewResponse response = timer.record(
             () -> aggregationService.getAccountOverview(customerId)
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    private String resolveOperatorId(String customerId, String operatorId) {
+        if (operatorId != null && !operatorId.isBlank()) {
+            return operatorId.trim();
+        }
+        return operatorContextResolver.resolveOperatorId(customerId);
+    }
+
+    private String resolveChannel(String channel) {
+        if (channel == null || channel.isBlank()) {
+            return "web";
+        }
+        return channel.trim();
     }
 }

@@ -1,0 +1,57 @@
+{
+  "offerId": "plan-premium-unlimited",
+  "operatorId": "default",
+  "updatedAt": "2026-03-12T00:00:00Z",
+  "versions": [
+    {
+      "version": 1,
+      "state": "DRAFT",
+      "name": "Premium Unlimited",
+      "description": "Unlimited data with 5G priority and 1 roaming pass/month.",
+      "eligibilityRules": {
+        "segment": "postpaid",
+        "minTenureDays": 30,
+        "lineStatus": ["ACTIVE"]
+      },
+      "visibleChannels": ["admin", "web"],
+      "notes": "Initial product draft",
+      "author": "product-owner",
+      "reviewer": null,
+      "updatedAt": "2026-03-10T09:00:00Z"
+    },
+    {
+      "version": 2,
+      "state": "APPROVAL",
+      "name": "Premium Unlimited",
+      "description": "Unlimited data with 5G priority and 2 roaming passes/month.",
+      "eligibilityRules": {
+        "segment": "postpaid",
+        "minTenureDays": 30,
+        "lineStatus": ["ACTIVE"],
+        "creditScoreTier": ["A", "B"]
+      },
+      "visibleChannels": ["admin", "web", "mobile"],
+      "notes": "Ready for go-to-market review",
+      "author": "product-owner",
+      "reviewer": "pricing-committee",
+      "updatedAt": "2026-03-11T11:20:00Z"
+    },
+    {
+      "version": 3,
+      "state": "PUBLISHED",
+      "name": "Premium Unlimited",
+      "description": "Unlimited data with 5G priority and 2 roaming passes/month.",
+      "eligibilityRules": {
+        "segment": "postpaid",
+        "minTenureDays": 30,
+        "lineStatus": ["ACTIVE"],
+        "creditScoreTier": ["A", "B"]
+      },
+      "visibleChannels": ["admin", "web", "mobile"],
+      "notes": "Approved for commercial launch",
+      "author": "catalog-admin",
+      "reviewer": "pricing-committee",
+      "updatedAt": "2026-03-12T00:00:00Z"
+    }
+  ]
+}

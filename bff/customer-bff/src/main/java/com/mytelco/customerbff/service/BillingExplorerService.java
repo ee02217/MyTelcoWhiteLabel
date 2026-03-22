@@ -1,7 +1,11 @@
 package com.mytelco.customerbff.service;
 
+import com.mytelco.customerbff.events.DomainEventPublisher;
+import com.mytelco.customerbff.events.EventTopic;
+import com.mytelco.customerbff.events.NoopDomainEventPublisher;
 import com.mytelco.customerbff.model.*;
 import com.mytelco.customerbff.provider.BillingProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -15,9 +19,15 @@ import java.util.stream.Collectors;
 public class BillingExplorerService {
 
     private final BillingProvider billingProvider;
+    private DomainEventPublisher domainEventPublisher = NoopDomainEventPublisher.INSTANCE;
 
     public BillingExplorerService(BillingProvider billingProvider) {
         this.billingProvider = billingProvider;
+    }
+
+    @Autowired(required = false)
+    public void setDomainEventPublisher(DomainEventPublisher domainEventPublisher) {
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     public BillExplorerResponse getBillExplorer(String customerId, YearMonth period) {
@@ -45,7 +55,7 @@ public class BillingExplorerService {
                 .multiply(new BigDecimal("100"))
                 .setScale(2, RoundingMode.HALF_UP);
 
-        return new BillExplorerResponse(
+        BillExplorerResponse response = new BillExplorerResponse(
             customerId,
             current.period(),
             current.periodStart(),
@@ -60,6 +70,20 @@ public class BillingExplorerService {
             ),
             current.invoice()
         );
+
+        domainEventPublisher.publish(
+            EventTopic.BILLING,
+            "billing.explorer.viewed.v1",
+            customerId,
+            current.period(),
+            Map.of(
+                "period", current.period(),
+                "total", grandTotal,
+                "lineItems", current.lineItems().size()
+            )
+        );
+
+        return response;
     }
 
     public Resource getInvoicePdf(String invoiceId) {
