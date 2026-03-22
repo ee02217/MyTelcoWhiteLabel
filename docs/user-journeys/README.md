@@ -12,10 +12,15 @@ This document provides visual documentation of all user journeys implemented in 
    - [Line Lifecycle Management](#line-lifecycle-management)
    - [Settings & Preferences](#settings--preferences)
 2. [Admin Portal - Operator Features](#admin-portal---operator-features)
+   - [Dashboard](#dashboard)
    - [Analytics Dashboard](#analytics-dashboard)
    - [User Management](#user-management)
    - [Journey & Flow Management](#journey--flow-management)
    - [Audit Log](#audit-log)
+3. [Web Portal - Customer Self-Service](#web-portal---customer-self-service)
+   - [Login Page](#login-page)
+   - [Customer Dashboard](#customer-dashboard)
+   - [Self-Care Lab](#self-care-lab)
 
 ---
 
@@ -386,6 +391,71 @@ This document provides visual documentation of all user journeys implemented in 
 #### Screenshot
 
 ![Audit Log](./screenshots/admin-audit.png)
+
+---
+
+## Web Portal - Customer Self-Service
+
+**Feature ID:** #159  
+**Path:** Web Portal (http://localhost:3000)
+
+### Login Page
+
+#### Journey Steps
+
+| Step | Screen | Description |
+|------|--------|-------------|
+| 1 | **Landing** | User arrives at MyTelco Self-Care portal |
+| 2 | **Login** | Click Login to authenticate via OIDC |
+| 3 | **Auth** | Redirect to Keycloak, enter credentials |
+| 4 | **Callback** | Return to portal with auth code |
+| 5 | **Session** | Tokens stored, API calls authorized |
+
+#### Screenshot
+
+![Web Portal Login](./screenshots/web-portal-login.png)
+
+---
+
+### Customer Dashboard
+
+#### Journey Steps
+
+| Step | Screen | Description |
+|------|--------|-------------|
+| 1 | **Session Status** | View auth token expiry, refresh or logout |
+| 2 | **Account Overview** | View personal account snapshot |
+| 3 | **Usage This Cycle** | Data, voice, SMS consumption |
+| 4 | **Billing** | Current balance, next payment, payment method |
+| 5 | **Support** | Notifications, open cases, pending actions |
+| 6 | **Quick Actions** | Shortcuts to common flows |
+
+#### Screenshot
+
+![Web Portal Dashboard](./screenshots/web-portal-dashboard.png)
+
+---
+
+### Self-Care Lab
+
+#### Journey Steps
+
+| Step | Screen | Description |
+|------|--------|-------------|
+| 1 | **Advanced Flows** | Engineering workspace for E2E testing |
+| 2 | **Payment Testing** | Register payment, checkout success/failure |
+| 3 | **Catalog** | Load plans, confirm selections |
+| 4 | **Family Roles** | Manage line assignments (owner/manager/member) |
+| 5 | **Order History** | View 12-month payment history |
+| 6 | **SIM Management** | Issue challenge, block/unblock, eSIM activation |
+| 7 | **Roaming** | Load and manage roaming packs |
+| 8 | **Notifications** | Load inbox and preferences |
+| 9 | **Support Cases** | Create and manage support tickets |
+| 10 | **Troubleshooting** | Load issue flows |
+
+#### Screenshot
+
+![Web Portal Lab](./screenshots/web-portal-lab.png)
 
 ---
 
