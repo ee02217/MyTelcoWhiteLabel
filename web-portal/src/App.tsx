@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { Button, Card, DesignSystemProvider, Typography } from './design-system';
 import { AppShell } from './app/AppShell';
 import { Dashboard } from './app/routes/Dashboard';
+import { Usage } from './app/routes/Usage';
+import { Billing } from './app/routes/Billing';
+import { Lines } from './app/routes/Lines';
+import { LineDetail } from './app/routes/LineDetail';
 import {
   beginLogin,
   completeLoginIfCallback,
@@ -148,25 +152,41 @@ function App() {
 
   // Render the appropriate page
   const renderPage = () => {
-    // For now, only Dashboard is implemented
-    // Other pages will show a placeholder
+    const authedFetch = async (path: string, init?: RequestInit) => {
+      const url = path.startsWith('http') ? path : `http://localhost:3000${path}`;
+      const response = await fetch(url, {
+        ...init,
+        headers: {
+          ...init?.headers,
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+      return response;
+    };
+
+    // Dashboard
     if (route === '/') {
-      return (
-        <Dashboard
-          authedFetch={async (path, init) => {
-            const url = path.startsWith('http') ? path : `http://localhost:3000${path}`;
-            const response = await fetch(url, {
-              ...init,
-              headers: {
-                ...init?.headers,
-                Authorization: `Bearer ${session.accessToken}`,
-              },
-            });
-            return response;
-          }}
-          onNavigate={navigateTo}
-        />
-      );
+      return <Dashboard authedFetch={authedFetch} onNavigate={navigateTo} />;
+    }
+
+    // Usage
+    if (route === '/usage') {
+      return <Usage />;
+    }
+
+    // Billing
+    if (route === '/billing') {
+      return <Billing />;
+    }
+
+    // Lines list
+    if (route === '/lines') {
+      return <Lines />;
+    }
+
+    // Line detail
+    if (route.startsWith('/lines/')) {
+      return <LineDetail />;
     }
 
     // Placeholder for other routes

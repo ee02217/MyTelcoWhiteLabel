@@ -68,9 +68,25 @@ export interface PaymentMethod {
   token: string;
   status: string;
   type: 'CARD' | 'SEPA';
-  last4?: string;
+  // For cards
+  cardBrand?: string;
+  lastFour?: string;
   expiryMonth?: number;
   expiryYear?: number;
+  expiryDate?: string;
+  // For SEPA
+  bankName?: string;
+}
+
+export interface PaymentRecord {
+  id: string;
+  date: string;
+  amount: number;
+  currency?: string;
+  status: 'completed' | 'pending' | 'failed';
+  method?: string;
+  description?: string;
+  receiptUrl?: string;
 }
 
 export interface PaymentHistoryItem {

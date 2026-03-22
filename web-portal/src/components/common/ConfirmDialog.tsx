@@ -1,29 +1,32 @@
-// Confirmation dialog component
+// Confirmation dialog component with flexible content support
 
-import { useState } from 'react';
 import { Button } from '../../design-system/Button';
 import { Typography } from '../../design-system/Typography';
 
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
-  message: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  variant?: 'danger' | 'warning' | 'primary';
   onConfirm: () => void;
-  onCancel: () => void;
+  onClose: () => void;
+  confirmText?: string;
+  cancelText?: string;
+  loading?: boolean;
+  confirmDisabled?: boolean;
+  variant?: 'primary' | 'danger';
+  children?: React.ReactNode;
 }
 
 export function ConfirmDialog({
   open,
   title,
-  message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  variant = 'primary',
   onConfirm,
-  onCancel,
+  onClose,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  loading = false,
+  confirmDisabled = false,
+  variant = 'primary',
+  children,
 }: ConfirmDialogProps) {
   if (!open) return null;
 
@@ -38,14 +41,14 @@ export function ConfirmDialog({
         justifyContent: 'center',
         zIndex: 1000,
       }}
-      onClick={onCancel}
+      onClick={onClose}
     >
       <div
         style={{
           background: 'white',
           borderRadius: '12px',
           padding: '24px',
-          maxWidth: '400px',
+          maxWidth: '450px',
           width: '90%',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
         }}
@@ -54,77 +57,24 @@ export function ConfirmDialog({
         <Typography variant="h4" style={{ marginBottom: '12px' }}>
           {title}
         </Typography>
-        <Typography variant="body" color="secondary" style={{ marginBottom: '24px' }}>
-          {message}
-        </Typography>
+        <div style={{ marginBottom: '24px' }}>
+          {children}
+        </div>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-          <Button variant="ghost" size="sm" onClick={onCancel}>
-            {cancelLabel}
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            {cancelText}
           </Button>
-          <Button variant={variant === 'primary' ? 'primary' : 'outline'} size="sm" onClick={onConfirm}>
-            {confirmLabel}
+          <Button
+            variant={variant === 'danger' ? 'outline' : 'primary'}
+            size="sm"
+            onClick={onConfirm}
+            disabled={loading || confirmDisabled}
+            style={variant === 'danger' ? { backgroundColor: '#dc2626', color: 'white', borderColor: '#dc2626' } : undefined}
+          >
+            {loading ? 'Loading...' : confirmText}
           </Button>
         </div>
       </div>
     </div>
   );
-}
-
-// Hook for managing dialog state
-export function useConfirmDialog() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [config, setConfig] = useState<{
-    title: string;
-    message: string;
-    confirmLabel?: string;
-    cancelLabel?: string;
-    variant?: 'danger' | 'warning' | 'primary';
-    onConfirm: () => void;
-  } | null>(null);
-
-  const confirm = (
-    title: string,
-    message: string,
-    onConfirm: () => void,
-    options?: {
-      confirmLabel?: string;
-      cancelLabel?: string;
-      variant?: 'danger' | 'warning' | 'primary';
-    }
-  ) => {
-    setConfig({
-      title,
-      message,
-      onConfirm: () => {
-        onConfirm();
-        setIsOpen(false);
-      },
-      ...options,
-    });
-    setIsOpen(true);
-  };
-
-  const cancel = () => {
-    setIsOpen(false);
-    setConfig(null);
-  };
-
-  return {
-    isOpen,
-    config,
-    confirm,
-    cancel,
-    Dialog: config ? (
-      <ConfirmDialog
-        open={isOpen}
-        title={config.title}
-        message={config.message}
-        confirmLabel={config.confirmLabel}
-        cancelLabel={config.cancelLabel}
-        variant={config.variant}
-        onConfirm={config.onConfirm}
-        onCancel={cancel}
-      />
-    ) : null,
-  };
 }
