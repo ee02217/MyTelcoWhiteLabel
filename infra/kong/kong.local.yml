@@ -71,13 +71,8 @@ services:
         strip_path: false
         preserve_host: false
         plugins:
-          # JWT Authentication
-          - name: jwt
-            config:
-              key_claim_name: kid
-              claims_to_verify:
-                - exp
-              run_on_preflight: true
+          # JWT Authentication disabled - customer-bff validates JWTs via Spring Security
+          # (Kong JWT plugin disabled to avoid credential coupling with Keycloak key rotation)
           # Rate Limiting
           - name: rate-limiting
             config:
@@ -119,12 +114,7 @@ services:
         strip_path: false
         preserve_host: false
         plugins:
-          - name: jwt
-            config:
-              key_claim_name: kid
-              claims_to_verify:
-                - exp
-              run_on_preflight: true
+          # JWT Authentication disabled - customer-bff validates JWTs via Spring Security
           - name: rate-limiting
             config:
               minute: 100
@@ -161,12 +151,7 @@ services:
         strip_path: false
         preserve_host: false
         plugins:
-          - name: jwt
-            config:
-              key_claim_name: kid
-              claims_to_verify:
-                - exp
-              run_on_preflight: true
+          # JWT Authentication disabled - customer-bff validates JWTs via Spring Security
           - name: rate-limiting
             config:
               minute: 100
