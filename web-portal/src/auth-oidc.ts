@@ -15,8 +15,21 @@ export type OidcSession = {
   scope?: string;
 };
 
+// Resolve OIDC issuer - use configured value as-is
+// This allows the app to work both locally (localhost) and remotely (IP/domain)
+// The configured Keycloak URL must be reachable from the browser
+const resolveIssuer = (configuredIssuer: string | undefined): string => {
+  if (!configuredIssuer) {
+    return window.location.origin;
+  }
+
+  // Return the configured issuer as-is - don't rewrite based on browser hostname
+  // Users must ensure Keycloak is accessible at the configured URL from their network
+  return configuredIssuer;
+};
+
 const cfg = {
-  issuer: import.meta.env.VITE_OIDC_ISSUER,
+  issuer: resolveIssuer(import.meta.env.VITE_OIDC_ISSUER),
   clientId: import.meta.env.VITE_OIDC_CLIENT_ID,
   redirectUri: import.meta.env.VITE_OIDC_REDIRECT_URI,
   postLogoutRedirectUri: import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI,
