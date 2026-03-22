@@ -405,18 +405,5 @@ This document provides visual documentation of all user journeys implemented in 
 
 ---
 
-## Screenshots Placeholder
-
-To add actual screenshots:
-
-1. Capture screenshots of each screen
-2. Save as PNG files in `docs/user-journeys/screenshots/`
-3. Reference in this document using:
-   ```markdown
-   ![Profile Screen](./screenshots/profile-screen.png)
-   ```
-
----
-
-*Last Updated: 2026-03-21*
+*Last Updated: 2026-03-22*
 *Document Version: 1.0*
