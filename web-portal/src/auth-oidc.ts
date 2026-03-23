@@ -64,12 +64,20 @@ export const loginWithCredentials = async (username: string, password: string): 
     throw new Error('Authentication failed');
   }
 
-  // Fetch session to get user details
-  const session = await fetchSession();
-  if (!session) {
-    throw new Error('Failed to fetch session after login');
-  }
-
+  // Create session from login response - we don't need to fetch session details
+  // The cookies are already set by the BFF
+  const expiresAt = Math.floor(Date.now() / 1000) + (auth.expiresIn || 300);
+  
+  // Store session info for UI (roles will be fetched on app init)
+  const session: OidcSession = {
+    accessToken: '', // Not accessible (HttpOnly cookie)
+    refreshToken: undefined,
+    expiresAt,
+    subject: '', // Will be fetched on app init
+    roles: ['CUSTOMER'], // Assume CUSTOMER role for now
+  };
+  
+  saveSession(session);
   return session;
 };
 
@@ -101,10 +109,14 @@ const fetchSession = async (): Promise<OidcSession | null> => {
     });
 
     if (!response.ok) {
+      console.error('Session fetch failed:', response.status, response.statusText);
       return null;
     }
 
-    const session: SessionResponse = await response.json();
+    const text = await response.text();
+    console.log('Session response:', text);
+    
+    const session: SessionResponse = JSON.parse(text);
     
     if (!session.authenticated) {
       return null;
@@ -118,7 +130,7 @@ const fetchSession = async (): Promise<OidcSession | null> => {
       subject: session.subject || '',
       roles: session.roles || [],
     };
-  } catch {
+  } catch (e) {
     return null;
   }
 };
