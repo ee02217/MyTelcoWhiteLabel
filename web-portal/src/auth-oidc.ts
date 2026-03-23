@@ -26,8 +26,9 @@ export type OidcSession = {
   roles: string[];
 };
 
-// BFF API base URL - Kong is exposed on port 8000
-const BFF_API_BASE = 'http://localhost:8000/api/v1/auth';
+// BFF API base URL - call through the portal's nginx (same origin)
+// This ensures cookies are sent properly (no CORS issues)
+const BFF_API_BASE = '/api/v1/auth';
 
 const SESSION_KEY = 'mytelco_session';
 
