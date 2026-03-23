@@ -72,6 +72,7 @@ export function UsageByLine({ lines, totalDataMb, limits }: UsageByLineProps) {
                   }`}>
                     {dataPercent.toFixed(0)}%
                   </span>
+                  <span className="text-xs text-gray-400 ml-1">of limit</span>
                 </div>
               </div>
             </div>

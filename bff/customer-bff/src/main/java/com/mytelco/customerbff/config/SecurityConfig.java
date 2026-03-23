@@ -43,7 +43,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
+        // Allow localhost and local network IPs for development
+        // Using allowedOriginPatterns with wildcard to allow any origin including IPs
+        // This is required when credentials (cookies/auth) are needed
+        // Use * to allow any origin in development
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Operator-ID", "X-Request-ID"));
         configuration.setExposedHeaders(List.of("X-RateLimit-Remaining", "X-RateLimit-Reset"));

@@ -43,6 +43,14 @@ export function formatDateLong(dateString: string): string {
   });
 }
 
+export function formatDateRange(startDate: string, endDate: string): string {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const startStr = start.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const endStr = end.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return `${startStr} - ${endStr}`;
+}
+
 export function calculatePercentage(used: number, limit: number): number {
   if (limit === 0) return 0;
   return (used / limit) * 100;

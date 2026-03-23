@@ -103,23 +103,10 @@ services:
           - name: cors
             config:
               origins:
-                - '*'
-              methods:
-                - GET
-                - POST
-                - PUT
-                - DELETE
-                - PATCH
-                - OPTIONS
-              headers:
-                - Authorization
-                - Content-Type
-                - X-Operator-ID
-                - X-Request-ID
-              exposed_headers:
-                - X-RateLimit-Remaining
-                - X-RateLimit-Reset
-              credentials: true
+                - "http://localhost:3000"
+                - "http://localhost:3001"
+                - "http://127.0.0.1:3000"
+                - "http://127.0.0.1:3001"
               max_age: 3600
               preflight_continue: false
 
@@ -140,23 +127,10 @@ services:
           - name: cors
             config:
               origins:
-                - '*'
-              methods:
-                - GET
-                - POST
-                - PUT
-                - DELETE
-                - PATCH
-                - OPTIONS
-              headers:
-                - Authorization
-                - Content-Type
-                - X-Operator-ID
-                - X-Request-ID
-              exposed_headers:
-                - X-RateLimit-Remaining
-                - X-RateLimit-Reset
-              credentials: true
+                - "http://localhost:3000"
+                - "http://localhost:3001"
+                - "http://127.0.0.1:3000"
+                - "http://127.0.0.1:3001"
               max_age: 3600
               preflight_continue: false
 
@@ -178,23 +152,10 @@ services:
           - name: cors
             config:
               origins:
-                - '*'
-              methods:
-                - GET
-                - POST
-                - PUT
-                - DELETE
-                - PATCH
-                - OPTIONS
-              headers:
-                - Authorization
-                - Content-Type
-                - X-Operator-ID
-                - X-Request-ID
-              exposed_headers:
-                - X-RateLimit-Remaining
-                - X-RateLimit-Reset
-              credentials: true
+                - "http://localhost:3000"
+                - "http://localhost:3001"
+                - "http://127.0.0.1:3000"
+                - "http://127.0.0.1:3001"
               max_age: 3600
               preflight_continue: false
         # Mobile client path
@@ -215,23 +176,10 @@ services:
           - name: cors
             config:
               origins:
-                - '*'
-              methods:
-                - GET
-                - POST
-                - PUT
-                - DELETE
-                - PATCH
-                - OPTIONS
-              headers:
-                - Authorization
-                - Content-Type
-                - X-Operator-ID
-                - X-Request-ID
-              exposed_headers:
-                - X-RateLimit-Remaining
-                - X-RateLimit-Reset
-              credentials: true
+                - "http://localhost:3000"
+                - "http://localhost:3001"
+                - "http://127.0.0.1:3000"
+                - "http://127.0.0.1:3001"
               max_age: 3600
               preflight_continue: false
 
@@ -258,23 +206,10 @@ services:
           - name: cors
             config:
               origins:
-                - '*'
-              methods:
-                - GET
-                - POST
-                - PUT
-                - DELETE
-                - PATCH
-                - OPTIONS
-              headers:
-                - Authorization
-                - Content-Type
-                - X-Operator-ID
-                - X-Request-ID
-              exposed_headers:
-                - X-RateLimit-Remaining
-                - X-RateLimit-Reset
-              credentials: true
+                - "http://localhost:3000"
+                - "http://localhost:3001"
+                - "http://127.0.0.1:3000"
+                - "http://127.0.0.1:3001"
               max_age: 3600
               preflight_continue: false
 

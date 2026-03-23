@@ -111,34 +111,38 @@ public class AuthController {
     }
 
     private ResponseCookie buildAccessTokenCookie(String token, long maxAgeSeconds) {
-        return ResponseCookie.from(cookieProps.accessTokenName(), token == null ? "" : token)
+        var builder = ResponseCookie.from(cookieProps.accessTokenName(), token == null ? "" : token)
             .httpOnly(true)
             .secure(cookieProps.secure())
             .path(cookieProps.path())
             .sameSite(cookieProps.sameSite())
-            .maxAge(maxAgeSeconds)
-            .build();
+            .maxAge(maxAgeSeconds);
+        // Explicitly set empty domain so cookie applies to current host (not localhost)
+        builder.domain("");
+        return builder.build();
     }
 
     private ResponseCookie buildRefreshTokenCookie(String token, long maxAgeSeconds) {
         if (token == null || token.isBlank()) {
             // Some deployments disable refresh tokens; keep behavior consistent.
-            return ResponseCookie.from(cookieProps.refreshTokenName(), "")
+            var builder = ResponseCookie.from(cookieProps.refreshTokenName(), "")
                 .httpOnly(true)
                 .secure(cookieProps.secure())
                 .path(cookieProps.path())
                 .sameSite(cookieProps.sameSite())
-                .maxAge(0)
-                .build();
+                .maxAge(0);
+            builder.domain("");
+            return builder.build();
         }
 
-        return ResponseCookie.from(cookieProps.refreshTokenName(), token)
+        var builder = ResponseCookie.from(cookieProps.refreshTokenName(), token)
             .httpOnly(true)
             .secure(cookieProps.secure())
             .path(cookieProps.path())
             .sameSite(cookieProps.sameSite())
-            .maxAge(maxAgeSeconds)
-            .build();
+            .maxAge(maxAgeSeconds);
+        builder.domain("");
+        return builder.build();
     }
 
     private String readCookie(HttpServletRequest request, String name) {

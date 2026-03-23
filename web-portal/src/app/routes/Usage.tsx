@@ -6,8 +6,6 @@ import { UsageByLine } from '../../components/usage/UsageByLine';
 import { UsageProjections } from '../../components/usage/UsageProjections';
 import { ThresholdAlerts } from '../../components/usage/ThresholdAlerts';
 import { QuickStats } from '../../components/usage/QuickStats';
-import { UsageChart } from '../../components/usage/UsageChart';
-import { UsageDetailsTable } from '../../components/usage/UsageDetailsTable';
 import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { getDaysRemaining } from '../../utils/usageFormatters';
@@ -18,54 +16,6 @@ const DEFAULT_LIMITS = {
   voiceMinutes: 500,
   smsCount: 200,
 };
-
-// Mock daily data - in production this would come from a separate API
-const MOCK_DAILY_DATA = [
-  { date: '2026-03-01', dataMb: 512, voiceMinutes: 15, smsCount: 3 },
-  { date: '2026-03-02', dataMb: 820, voiceMinutes: 8, smsCount: 5 },
-  { date: '2026-03-03', dataMb: 307, voiceMinutes: 22, smsCount: 2 },
-  { date: '2026-03-04', dataMb: 1228, voiceMinutes: 5, smsCount: 8 },
-  { date: '2026-03-05', dataMb: 922, voiceMinutes: 18, smsCount: 4 },
-  { date: '2026-03-06', dataMb: 410, voiceMinutes: 12, smsCount: 6 },
-  { date: '2026-03-07', dataMb: 615, voiceMinutes: 25, smsCount: 3 },
-  { date: '2026-03-08', dataMb: 1536, voiceMinutes: 10, smsCount: 9 },
-  { date: '2026-03-09', dataMb: 717, voiceMinutes: 15, smsCount: 4 },
-  { date: '2026-03-10', dataMb: 820, voiceMinutes: 8, smsCount: 5 },
-  { date: '2026-03-11', dataMb: 1126, voiceMinutes: 20, smsCount: 7 },
-  { date: '2026-03-12', dataMb: 512, voiceMinutes: 12, smsCount: 3 },
-  { date: '2026-03-13', dataMb: 615, voiceMinutes: 18, smsCount: 4 },
-  { date: '2026-03-14', dataMb: 922, voiceMinutes: 14, smsCount: 6 },
-  { date: '2026-03-15', dataMb: 2355, voiceMinutes: 25, smsCount: 10 },
-  { date: '2026-03-16', dataMb: 820, voiceMinutes: 8, smsCount: 5 },
-  { date: '2026-03-17', dataMb: 512, voiceMinutes: 15, smsCount: 3 },
-  { date: '2026-03-18', dataMb: 717, voiceMinutes: 10, smsCount: 4 },
-  { date: '2026-03-19', dataMb: 1024, voiceMinutes: 22, smsCount: 6 },
-  { date: '2026-03-20', dataMb: 615, voiceMinutes: 12, smsCount: 3 },
-  { date: '2026-03-21', dataMb: 512, voiceMinutes: 18, smsCount: 4 },
-  { date: '2026-03-22', dataMb: 410, voiceMinutes: 8, smsCount: 2 },
-];
-
-// Mock detailed records for the table
-function generateMockRecords(): Array<{ date: string; type: 'DATA' | 'VOICE' | 'SMS'; amount: number; runningTotal: number }> {
-  const records: Array<{ date: string; type: 'DATA' | 'VOICE' | 'SMS'; amount: number; runningTotal: number }> = [];
-  let dataTotal = 0;
-  let voiceTotal = 0;
-  let smsTotal = 0;
-
-  for (const day of MOCK_DAILY_DATA) {
-    dataTotal += day.dataMb;
-    voiceTotal += day.voiceMinutes;
-    smsTotal += day.smsCount;
-    
-    records.push(
-      { date: day.date, type: 'DATA', amount: day.dataMb, runningTotal: dataTotal },
-      { date: day.date, type: 'VOICE', amount: day.voiceMinutes, runningTotal: voiceTotal },
-      { date: day.date, type: 'SMS', amount: day.smsCount, runningTotal: smsTotal }
-    );
-  }
-
-  return records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-}
 
 interface UsageProps {
   authedFetch: (path: string, init?: RequestInit) => Promise<Response>;
@@ -193,12 +143,6 @@ export function Usage({ authedFetch }: UsageProps) {
         activeLines={data.lines.length}
         periodEnd={data.periodEnd}
       />
-
-      {/* Daily Usage Chart */}
-      <UsageChart data={MOCK_DAILY_DATA} />
-
-      {/* Usage Details Table */}
-      <UsageDetailsTable data={generateMockRecords()} />
     </div>
   );
 }

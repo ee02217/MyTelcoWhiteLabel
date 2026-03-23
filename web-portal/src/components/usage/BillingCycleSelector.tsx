@@ -1,4 +1,4 @@
-import { formatDateLong } from '../../utils/usageFormatters';
+import { formatDateRange } from '../../utils/usageFormatters';
 
 interface BillingCycleSelectorProps {
   periodStart: string;
@@ -18,9 +18,9 @@ export function BillingCycleSelector({
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
       <div className="text-sm text-gray-500">
-        {formatDateLong(periodStart)} - {formatDateLong(periodEnd)}
+        {formatDateRange(periodStart, periodEnd)}
         <span className="ml-2 text-blue-600 font-medium">
-          {daysRemaining} days remaining
+          • {daysRemaining} days remaining
         </span>
       </div>
       <select
