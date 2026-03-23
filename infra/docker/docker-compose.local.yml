@@ -130,6 +130,9 @@ services:
       SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS: ${SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS:-2000}
       SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS: ${SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS:-5000}
       CASE_BFF_BASE_URL: ${CASE_BFF_BASE_URL:-http://case-bff:8083}
+      # Cookie configuration - use None+Secure for cross-origin compatibility
+      APP_AUTH_COOKIE_SAMESITE: ${APP_AUTH_COOKIE_SAMESITE:-None}
+      APP_AUTH_COOKIE_SECURE: ${APP_AUTH_COOKIE_SECURE:-true}
     volumes:
       - ../../platform-config:/app/platform-config:ro
     ports:
