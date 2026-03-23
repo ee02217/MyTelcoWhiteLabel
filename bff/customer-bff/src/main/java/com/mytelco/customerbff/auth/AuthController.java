@@ -94,18 +94,20 @@ public class AuthController {
     @GetMapping("/session")
     @Operation(summary = "Session", description = "Return current authenticated subject + roles")
     public ResponseEntity<?> session(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("authenticated", false));
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"authenticated\":false}");
+        }
+        
+        if (!(authentication.getPrincipal() instanceof Jwt jwt)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"authenticated\":false,\"error\":\"Not JWT\"}");
         }
 
         List<String> roles = extractRoles(jwt);
-        return ResponseEntity.ok(Map.of(
-            "authenticated", true,
-            "subject", jwt.getSubject(),
-            "username", jwt.getClaimAsString("preferred_username"),
-            "roles", roles,
-            "expiresAt", jwt.getExpiresAt() == null ? null : jwt.getExpiresAt().getEpochSecond()
-        ));
+        String subject = jwt.getSubject();
+        String username = jwt.getClaimAsString("preferred_username");
+        Long expiresAt = jwt.getExpiresAt() != null ? jwt.getExpiresAt().getEpochSecond() : 0L;
+        
+        return ResponseEntity.ok("{\"authenticated\":true,\"subject\":\"" + subject + "\",\"username\":\"" + username + "\",\"roles\":" + roles + ",\"expiresAt\":" + expiresAt + "}");
     }
 
     private ResponseCookie buildAccessTokenCookie(String token, long maxAgeSeconds) {
