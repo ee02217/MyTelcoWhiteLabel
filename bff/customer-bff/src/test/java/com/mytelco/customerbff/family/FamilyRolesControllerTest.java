@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -63,12 +64,14 @@ class FamilyRolesControllerTest {
     @WithMockUser(roles = "CUSTOMER")
     void updateRole_forwardsRequest() throws Exception {
         when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
+        FamilyRoleEntry updatedEntry = new FamilyRoleEntry("line-2", "3515000002", "secondary", "ACTIVE", FamilyRole.MANAGER, List.of(FamilyPermission.MANAGE_ROLES));
         when(familyRoleService.updateRole(eq("cust-1"), any(), eq("line-2"), any(), any()))
-            .thenReturn(sampleResponse().assignments().get(1));
+            .thenReturn(updatedEntry);
 
         FamilyRoleUpdateRequest request = new FamilyRoleUpdateRequest(FamilyRole.MANAGER, "note");
 
         mockMvc.perform(patch("/api/v1/customer/family/roles/line-2")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())

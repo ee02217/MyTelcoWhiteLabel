@@ -110,3 +110,23 @@ logging:
     com.mytelco: DEBUG
     org.springframework.web: INFO
     org.springframework.security: DEBUG
+
+case-bff:
+  base-url: ${CASE_BFF_BASE_URL:http://localhost:8083}
+
+app:
+  auth:
+    oidc:
+      client-id: ${APP_AUTH_OIDC_CLIENT_ID:web-portal}
+      client-secret: ${APP_AUTH_OIDC_CLIENT_SECRET:}
+      scope: ${APP_AUTH_OIDC_SCOPE:openid roles}
+    cookies:
+      access-token-name: ${APP_AUTH_COOKIE_ACCESS_TOKEN_NAME:MYTELCO_ACCESS_TOKEN}
+      refresh-token-name: ${APP_AUTH_COOKIE_REFRESH_TOKEN_NAME:MYTELCO_REFRESH_TOKEN}
+      same-site: ${APP_AUTH_COOKIE_SAMESITE:Lax}
+      secure: ${APP_AUTH_COOKIE_SECURE:false}
+      path: ${APP_AUTH_COOKIE_PATH:/}
+
+  security:
+    # Local-only option (off by default). When enabled, security is bypassed via DevSecurityConfig.
+    dev-mode: ${APP_SECURITY_DEV_MODE:false}

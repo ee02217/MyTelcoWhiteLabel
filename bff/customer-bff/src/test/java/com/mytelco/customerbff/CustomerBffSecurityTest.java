@@ -3,10 +3,13 @@ package com.mytelco.customerbff;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.mytelco.customerbff.analytics.ProductAnalyticsService;
 import com.mytelco.customerbff.config.SecurityConfig;
 import com.mytelco.customerbff.controller.CustomerDashboardController;
+import com.mytelco.customerbff.operator.OperatorContextResolver;
 import com.mytelco.customerbff.security.CustomerIdentityResolver;
 import com.mytelco.customerbff.service.CustomerAggregationService;
+import com.mytelco.customerbff.family.controls.SharedControlService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +34,15 @@ class CustomerBffSecurityTest {
 
     @MockBean
     private CustomerIdentityResolver customerIdentityResolver;
+
+    @MockBean
+    private OperatorContextResolver operatorContextResolver;
+
+    @MockBean
+    private ProductAnalyticsService productAnalyticsService;
+
+    @MockBean
+    private SharedControlService sharedControlService;
 
     @Test
     void dashboard_withNoAuthentication_shouldReturn401() throws Exception {

@@ -30,6 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -134,7 +135,7 @@ class CatalogControllerTest {
             eq("cust-1"),
             eq("operator-stub-pt"),
             eq("web"),
-            anyString(),
+            nullable(String.class),
             eq("line-22"),
             eq(1),
             eq(true)

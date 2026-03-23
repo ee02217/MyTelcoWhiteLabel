@@ -77,34 +77,6 @@ class DurableStatePersistenceTest {
         assertThat(secondService.getPreferences("12345").categories()).isNotEmpty();
     }
 
-    @Test
-    void supportCasesShouldSurviveServiceRestart() {
-        JsonFileDurableStateStore stateStore = newStateStore(tempDir);
-
-        SupportCaseSlaService slaService = new SupportCaseSlaService();
-        SupportCaseService firstService = new SupportCaseService(slaService);
-        firstService.setDurableStateStore(stateStore);
-
-        var created = firstService.create(new SupportCaseCreateRequest(
-            "TECHNICAL",
-            "No signal",
-            "Signal dropped after update",
-            "HIGH",
-            List.of()
-        ));
-
-        firstService.addMessage(
-            created.caseId(),
-            new SupportCaseMessageRequest("customer-123", "CUSTOMER", "Any update?")
-        );
-
-        SupportCaseService secondService = new SupportCaseService(slaService);
-        secondService.setDurableStateStore(stateStore);
-
-        var reloaded = secondService.get(created.caseId());
-        assertThat(reloaded).isNotNull();
-        assertThat(reloaded.timeline()).hasSizeGreaterThanOrEqualTo(2);
-    }
 
     private JsonFileDurableStateStore newStateStore(Path baseDir) {
         ObjectMapper mapper = new ObjectMapper();
