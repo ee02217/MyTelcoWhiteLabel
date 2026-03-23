@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,7 +52,6 @@ public class SupportCaseController {
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Case created")})
     public ResponseEntity<SupportCaseResponse> create(
         Authentication authentication,
-        @RequestHeader(value = "Authorization", required = false) String authorization,
         @RequestHeader(value = "X-Operator-ID", required = false) String operatorId,
         @RequestHeader(value = "X-Channel", required = false) String channel,
         @RequestHeader(value = "X-Correlation-ID", required = false) String correlationId,
@@ -61,7 +61,7 @@ public class SupportCaseController {
         String resolvedOperatorId = resolveOperatorId(customerId, operatorId);
         String resolvedChannel = resolveChannel(channel);
 
-        SupportCaseResponse response = supportCaseService.create(authorization, request);
+        SupportCaseResponse response = supportCaseService.create(toBearerHeader(authentication), request);
 
         productAnalyticsService.trackSupportCaseCreated(
             customerId,
@@ -79,20 +79,15 @@ public class SupportCaseController {
     @GetMapping
     @Operation(summary = "List support cases")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Cases listed")})
-    public ResponseEntity<List<SupportCaseResponse>> list(
-        @RequestHeader(value = "Authorization", required = false) String authorization
-    ) {
-        return ResponseEntity.ok(supportCaseService.list(authorization));
+    public ResponseEntity<List<SupportCaseResponse>> list(Authentication authentication) {
+        return ResponseEntity.ok(supportCaseService.list(toBearerHeader(authentication)));
     }
 
     @GetMapping("/{caseId}")
     @Operation(summary = "Get support case by id")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Case found")})
-    public ResponseEntity<SupportCaseResponse> get(
-        @RequestHeader(value = "Authorization", required = false) String authorization,
-        @PathVariable String caseId
-    ) {
-        SupportCaseResponse supportCase = supportCaseService.get(authorization, caseId);
+    public ResponseEntity<SupportCaseResponse> get(Authentication authentication, @PathVariable String caseId) {
+        SupportCaseResponse supportCase = supportCaseService.get(toBearerHeader(authentication), caseId);
         if (supportCase == null) {
             return ResponseEntity.notFound().build();
         }
@@ -103,15 +98,22 @@ public class SupportCaseController {
     @Operation(summary = "Append message to support case timeline")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Timeline updated")})
     public ResponseEntity<SupportCaseResponse> addMessage(
-        @RequestHeader(value = "Authorization", required = false) String authorization,
+        Authentication authentication,
         @PathVariable String caseId,
         @Valid @RequestBody SupportCaseMessageRequest request
     ) {
-        SupportCaseResponse supportCase = supportCaseService.addMessage(authorization, caseId, request);
+        SupportCaseResponse supportCase = supportCaseService.addMessage(toBearerHeader(authentication), caseId, request);
         if (supportCase == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(supportCase);
+    }
+
+    private String toBearerHeader(Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            return "Bearer " + jwtAuth.getToken().getTokenValue();
+        }
+        return null;
     }
 
     private String resolveOperatorId(String customerId, String operatorId) {

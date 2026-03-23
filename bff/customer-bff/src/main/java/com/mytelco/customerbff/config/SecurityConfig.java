@@ -25,6 +25,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -58,7 +60,7 @@ public class SecurityConfig {
     );
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, BearerTokenResolver bearerTokenResolver) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
@@ -69,11 +71,13 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**")
                 .permitAll()
+                .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/customer/notifications/test-send").hasRole("ADMIN")
                 .requestMatchers("/api/v1/customer/analytics/**").hasAnyRole("CUSTOMER", "ADMIN")
                 .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2
+                .bearerTokenResolver(bearerTokenResolver)
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
         return http.build();
@@ -119,6 +123,31 @@ public class SecurityConfig {
             return path.substring(0, path.length() - 1);
         }
         return path;
+    }
+
+    @Bean
+    public BearerTokenResolver bearerTokenResolver(
+        @Value("${app.auth.cookies.access-token-name:MYTELCO_ACCESS_TOKEN}") String accessTokenCookieName
+    ) {
+        DefaultBearerTokenResolver headerResolver = new DefaultBearerTokenResolver();
+        // Keep default behavior for Authorization header.
+        return request -> {
+            String token = headerResolver.resolve(request);
+            if (token != null && !token.isBlank()) {
+                return token;
+            }
+
+            if (request.getCookies() == null) {
+                return null;
+            }
+
+            for (var cookie : request.getCookies()) {
+                if (accessTokenCookieName.equals(cookie.getName()) && cookie.getValue() != null && !cookie.getValue().isBlank()) {
+                    return cookie.getValue();
+                }
+            }
+            return null;
+        };
     }
 
     @Bean
