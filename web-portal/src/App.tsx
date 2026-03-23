@@ -37,6 +37,8 @@ function App() {
     const initSession = async () => {
       const stored = await readSession();
       setSession(stored);
+      // Read initial route from URL path
+      setRoute(window.location.pathname);
       setLoading(false);
     };
     initSession();
@@ -219,7 +221,7 @@ function App() {
 
     // Usage
     if (route === '/usage') {
-      return <Usage />;
+      return <Usage authedFetch={authedFetch} />;
     }
 
     // Billing

@@ -1,2 +1,3 @@
 export { DataUsageChart } from './DataUsageChart';
 export { UsageCard } from './UsageCard';
+export { UsageByLine } from './UsageByLine';

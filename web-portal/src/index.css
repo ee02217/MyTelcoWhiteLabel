@@ -23,3 +23,16 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Constrain icons in usage cards to 20x20px */
+.usage-icon-container > div {
+  width: 20px !important;
+  height: 20px !important;
+  overflow: hidden !important;
+}
+
+.usage-icon-container > div > * {
+  width: 20px !important;
+  height: 20px !important;
+  display: block !important;
+}

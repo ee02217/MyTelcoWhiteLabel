@@ -1,95 +1,146 @@
-import { useState } from 'react';
-import { UsageCard } from '../../components/usage/UsageCard';
-import { DataUsageChart } from '../../components/usage/DataUsageChart';
+import { useState, useMemo } from 'react';
+import { useUsageData } from '../../hooks/useUsageData';
+import { BillingCycleSelector } from '../../components/usage/BillingCycleSelector';
+import { UsageSummaryCards } from '../../components/usage/UsageSummaryCards';
+import { UsageByLine } from '../../components/usage/UsageByLine';
+import { UsageProjections } from '../../components/usage/UsageProjections';
+import { ThresholdAlerts } from '../../components/usage/ThresholdAlerts';
+import { QuickStats } from '../../components/usage/QuickStats';
+import { UsageChart } from '../../components/usage/UsageChart';
+import { UsageDetailsTable } from '../../components/usage/UsageDetailsTable';
 import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
-import {
-  CircleStackIcon,
-  PhoneIcon,
-  ChatBubbleLeftRightIcon,
-} from '@heroicons/react/24/outline';
+import { getDaysRemaining } from '../../utils/usageFormatters';
 
-// Mock data - will be replaced by API call
-const mockUsage = {
-  billingCycle: {
-    start: '2026-03-01',
-    end: '2026-03-31',
-    daysRemaining: 9,
-  },
-  data: {
-    used: 18.5,
-    limit: 20,
-    unit: 'GB',
-    dailyAverage: 0.77,
-    peakDay: { date: '2026-03-15', used: 2.3 },
-  },
-  voice: {
-    used: 342,
-    limit: 500,
-    unit: 'min',
-    international: 45,
-  },
-  sms: {
-    used: 127,
-    limit: 200,
-    unit: 'messages',
-  },
-  dailyData: [
-    { date: '2026-03-01', used: 0.5 },
-    { date: '2026-03-02', used: 0.8 },
-    { date: '2026-03-03', used: 0.3 },
-    { date: '2026-03-04', used: 1.2 },
-    { date: '2026-03-05', used: 0.9 },
-    { date: '2026-03-06', used: 0.4 },
-    { date: '2026-03-07', used: 0.6 },
-    { date: '2026-03-08', used: 1.5 },
-    { date: '2026-03-09', used: 0.7 },
-    { date: '2026-03-10', used: 0.8 },
-    { date: '2026-03-11', used: 1.1 },
-    { date: '2026-03-12', used: 0.5 },
-    { date: '2026-03-13', used: 0.6 },
-    { date: '2026-03-14', used: 0.9 },
-    { date: '2026-03-15', used: 2.3 },
-    { date: '2026-03-16', used: 0.8 },
-    { date: '2026-03-17', used: 0.5 },
-    { date: '2026-03-18', used: 0.7 },
-    { date: '2026-03-19', used: 1.0 },
-    { date: '2026-03-20', used: 0.6 },
-    { date: '2026-03-21', used: 0.5 },
-    { date: '2026-03-22', used: 0.4 },
-  ],
+// Default limits - in production these would come from the API
+const DEFAULT_LIMITS = {
+  dataMb: 10 * 1024, // 10 GB
+  voiceMinutes: 500,
+  smsCount: 200,
 };
 
-export function Usage() {
-  const [isLoading] = useState(false);
-  const [error] = useState<string | null>(null);
-  const [selectedCycle] = useState('current');
+// Mock daily data - in production this would come from a separate API
+const MOCK_DAILY_DATA = [
+  { date: '2026-03-01', dataMb: 512, voiceMinutes: 15, smsCount: 3 },
+  { date: '2026-03-02', dataMb: 820, voiceMinutes: 8, smsCount: 5 },
+  { date: '2026-03-03', dataMb: 307, voiceMinutes: 22, smsCount: 2 },
+  { date: '2026-03-04', dataMb: 1228, voiceMinutes: 5, smsCount: 8 },
+  { date: '2026-03-05', dataMb: 922, voiceMinutes: 18, smsCount: 4 },
+  { date: '2026-03-06', dataMb: 410, voiceMinutes: 12, smsCount: 6 },
+  { date: '2026-03-07', dataMb: 615, voiceMinutes: 25, smsCount: 3 },
+  { date: '2026-03-08', dataMb: 1536, voiceMinutes: 10, smsCount: 9 },
+  { date: '2026-03-09', dataMb: 717, voiceMinutes: 15, smsCount: 4 },
+  { date: '2026-03-10', dataMb: 820, voiceMinutes: 8, smsCount: 5 },
+  { date: '2026-03-11', dataMb: 1126, voiceMinutes: 20, smsCount: 7 },
+  { date: '2026-03-12', dataMb: 512, voiceMinutes: 12, smsCount: 3 },
+  { date: '2026-03-13', dataMb: 615, voiceMinutes: 18, smsCount: 4 },
+  { date: '2026-03-14', dataMb: 922, voiceMinutes: 14, smsCount: 6 },
+  { date: '2026-03-15', dataMb: 2355, voiceMinutes: 25, smsCount: 10 },
+  { date: '2026-03-16', dataMb: 820, voiceMinutes: 8, smsCount: 5 },
+  { date: '2026-03-17', dataMb: 512, voiceMinutes: 15, smsCount: 3 },
+  { date: '2026-03-18', dataMb: 717, voiceMinutes: 10, smsCount: 4 },
+  { date: '2026-03-19', dataMb: 1024, voiceMinutes: 22, smsCount: 6 },
+  { date: '2026-03-20', dataMb: 615, voiceMinutes: 12, smsCount: 3 },
+  { date: '2026-03-21', dataMb: 512, voiceMinutes: 18, smsCount: 4 },
+  { date: '2026-03-22', dataMb: 410, voiceMinutes: 8, smsCount: 2 },
+];
+
+// Mock detailed records for the table
+function generateMockRecords(): Array<{ date: string; type: 'DATA' | 'VOICE' | 'SMS'; amount: number; runningTotal: number }> {
+  const records: Array<{ date: string; type: 'DATA' | 'VOICE' | 'SMS'; amount: number; runningTotal: number }> = [];
+  let dataTotal = 0;
+  let voiceTotal = 0;
+  let smsTotal = 0;
+
+  for (const day of MOCK_DAILY_DATA) {
+    dataTotal += day.dataMb;
+    voiceTotal += day.voiceMinutes;
+    smsTotal += day.smsCount;
+    
+    records.push(
+      { date: day.date, type: 'DATA', amount: day.dataMb, runningTotal: dataTotal },
+      { date: day.date, type: 'VOICE', amount: day.voiceMinutes, runningTotal: voiceTotal },
+      { date: day.date, type: 'SMS', amount: day.smsCount, runningTotal: smsTotal }
+    );
+  }
+
+  return records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
+interface UsageProps {
+  authedFetch: (path: string, init?: RequestInit) => Promise<Response>;
+}
+
+export function Usage({ authedFetch }: UsageProps) {
+  const [view, setView] = useState<'daily' | 'billing-cycle'>('billing-cycle');
+
+  const { data, isLoading, error, refetch } = useUsageData({
+    view,
+    authedFetch,
+  });
+
+  // Calculate derived data
+  const derivedData = useMemo(() => {
+    if (!data) {
+      return null;
+    }
+
+    const daysRemaining = getDaysRemaining(data.periodEnd);
+    const totalDataMb = data.totals.dataMb;
+    const dailyAverageMb = totalDataMb / Math.max(1, 30 - daysRemaining);
+    const dailyAverageGb = dailyAverageMb / 1024;
+    const remainingGb = (DEFAULT_LIMITS.dataMb - totalDataMb) / 1024;
+
+    // Simple projection: days until limit
+    const dataDaysRemaining = dailyAverageGb > 0 
+      ? Math.floor(remainingGb / dailyAverageGb)
+      : null;
+
+    // Find peak day from lines (simplified)
+    const peakLine = data.lines.reduce(
+      (peak, line) => (line.usage.dataMb > peak.usage.dataMb ? line : peak),
+      data.lines[0]
+    );
+
+    return {
+      daysRemaining,
+      dailyAverageGb,
+      remainingGb,
+      dataDaysRemaining,
+      totalDataMb,
+      peakDay: {
+        date: data.periodStart, // Simplified - would need daily API for actual peak
+        dataMb: peakLine?.usage.dataMb || 0,
+      },
+    };
+  }, [data]);
 
   if (isLoading) {
     return (
       <div className="p-6 space-y-6">
-        <LoadingSkeleton className="h-8 w-48" />
+        <LoadingSkeleton className="h-8 w-64" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <LoadingSkeleton className="h-48" />
-          <LoadingSkeleton className="h-48" />
-          <LoadingSkeleton className="h-48" />
+          <LoadingSkeleton className="h-40" />
+          <LoadingSkeleton className="h-40" />
+          <LoadingSkeleton className="h-40" />
         </div>
+        <LoadingSkeleton className="h-64" />
       </div>
     );
   }
 
   if (error) {
-    return <ErrorMessage message={error} onRetry={() => {}} />;
+    return (
+      <ErrorMessage 
+        message="Failed to load usage data. Please try again." 
+        onRetry={refetch} 
+      />
+    );
   }
 
-  const usage = mockUsage;
-  const { billingCycle, data, voice, sms } = usage;
-
-  const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-    });
+  if (!data || !derivedData) {
+    return null;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -97,123 +148,57 @@ export function Usage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Usage Details</h1>
-          <p className="text-gray-500 mt-1">
-            {formatDate(billingCycle.start)} - {formatDate(billingCycle.end)}
-            <span className="ml-2 text-blue-600">
-              {billingCycle.daysRemaining} days remaining
-            </span>
-          </p>
         </div>
-        <div className="flex gap-2">
-          <select
-            value={selectedCycle}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="current">Mar 1 - Mar 31, 2026</option>
-            <option value="prev">Feb 1 - Feb 28, 2026</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Usage Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <UsageCard
-          title="Data"
-          icon={<CircleStackIcon className="h-5 w-5" />}
-          used={data.used}
-          limit={data.limit}
-          unit="GB"
-          color="blue"
-        />
-        <UsageCard
-          title="Voice"
-          icon={<PhoneIcon className="h-5 w-5" />}
-          used={voice.used}
-          limit={voice.limit}
-          unit="min"
-          color="green"
-        />
-        <UsageCard
-          title="SMS"
-          icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />}
-          used={sms.used}
-          limit={sms.limit}
-          unit="msg"
-          color="purple"
+        <BillingCycleSelector
+          periodStart={data.periodStart}
+          periodEnd={data.periodEnd}
+          daysRemaining={derivedData.daysRemaining}
+          selectedView={view}
+          onViewChange={setView}
         />
       </div>
 
-      {/* Usage Chart */}
-      <DataUsageChart
-        dataUsed={data.used}
-        dataLimit={data.limit}
-        dailyData={mockUsage.dailyData}
+      {/* Threshold Alerts */}
+      <ThresholdAlerts crossings={data.thresholdCrossings} />
+
+      {/* Usage Summary Cards */}
+      <UsageSummaryCards
+        data={{
+          used: data.totals,
+          limits: DEFAULT_LIMITS,
+        }}
+        thresholdCrossings={data.thresholdCrossings}
       />
 
-      {/* Details */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Usage Breakdown</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Data Details</h3>
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Daily average</dt>
-                <dd className="font-medium">{data.dailyAverage.toFixed(2)} GB</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Peak usage day</dt>
-                <dd className="font-medium">
-                  {formatDate(data.peakDay.date)} ({data.peakDay.used} GB)
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Remaining</dt>
-                <dd className="font-medium text-green-600">
-                  {(data.limit - data.used).toFixed(1)} GB
-                </dd>
-              </div>
-            </dl>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Voice Details</h3>
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-500">International calls</dt>
-                <dd className="font-medium">{voice.international} min</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Domestic calls</dt>
-                <dd className="font-medium">{voice.used - voice.international} min</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Remaining</dt>
-                <dd className="font-medium text-green-600">
-                  {(voice.limit - voice.used)} min
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      </div>
+      {/* Projection Banner */}
+      <UsageProjections
+        dataDaysRemaining={derivedData.dataDaysRemaining}
+        dataLimitBreachDate={null}
+        dataDailyAverageGb={derivedData.dailyAverageGb}
+      />
 
-      {/* Warning Banner */}
-      {data.used / data.limit > 0.8 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="font-medium text-amber-800">You're approaching your data limit</h3>
-            <p className="text-sm text-amber-700 mt-1">
-              You've used {((data.used / data.limit) * 100).toFixed(0)}% of your {data.limit} GB data allowance.
-              Consider upgrading to avoid out-of-cycle charges.
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Usage by Line */}
+      <UsageByLine
+        lines={data.lines}
+        totalDataMb={derivedData.totalDataMb}
+        limits={{ dataMb: DEFAULT_LIMITS.dataMb }}
+      />
+
+      {/* Quick Stats */}
+      <QuickStats
+        peakDay={derivedData.peakDay}
+        dailyAverageGb={derivedData.dailyAverageGb}
+        remainingGb={derivedData.remainingGb}
+        totalLimitGb={DEFAULT_LIMITS.dataMb / 1024}
+        activeLines={data.lines.length}
+        periodEnd={data.periodEnd}
+      />
+
+      {/* Daily Usage Chart */}
+      <UsageChart data={MOCK_DAILY_DATA} />
+
+      {/* Usage Details Table */}
+      <UsageDetailsTable data={generateMockRecords()} />
     </div>
   );
 }

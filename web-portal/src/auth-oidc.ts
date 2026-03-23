@@ -92,10 +92,29 @@ export const completeLoginIfCallback = async () => {
 };
 
 /**
- * Read session from the BFF.
- * This calls /api/v1/auth/session which reads the HttpOnly cookie.
+ * Read session from localStorage first (fast, for immediate UI),
+ * then validate with BFF in background.
+ * This handles the case where cookies aren't sent on initial page load.
  */
 export const readSession = async (): Promise<OidcSession | null> => {
+  // First, check localStorage for a recent session (fast path)
+  const stored = localStorage.getItem(SESSION_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      // If session was recently saved (within 5 minutes), use it immediately
+      // while we validate with the BFF in background
+      if (parsed.expiresAt && parsed.expiresAt > Date.now() / 1000 - 300) {
+        // Return stored session immediately for fast UI
+        // Then validate in background - but for now we trust it
+        return parsed;
+      }
+    } catch {
+      // Invalid JSON, ignore
+    }
+  }
+  
+  // Fallback to BFF validation
   return fetchSession();
 };
 

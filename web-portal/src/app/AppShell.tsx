@@ -45,12 +45,14 @@ export function AppShell({
 }: AppShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const sidebarWidth = sidebarCollapsed ? '64px' : '240px';
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f5' }}>
       {/* Sidebar */}
       <aside
         style={{
-          width: sidebarCollapsed ? '64px' : '240px',
+          width: sidebarWidth,
           background: '#1a1a2e',
           color: 'white',
           display: 'flex',
@@ -59,6 +61,9 @@ export function AppShell({
           position: 'fixed',
           height: '100vh',
           overflow: 'hidden',
+          left: 0,
+          top: 0,
+          zIndex: 100,
         }}
       >
         {/* Logo */}
@@ -156,8 +161,8 @@ export function AppShell({
       <main
         style={{
           flex: 1,
-          marginLeft: sidebarCollapsed ? '64px' : '240px',
-          transition: 'margin-left 0.2s ease',
+          minHeight: '100vh',
+          width: '100%',
         }}
       >
         {/* Header */}
@@ -165,6 +170,7 @@ export function AppShell({
           style={{
             background: 'white',
             padding: '12px 24px',
+            paddingLeft: `calc(24px + ${sidebarWidth})`,
             borderBottom: '1px solid #e5e7eb',
             display: 'flex',
             alignItems: 'center',
@@ -173,6 +179,7 @@ export function AppShell({
             position: 'sticky',
             top: 0,
             zIndex: 10,
+            boxSizing: 'border-box',
           }}
         >
           <Button
@@ -210,7 +217,7 @@ export function AppShell({
         </header>
 
         {/* Page content */}
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '24px', paddingLeft: `calc(24px + ${sidebarWidth})`, boxSizing: 'border-box' }}>
           {children}
         </div>
       </main>
@@ -258,7 +265,7 @@ function NavSection({ items, currentPath, onNavigate, collapsed }: NavSectionPro
               }
             }}
           >
-            <span style={{ fontSize: '18px' }}>{item.icon}</span>
+            <span style={{ fontSize: '16px', lineHeight: 1 }}>{item.icon}</span>
             {!collapsed && (
               <Typography variant="body" style={{ color: 'inherit' }}>
                 {item.label}
