@@ -1,7 +1,7 @@
 import React from 'react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -24,6 +24,11 @@ const variantStyles: Record<string, React.CSSProperties> = {
   ghost: {
     backgroundColor: 'transparent',
     color: 'var(--color-primary-500)',
+    border: 'none',
+  },
+  danger: {
+    backgroundColor: 'var(--color-danger-500, #e74c3c)',
+    color: '#ffffff',
     border: 'none',
   },
 };

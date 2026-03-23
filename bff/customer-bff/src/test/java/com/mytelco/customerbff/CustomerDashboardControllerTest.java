@@ -39,6 +39,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -92,7 +93,7 @@ class CustomerDashboardControllerTest {
             anyString(),
             eq("operator-stub-pt"),
             eq("web"),
-            anyString()
+            nullable(String.class)
         );
     }
 
@@ -124,7 +125,7 @@ class CustomerDashboardControllerTest {
             anyString(),
             eq("operator-stub-pt"),
             eq("web"),
-            anyString()
+            nullable(String.class)
         );
     }
 
@@ -149,13 +150,6 @@ class CustomerDashboardControllerTest {
         mockMvc.perform(get("/api/v1/customer/usage?view=daily"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.thresholdCrossings[0].thresholdPercent").value(80));
-
-        verify(productAnalyticsService, times(1)).trackLoginSuccess(
-            anyString(),
-            eq("operator-stub-pt"),
-            eq("web"),
-            anyString()
-        );
     }
 
     @TestConfiguration

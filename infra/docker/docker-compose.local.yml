@@ -129,6 +129,7 @@ services:
       SPRING_KAFKA_PRODUCER_MAX_BLOCK_MS: ${SPRING_KAFKA_PRODUCER_MAX_BLOCK_MS:-3000}
       SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS: ${SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS:-2000}
       SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS: ${SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS:-5000}
+      CASE_BFF_BASE_URL: ${CASE_BFF_BASE_URL:-http://case-bff:8083}
     volumes:
       - ../../platform-config:/app/platform-config:ro
     ports:
@@ -173,6 +174,38 @@ services:
         condition: service_healthy
     healthcheck:
       test: ['CMD-SHELL', 'wget -q --spider http://localhost:8082/actuator/health || exit 1']
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
+    networks:
+      - mytelco-network
+
+  case-bff:
+    build:
+      context: ../../bff/case-bff
+    container_name: mytelco-case-bff
+    environment:
+      SERVER_PORT: 8083
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: ${INTERNAL_OIDC_ISSUER:-http://keycloak:8080/realms/mytelco-white-label}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: ${INTERNAL_OIDC_JWKS_URI:-http://keycloak:8080/realms/mytelco-white-label/protocol/openid-connect/certs}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-mytelco}
+      DB_USER: ${POSTGRES_USER:-mytelco}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-mytelco}
+    ports:
+      - '${CASE_BFF_PORT:-8083}:8083'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      kong:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost:8083/actuator/health || exit 1']
       interval: 20s
       timeout: 5s
       retries: 8

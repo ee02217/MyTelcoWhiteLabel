@@ -5,6 +5,7 @@ export interface CardProps {
   padding?: 'none' | 'sm' | 'md' | 'lg';
   shadow?: 'none' | 'sm' | 'md' | 'lg';
   style?: React.CSSProperties;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
 const paddingStyles: Record<string, string> = {
@@ -21,7 +22,7 @@ const shadowStyles: Record<string, string> = {
   lg: 'var(--shadow-lg)',
 };
 
-export function Card({ children, padding = 'md', shadow = 'md', style }: CardProps) {
+export function Card({ children, padding = 'md', shadow = 'md', style, onClick }: CardProps) {
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'var(--color-background-primary, #ffffff)',
     borderRadius: 'var(--radius-lg)',
@@ -32,5 +33,14 @@ export function Card({ children, padding = 'md', shadow = 'md', style }: CardPro
     ...style,
   };
 
-  return <div style={cardStyle}>{children}</div>;
+  return (
+    <div
+      style={cardStyle}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
+      {children}
+    </div>
+  );
 }

@@ -51,6 +51,7 @@ public class SupportCaseController {
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Case created")})
     public ResponseEntity<SupportCaseResponse> create(
         Authentication authentication,
+        @RequestHeader(value = "Authorization", required = false) String authorization,
         @RequestHeader(value = "X-Operator-ID", required = false) String operatorId,
         @RequestHeader(value = "X-Channel", required = false) String channel,
         @RequestHeader(value = "X-Correlation-ID", required = false) String correlationId,
@@ -60,7 +61,7 @@ public class SupportCaseController {
         String resolvedOperatorId = resolveOperatorId(customerId, operatorId);
         String resolvedChannel = resolveChannel(channel);
 
-        SupportCaseResponse response = supportCaseService.create(request);
+        SupportCaseResponse response = supportCaseService.create(authorization, request);
 
         productAnalyticsService.trackSupportCaseCreated(
             customerId,
@@ -78,15 +79,20 @@ public class SupportCaseController {
     @GetMapping
     @Operation(summary = "List support cases")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Cases listed")})
-    public ResponseEntity<List<SupportCaseResponse>> list() {
-        return ResponseEntity.ok(supportCaseService.list());
+    public ResponseEntity<List<SupportCaseResponse>> list(
+        @RequestHeader(value = "Authorization", required = false) String authorization
+    ) {
+        return ResponseEntity.ok(supportCaseService.list(authorization));
     }
 
     @GetMapping("/{caseId}")
     @Operation(summary = "Get support case by id")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Case found")})
-    public ResponseEntity<SupportCaseResponse> get(@PathVariable String caseId) {
-        SupportCaseResponse supportCase = supportCaseService.get(caseId);
+    public ResponseEntity<SupportCaseResponse> get(
+        @RequestHeader(value = "Authorization", required = false) String authorization,
+        @PathVariable String caseId
+    ) {
+        SupportCaseResponse supportCase = supportCaseService.get(authorization, caseId);
         if (supportCase == null) {
             return ResponseEntity.notFound().build();
         }
@@ -96,9 +102,12 @@ public class SupportCaseController {
     @PostMapping("/{caseId}/messages")
     @Operation(summary = "Append message to support case timeline")
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Timeline updated")})
-    public ResponseEntity<SupportCaseResponse> addMessage(@PathVariable String caseId,
-                                                          @Valid @RequestBody SupportCaseMessageRequest request) {
-        SupportCaseResponse supportCase = supportCaseService.addMessage(caseId, request);
+    public ResponseEntity<SupportCaseResponse> addMessage(
+        @RequestHeader(value = "Authorization", required = false) String authorization,
+        @PathVariable String caseId,
+        @Valid @RequestBody SupportCaseMessageRequest request
+    ) {
+        SupportCaseResponse supportCase = supportCaseService.addMessage(authorization, caseId, request);
         if (supportCase == null) {
             return ResponseEntity.notFound().build();
         }

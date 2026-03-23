@@ -1,0 +1,55 @@
+server:
+  port: ${SERVER_PORT:8083}
+
+spring:
+  application:
+    name: case-bff
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:mytelco}
+    username: ${DB_USER:mytelco}
+    password: ${DB_PASSWORD:mytelco}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:8080/realms/mytelco-white-label}
+          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI:http://localhost:8080/realms/mytelco-white-label/protocol/openid-connect/certs}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+app:
+  security:
+    # When true, bypasses JWT validation (local-only).
+    dev-mode: ${APP_SECURITY_DEV_MODE:false}
+    # Validate only realm path to avoid coupling to Keycloak hostnames in local docker.
+    jwt:
+      expected-realm-path: ${APP_SECURITY_JWT_EXPECTED_REALM_PATH:/realms/mytelco-white-label}
+
+logging:
+  level:
+    com.mytelco: DEBUG
+    org.springframework.security: DEBUG

@@ -1,281 +1,123 @@
 package com.mytelco.customerbff.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.mytelco.customerbff.model.SupportCaseAttachment;
+import com.mytelco.customerbff.integration.casebff.CaseBffClient;
 import com.mytelco.customerbff.model.SupportCaseCreateRequest;
 import com.mytelco.customerbff.model.SupportCaseMessageRequest;
 import com.mytelco.customerbff.model.SupportCaseResponse;
 import com.mytelco.customerbff.model.SupportCaseStatus;
 import com.mytelco.customerbff.model.SupportCaseTimelineEntry;
-import com.mytelco.customerbff.service.persistence.DurableStateStore;
-import com.mytelco.customerbff.service.persistence.NoopDurableStateStore;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Locale;
 
 @Service
 public class SupportCaseService {
 
-    private static final String STATE_KEY = "support-case-state";
-    private static final int SCHEMA_VERSION = 1;
-
+    private final CaseBffClient caseBffClient;
     private final SupportCaseSlaService slaService;
-    private final Map<String, SupportCaseRecord> casesById = new ConcurrentHashMap<>();
-    private DurableStateStore durableStateStore = NoopDurableStateStore.INSTANCE;
 
-    public SupportCaseService(SupportCaseSlaService slaService) {
+    public SupportCaseService(CaseBffClient caseBffClient, SupportCaseSlaService slaService) {
+        this.caseBffClient = caseBffClient;
         this.slaService = slaService;
     }
 
-    @Autowired(required = false)
-    public void setDurableStateStore(DurableStateStore durableStateStore) {
-        this.durableStateStore = durableStateStore;
-        loadState();
-    }
-
-    public SupportCaseResponse create(SupportCaseCreateRequest request) {
-        Instant now = Instant.now();
-        String caseId = "sc_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        String normalizedPriority = request.priority() == null || request.priority().isBlank() ? "NORMAL" : request.priority();
-
-        List<SupportCaseAttachment> attachments = request.attachments() == null ? List.of() : List.copyOf(request.attachments());
-        List<SupportCaseTimelineEntry> timeline = new ArrayList<>();
-        timeline.add(new SupportCaseTimelineEntry(
-            "evt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12),
-            now,
-            "system",
-            "SYSTEM",
-            "CASE_CREATED",
-            "Support case created"
-        ));
-
-        SupportCaseRecord supportCase = new SupportCaseRecord(
-            caseId,
+    public SupportCaseResponse create(String authorizationHeader, SupportCaseCreateRequest request) {
+        CaseBffClient.TroubleTicketCreateRequest createRequest = new CaseBffClient.TroubleTicketCreateRequest(
             request.category(),
             request.subject(),
             request.description(),
-            normalizedPriority,
-            SupportCaseStatus.OPEN,
-            now,
-            now,
-            slaService.slaTargetFor(request.category(), normalizedPriority),
-            slaService.expectedResponseAt(now, request.category(), normalizedPriority),
-            attachments,
-            timeline
+            normalizePriority(request.priority()),
+            null
         );
 
-        casesById.put(caseId, supportCase);
-        persistState();
-        return supportCase.toResponse();
+        CaseBffClient.TroubleTicketResponse created = caseBffClient.create(authorizationHeader, createRequest);
+        return toSupportCaseResponse(created);
     }
 
-    public List<SupportCaseResponse> list() {
-        ensureSeedCases();
-        return casesById.values().stream()
-            .map(SupportCaseRecord::toResponse)
+    public List<SupportCaseResponse> list(String authorizationHeader) {
+        return caseBffClient.list(authorizationHeader)
+            .stream()
+            .map(this::toSupportCaseResponse)
             .sorted(Comparator.comparing(SupportCaseResponse::createdAt).reversed())
             .toList();
     }
 
-    public SupportCaseResponse get(String caseId) {
-        SupportCaseRecord supportCase = casesById.get(caseId);
-        return supportCase == null ? null : supportCase.toResponse();
+    public SupportCaseResponse get(String authorizationHeader, String caseId) {
+        CaseBffClient.TroubleTicketResponse ticket = caseBffClient.get(authorizationHeader, caseId);
+        return ticket == null ? null : toSupportCaseResponse(ticket);
     }
 
-    public SupportCaseResponse addMessage(String caseId, SupportCaseMessageRequest request) {
-        SupportCaseRecord supportCase = casesById.get(caseId);
-        if (supportCase == null) {
+    public SupportCaseResponse addMessage(String authorizationHeader, String caseId, SupportCaseMessageRequest request) {
+        CaseBffClient.EventRequest eventRequest = new CaseBffClient.EventRequest(
+            "MESSAGE",
+            request.message()
+        );
+
+        CaseBffClient.TroubleTicketResponse updated = caseBffClient.addEvent(authorizationHeader, caseId, eventRequest);
+        return updated == null ? null : toSupportCaseResponse(updated);
+    }
+
+    private SupportCaseResponse toSupportCaseResponse(CaseBffClient.TroubleTicketResponse ticket) {
+        if (ticket == null) {
             return null;
         }
 
-        Instant now = Instant.now();
-        List<SupportCaseTimelineEntry> timeline = new ArrayList<>(supportCase.timeline());
-        timeline.add(new SupportCaseTimelineEntry(
-            "evt_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12),
-            now,
-            request.actor(),
-            request.actorType() == null || request.actorType().isBlank() ? "CUSTOMER" : request.actorType(),
-            "MESSAGE",
-            request.message()
-        ));
+        List<SupportCaseTimelineEntry> timeline = ticket.timeline() == null
+            ? List.of()
+            : ticket.timeline().stream()
+                .map(evt -> new SupportCaseTimelineEntry(
+                    evt.id() == null ? null : evt.id().toString(),
+                    evt.createdAt(),
+                    evt.actor(),
+                    evt.actorType(),
+                    evt.eventType(),
+                    evt.message()
+                ))
+                .sorted(Comparator.comparing(SupportCaseTimelineEntry::timestamp))
+                .toList();
 
-        SupportCaseRecord updated = supportCase.withUpdatedTimeline(now, timeline);
-        casesById.put(caseId, updated);
-        persistState();
-        return updated.toResponse();
-    }
-
-    private void ensureSeedCases() {
-        if (!casesById.isEmpty()) {
-            return;
+        Instant expectedResponseAt = ticket.expectedResponseAt();
+        if (expectedResponseAt == null && ticket.createdAt() != null) {
+            expectedResponseAt = slaService.expectedResponseAt(ticket.createdAt(), ticket.category(), ticket.priority());
         }
 
-        Instant now = Instant.now();
+        String slaTarget = slaService.slaTargetFor(ticket.category(), ticket.priority());
 
-        seedCase(
-            "sc_seed_network_001",
-            "TECHNICAL",
-            "Intermittent network drops",
-            "Data session drops were detected on line-web-1. Investigation in progress.",
-            "HIGH",
-            SupportCaseStatus.IN_PROGRESS,
-            now.minusSeconds(3 * 24 * 60 * 60L),
-            now.minusSeconds(2 * 60 * 60L),
-            List.of(
-                new SupportCaseTimelineEntry(
-                    "evt_seed_tech_001",
-                    now.minusSeconds(3 * 24 * 60 * 60L),
-                    "system",
-                    "SYSTEM",
-                    "CASE_CREATED",
-                    "Case opened from proactive monitoring alert"
-                ),
-                new SupportCaseTimelineEntry(
-                    "evt_seed_tech_002",
-                    now.minusSeconds(2 * 24 * 60 * 60L),
-                    "support-agent",
-                    "AGENT",
-                    "MESSAGE",
-                    "We are collecting diagnostics from the serving cell."
-                )
-            )
-        );
-
-        seedCase(
-            "sc_seed_billing_001",
-            "BILLING",
-            "Invoice clarification requested",
-            "Customer asked for clarification on invoice line items for last cycle.",
-            "NORMAL",
-            SupportCaseStatus.WAITING_CUSTOMER,
-            now.minusSeconds(4 * 24 * 60 * 60L),
-            now.minusSeconds(20 * 60 * 60L),
-            List.of(
-                new SupportCaseTimelineEntry(
-                    "evt_seed_bill_001",
-                    now.minusSeconds(4 * 24 * 60 * 60L),
-                    "customer1",
-                    "CUSTOMER",
-                    "CASE_CREATED",
-                    "Need a breakdown for the latest invoice."
-                ),
-                new SupportCaseTimelineEntry(
-                    "evt_seed_bill_002",
-                    now.minusSeconds(20 * 60 * 60L),
-                    "billing-agent",
-                    "AGENT",
-                    "MESSAGE",
-                    "Please confirm which charge category you need clarified."
-                )
-            )
-        );
-
-        persistState();
-    }
-
-    private void seedCase(
-        String caseId,
-        String category,
-        String subject,
-        String description,
-        String priority,
-        SupportCaseStatus status,
-        Instant createdAt,
-        Instant updatedAt,
-        List<SupportCaseTimelineEntry> timeline
-    ) {
-        SupportCaseRecord seededCase = new SupportCaseRecord(
-            caseId,
-            category,
-            subject,
-            description,
-            priority,
-            status,
-            createdAt,
-            updatedAt,
-            slaService.slaTargetFor(category, priority),
-            slaService.expectedResponseAt(createdAt, category, priority),
+        return new SupportCaseResponse(
+            ticket.externalId(),
+            ticket.category(),
+            ticket.title(),
+            ticket.description(),
+            ticket.priority(),
+            toStatus(ticket.status()),
+            ticket.createdAt(),
+            ticket.updatedAt(),
+            slaTarget,
+            expectedResponseAt,
             List.of(),
             timeline
         );
-        casesById.put(caseId, seededCase);
     }
 
-    private void loadState() {
-        SupportCaseState state = durableStateStore.read(
-            STATE_KEY,
-            new TypeReference<>() {
-            },
-            SupportCaseState::empty
-        );
+    private SupportCaseStatus toStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return SupportCaseStatus.OPEN;
+        }
 
-        casesById.clear();
-        casesById.putAll(state.casesById());
-    }
-
-    private void persistState() {
-        durableStateStore.write(STATE_KEY, new SupportCaseState(SCHEMA_VERSION, Map.copyOf(casesById)));
-    }
-
-    private record SupportCaseState(int schemaVersion, Map<String, SupportCaseRecord> casesById) {
-        private static SupportCaseState empty() {
-            return new SupportCaseState(SCHEMA_VERSION, Map.of());
+        try {
+            return SupportCaseStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            return SupportCaseStatus.OPEN;
         }
     }
 
-    private record SupportCaseRecord(
-        String caseId,
-        String category,
-        String subject,
-        String description,
-        String priority,
-        SupportCaseStatus status,
-        Instant createdAt,
-        Instant updatedAt,
-        String slaTarget,
-        Instant expectedResponseAt,
-        List<SupportCaseAttachment> attachments,
-        List<SupportCaseTimelineEntry> timeline
-    ) {
-        private SupportCaseRecord withUpdatedTimeline(Instant updatedAt, List<SupportCaseTimelineEntry> timeline) {
-            return new SupportCaseRecord(
-                caseId,
-                category,
-                subject,
-                description,
-                priority,
-                status,
-                createdAt,
-                updatedAt,
-                slaTarget,
-                expectedResponseAt,
-                List.copyOf(attachments),
-                List.copyOf(timeline)
-            );
+    private String normalizePriority(String priority) {
+        if (priority == null || priority.isBlank()) {
+            return "NORMAL";
         }
-
-        private SupportCaseResponse toResponse() {
-            return new SupportCaseResponse(
-                caseId,
-                category,
-                subject,
-                description,
-                priority,
-                status,
-                createdAt,
-                updatedAt,
-                slaTarget,
-                expectedResponseAt,
-                List.copyOf(attachments),
-                timeline.stream().sorted(Comparator.comparing(SupportCaseTimelineEntry::timestamp)).toList()
-            );
-        }
+        return priority.trim().toUpperCase(Locale.ROOT);
     }
 }

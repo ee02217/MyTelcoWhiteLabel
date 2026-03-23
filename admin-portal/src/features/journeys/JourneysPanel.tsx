@@ -145,7 +145,7 @@ export function JourneysPanel() {
 
               <div style={{ marginTop: '16px' }}>
                 <Typography variant="body" style={{ fontWeight: 'bold' }}>Steps</Typography>
-                {selectedJourney.steps.map((step: any, i: number) => (
+                {selectedJourney.steps.map((step: any) => (
                   <div 
                     key={step.id}
                     style={{ 

@@ -24,6 +24,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -81,7 +82,7 @@ class SupportCaseControllerTest {
 
         when(customerIdentityResolver.resolveCustomerId(any())).thenReturn("cust-1");
         when(operatorContextResolver.resolveOperatorId(anyString())).thenReturn("operator-stub-pt");
-        when(supportCaseService.create(any())).thenReturn(response);
+        when(supportCaseService.create(any(), any())).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/customer/support/cases")
                 .with(csrf())
@@ -99,7 +100,7 @@ class SupportCaseControllerTest {
             eq("cust-1"),
             eq("operator-stub-pt"),
             eq("web"),
-            anyString(),
+            nullable(String.class),
             eq("sc_1"),
             eq("OUTAGE"),
             eq("HIGH")

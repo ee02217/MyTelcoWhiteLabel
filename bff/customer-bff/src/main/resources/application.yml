@@ -110,3 +110,11 @@ logging:
     com.mytelco: DEBUG
     org.springframework.web: INFO
     org.springframework.security: DEBUG
+
+case-bff:
+  base-url: ${CASE_BFF_BASE_URL:http://localhost:8083}
+
+app:
+  security:
+    # Local-only option (off by default). When enabled, security is bypassed via DevSecurityConfig.
+    dev-mode: ${APP_SECURITY_DEV_MODE:false}

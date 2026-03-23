@@ -180,8 +180,8 @@ export function AnalyticsPanel() {
           <Typography variant="caption" style={{ opacity: 0.9 }}>Total Users</Typography>
           <Typography variant="h2" style={{ color: '#fff' }}>{formatNumber(overview?.totalUsers || 0)}</Typography>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-            <span style={{ color: getTrendColor(overview?.userGrowth || 0) }}>
-              {overview?.userGrowth > 0 ? '↑' : '↓'} {Math.abs(overview?.userGrowth || 0)}%
+            <span style={{ color: getTrendColor(overview?.userGrowth ?? 0) }}>
+              {(overview?.userGrowth ?? 0) > 0 ? '↑' : '↓'} {Math.abs(overview?.userGrowth ?? 0)}%
             </span>
             <Typography variant="caption" style={{ opacity: 0.8 }}>vs last period</Typography>
           </div>
@@ -199,8 +199,8 @@ export function AnalyticsPanel() {
           <Typography variant="caption" style={{ opacity: 0.9 }}>Total Revenue</Typography>
           <Typography variant="h2" style={{ color: '#fff' }}>{formatCurrency(overview?.totalRevenue || 0)}</Typography>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-            <span style={{ color: getTrendColor(overview?.revenueGrowth || 0) }}>
-              {overview?.revenueGrowth > 0 ? '↑' : '↓'} {Math.abs(overview?.revenueGrowth || 0)}%
+            <span style={{ color: getTrendColor(overview?.revenueGrowth ?? 0) }}>
+              {(overview?.revenueGrowth ?? 0) > 0 ? '↑' : '↓'} {Math.abs(overview?.revenueGrowth ?? 0)}%
             </span>
             <Typography variant="caption" style={{ opacity: 0.8 }}>vs last period</Typography>
           </div>
