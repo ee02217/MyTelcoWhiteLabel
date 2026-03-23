@@ -1,7 +1,7 @@
 // New App.tsx - Production-ready with AppShell
 
 import { useEffect, useState } from 'react';
-import { Button, Card, DesignSystemProvider, Typography } from './design-system';
+import { Button, Card, DesignSystemProvider, Field, Typography } from './design-system';
 import { AppShell } from './app/AppShell';
 import { Dashboard } from './app/routes/Dashboard';
 import { Usage } from './app/routes/Usage';
@@ -9,13 +9,12 @@ import { Billing } from './app/routes/Billing';
 import { Lines } from './app/routes/Lines';
 import { LineDetail } from './app/routes/LineDetail';
 import {
-  beginLogin,
   completeLoginIfCallback,
+  loginWithCredentials,
   logout,
   readSession,
   type OidcSession,
 } from './auth-oidc';
-import { setAuthFetch } from './services/api';
 
 type AppRoute = string;
 
@@ -23,33 +22,25 @@ function App() {
   const [route, setRoute] = useState<AppRoute>('/');
   const [session, setSession] = useState<OidcSession | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  
+  // Login form state
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
-    // Check for OIDC callback
+    // Check for OIDC callback (backward compatibility)
     completeLoginIfCallback();
     
-    // Read session
-    const stored = readSession();
-    setSession(stored);
-    setLoading(false);
+    // Read session from BFF (async)
+    const initSession = async () => {
+      const stored = await readSession();
+      setSession(stored);
+      setLoading(false);
+    };
+    initSession();
   }, []);
-
-  // Set up API client with auth
-  useEffect(() => {
-    if (session?.accessToken) {
-      setAuthFetch(async (path: string, init: RequestInit = {}) => {
-        const url = path.startsWith('http') ? path : `http://localhost:3000${path}`;
-        const response = await fetch(url, {
-          ...init,
-          headers: {
-            ...init.headers,
-            Authorization: `Bearer ${session.accessToken}`,
-          },
-        });
-        return response;
-      });
-    }
-  }, [session]);
 
   const navigateTo = (nextRoute: string) => {
     // Update URL without reload
@@ -66,16 +57,28 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const handleLogin = async () => {
+  const handleLoginClick = () => {
+    setIsLoggingIn(true);
+    setLoginError('');
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoginError('');
+    
     try {
-      await beginLogin();
-    } catch (e) {
-      console.error('Login failed:', e);
+      const newSession = await loginWithCredentials(username, password);
+      setSession(newSession);
+      setIsLoggingIn(false);
+      setUsername('');
+      setPassword('');
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : 'Login failed');
     }
   };
 
   const handleLogout = async () => {
-    await logout(session);
+    await logout();
     setSession(null);
     navigateTo('/');
   };
@@ -91,8 +94,8 @@ function App() {
     );
   }
 
-  // Show login if no session
-  if (!session) {
+  // Show login form if not authenticated or logging in
+  if (!session || isLoggingIn) {
     return (
       <DesignSystemProvider>
         <div
@@ -104,23 +107,70 @@ function App() {
             background: '#f5f5f5',
           }}
         >
-          <Card padding="lg" shadow="lg" style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
-            <Typography variant="h3" style={{ marginBottom: '8px' }}>
+          <Card padding="lg" shadow="lg" style={{ maxWidth: '400px', width: '100%' }}>
+            <Typography variant="h3" style={{ marginBottom: '8px', textAlign: 'center' }}>
               MyTelco
             </Typography>
-            <Typography variant="body" color="secondary" style={{ marginBottom: '24px' }}>
+            <Typography variant="body" color="secondary" style={{ marginBottom: '24px', textAlign: 'center' }}>
               Sign in to manage your account
             </Typography>
-            <Button onClick={handleLogin} style={{ width: '100%' }}>
-              Sign In
-            </Button>
+            
+            {isLoggingIn ? (
+              <form onSubmit={handleLoginSubmit}>
+                <Field
+                  label="Username"
+                  type="text"
+                  value={username}
+                  onChange={setUsername}
+                  placeholder="Enter username"
+                  required
+                  style={{ marginBottom: '16px' }}
+                />
+                <Field
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={setPassword}
+                  placeholder="Enter password"
+                  required
+                  style={{ marginBottom: '16px' }}
+                />
+                
+                {loginError && (
+                  <Typography variant="body" style={{ marginBottom: '16px', color: '#d32f2f' }}>
+                    {loginError}
+                  </Typography>
+                )}
+                
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    onClick={() => setIsLoggingIn(false)}
+                    style={{ flex: 1 }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    style={{ flex: 1 }}
+                  >
+                    Sign In
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <Button onClick={handleLoginClick} style={{ width: '100%' }}>
+                Sign In
+              </Button>
+            )}
           </Card>
         </div>
       </DesignSystemProvider>
     );
   }
 
-  // Token expiration warning
+  // Token expiration warning (check if session is still valid)
   const tokenExpired = session.expiresAt * 1000 < Date.now();
   if (tokenExpired) {
     return (
@@ -141,7 +191,7 @@ function App() {
             <Typography variant="body" color="secondary" style={{ marginBottom: '24px' }}>
               Your session has expired. Please sign in again.
             </Typography>
-            <Button onClick={handleLogin} style={{ width: '100%' }}>
+            <Button onClick={handleLoginClick} style={{ width: '100%' }}>
               Sign In
             </Button>
           </Card>
@@ -150,20 +200,18 @@ function App() {
     );
   }
 
+  // Authenticated fetch - uses cookies automatically (no Authorization header needed)
+  const authedFetch = async (path: string, init?: RequestInit) => {
+    const url = path.startsWith('http') ? path : `${path}`;
+    const response = await fetch(url, {
+      ...init,
+      credentials: 'include', // Important: include cookies for BFF auth
+    });
+    return response;
+  };
+
   // Render the appropriate page
   const renderPage = () => {
-    const authedFetch = async (path: string, init?: RequestInit) => {
-      const url = path.startsWith('http') ? path : `http://localhost:3000${path}`;
-      const response = await fetch(url, {
-        ...init,
-        headers: {
-          ...init?.headers,
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-      });
-      return response;
-    };
-
     // Dashboard
     if (route === '/') {
       return <Dashboard authedFetch={authedFetch} onNavigate={navigateTo} />;
@@ -207,7 +255,7 @@ function App() {
       <AppShell
         currentPath={route}
         onNavigate={navigateTo}
-        userName="Customer"
+        userName={session.subject || 'Customer'}
         onLogout={handleLogout}
       >
         {renderPage()}
