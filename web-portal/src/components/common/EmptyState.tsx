@@ -2,9 +2,10 @@
 
 import { Button } from '../../design-system/Button';
 import { Typography } from '../../design-system/Typography';
+import type { ReactNode } from 'react';
 
 interface EmptyStateProps {
-  icon?: string;
+  icon?: ReactNode;
   title: string;
   description?: string;
   actionLabel?: string;
@@ -12,22 +13,15 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  icon = '📭',
+  icon,
   title,
   description,
   actionLabel,
   onAction,
 }: EmptyStateProps) {
   return (
-    <div
-      style={{
-        padding: '48px 24px',
-        textAlign: 'center',
-        background: '#f9fafb',
-        borderRadius: '8px',
-      }}
-    >
-      <div style={{ fontSize: '48px', marginBottom: '16px' }}>{icon}</div>
+    <div className="card" style={{ padding: '48px 24px', textAlign: 'center' }}>
+      {icon && <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>{icon}</div>}
       <Typography variant="h4" style={{ marginBottom: '8px' }}>
         {title}
       </Typography>

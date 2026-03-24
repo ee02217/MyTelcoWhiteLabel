@@ -17,22 +17,31 @@ import {
   type OidcSession,
 } from './auth-oidc';
 
+const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
+const DEV_SESSION: OidcSession = {
+  accessToken: 'dev-mode-token',
+  expiresAt: Math.floor(Date.now() / 1000) + 86400,
+  subject: 'Customer',
+  roles: ['CUSTOMER'],
+};
+
 function App() {
   const navigate = useNavigate();
   const [route, setRoute] = useState<string>(window.location.pathname);
-  const [session, setSession] = useState<OidcSession | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<OidcSession | null>(DEV_MODE ? DEV_SESSION : null);
+  const [loading, setLoading] = useState(DEV_MODE ? false : true);
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  
+
   // Login form state
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   useEffect(() => {
+    if (DEV_MODE) return;
     // Check for OIDC callback (backward compatibility)
     completeLoginIfCallback();
-    
+
     // Read session from BFF (async)
     const initSession = async () => {
       const stored = await readSession();

@@ -4,30 +4,27 @@ interface SIMStatusBadgeProps {
 }
 
 export function SIMStatusBadge({ status, size = 'md' }: SIMStatusBadgeProps) {
-  const statusConfig: Record<string, { label: string; color: string; icon: string }> = {
+  const statusConfig: Record<string, { label: string; badgeClass: string }> = {
     ACTIVE: {
       label: 'Active',
-      color: 'bg-green-100 text-green-700',
-      icon: '✓',
+      badgeClass: 'badge badge-success',
     },
     SUSPENDED: {
       label: 'Suspended',
-      color: 'bg-amber-100 text-amber-700',
-      icon: '⏸',
+      badgeClass: 'badge badge-warning',
     },
     INACTIVE: {
       label: 'Inactive',
-      color: 'bg-gray-100 text-gray-700',
-      icon: '✕',
+      badgeClass: 'badge badge-neutral',
     },
   };
 
   const config = statusConfig[status] || statusConfig.INACTIVE;
-  const sizeClasses = size === 'sm' ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-sm';
+  const sizeClass = size === 'sm' ? 'badge-sm' : '';
 
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full font-medium ${config.color} ${sizeClasses}`}>
-      <span>{config.icon}</span>
+    <span className={`${config.badgeClass} ${sizeClass}`}>
+      <span className={`status-dot ${status === 'ACTIVE' ? 'status-dot-active' : status === 'SUSPENDED' ? 'status-dot-suspended' : 'status-dot-inactive'}`} />
       <span>{config.label}</span>
     </span>
   );

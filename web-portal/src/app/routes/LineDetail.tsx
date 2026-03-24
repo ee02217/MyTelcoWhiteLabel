@@ -65,14 +65,13 @@ export function LineDetail() {
 
   const handleRename = () => {
     setShowRenameDialog(false);
-    // Would call API here
   };
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <LoadingSkeleton className="h-8 w-48" />
-        <LoadingSkeleton className="h-64" />
+      <div className="page">
+        <LoadingSkeleton width="200px" height="32px" />
+        <LoadingSkeleton height="280px" />
       </div>
     );
   }
@@ -97,135 +96,130 @@ export function LineDetail() {
 
   const dataPercent = (line.usage.dataUsedMb / line.usage.dataLimitMb) * 100;
 
+  const getProgressFill = () => {
+    if (dataPercent > 90) return 'progress-fill-red';
+    if (dataPercent > 75) return 'progress-fill-amber';
+    return 'progress-fill-blue';
+  };
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="page">
       {/* Back Button */}
       <button
+        className="btn-ghost self-start"
         onClick={() => navigate('/lines')}
-        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
+        style={{ padding: '6px 12px', gap: '6px' }}
       >
-        <ArrowLeftIcon className="h-5 w-5" />
+        <ArrowLeftIcon style={{ width: 18, height: 18 }} />
         Back to Lines
       </button>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-green-50 rounded-full">
-            <SignalIcon className="h-8 w-8 text-green-600" />
-          </div>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">+351 {line.msisdn}</h1>
-              <SIMStatusBadge status={line.status} />
+      <div className="page-header">
+        <div className="page-header-row">
+          <div className="row" style={{ gap: '16px' }}>
+            <div className="bg-success-light p-3 rounded-full">
+              <SignalIcon style={{ width: 28, height: 28, color: 'var(--premium-success)' }} />
             </div>
-            {line.nickname && (
-              <p className="text-gray-500">{line.nickname}</p>
+            <div>
+              <div className="row" style={{ gap: '12px' }}>
+                <h1 className="page-title">+351 {line.msisdn}</h1>
+                <SIMStatusBadge status={line.status} />
+              </div>
+              {line.nickname && (
+                <p className="page-subtitle">{line.nickname}</p>
+              )}
+            </div>
+          </div>
+          <div className="row" style={{ gap: '8px' }}>
+            <button
+              className="btn-secondary"
+              onClick={() => { setNewNickname(line.nickname || ''); setShowRenameDialog(true); }}
+            >
+              <PencilIcon style={{ width: 16, height: 16 }} />
+              Rename
+            </button>
+            {line.status === 'ACTIVE' ? (
+              <button className="btn-danger" onClick={() => setShowBlockDialog(true)}>
+                Block Line
+              </button>
+            ) : (
+              <button className="btn-primary" style={{ background: 'var(--premium-success)' }} onClick={() => setShowUnblockDialog(true)}>
+                Unblock Line
+              </button>
             )}
           </div>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => { setNewNickname(line.nickname || ''); setShowRenameDialog(true); }}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <PencilIcon className="h-4 w-4" />
-            Rename
-          </button>
-          {line.status === 'ACTIVE' ? (
-            <button
-              onClick={() => setShowBlockDialog(true)}
-              className="px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700"
-            >
-              Block Line
-            </button>
-          ) : (
-            <button
-              onClick={() => setShowUnblockDialog(true)}
-              className="px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700"
-            >
-              Unblock Line
-            </button>
-          )}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+      <div className="tab-group">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`tab ${activeTab === tab.id ? 'tab-active' : ''}`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Line Details</h2>
-            <dl className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Phone Number</dt>
-                <dd className="font-medium">+351 {line.msisdn}</dd>
+        <div className="grid-2">
+          <div className="card">
+            <h2 className="text-base text-semibold mb-4">Line Details</h2>
+            <div className="detail-list">
+              <div className="detail-row">
+                <span className="detail-label">Phone Number</span>
+                <span className="detail-value">+351 {line.msisdn}</span>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Plan</dt>
-                <dd className="font-medium">{line.plan}</dd>
+              <div className="detail-row">
+                <span className="detail-label">Plan</span>
+                <span className="detail-value">{line.plan}</span>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">SIM Number</dt>
-                <dd className="font-medium">{line.simNumber}</dd>
+              <div className="detail-row">
+                <span className="detail-label">SIM Number</span>
+                <span className="detail-value">{line.simNumber}</span>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">eSIM Status</dt>
-                <dd className="font-medium">{esimStatusLabels[line.esimStatus as EsimStatus]}</dd>
+              <div className="detail-row">
+                <span className="detail-label">eSIM Status</span>
+                <span className="detail-value">{esimStatusLabels[line.esimStatus as EsimStatus]}</span>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Roaming</dt>
-                <dd className="font-medium text-green-600">
+              <div className="detail-row">
+                <span className="detail-label">Roaming</span>
+                <span className="detail-value text-success">
                   {line.roamingEnabled ? 'Enabled' : 'Disabled'}
-                </dd>
+                </span>
               </div>
-            </dl>
+            </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Data Usage</h2>
+          <div className="card">
+            <h2 className="text-base text-semibold mb-4">Data Usage</h2>
             <div className="mb-4">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-500">Data Used</span>
-                <span className="font-medium">
+              <div className="row-between mb-1">
+                <span className="text-sm text-secondary">Data Used</span>
+                <span className="text-sm text-semibold">
                   {(line.usage.dataUsedMb / 1024).toFixed(1)} GB / {(line.usage.dataLimitMb / 1024).toFixed(0)} GB
                 </span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-3">
+              <div className="progress-bar progress-bar-lg">
                 <div
-                  className={`h-3 rounded-full transition-all ${
-                    dataPercent > 90 ? 'bg-red-500' : dataPercent > 75 ? 'bg-amber-500' : 'bg-blue-600'
-                  }`}
+                  className={`progress-fill ${getProgressFill()}`}
                   style={{ width: `${Math.min(dataPercent, 100)}%` }}
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid-2" style={{ gap: '16px' }}>
               <div>
-                <p className="text-gray-500">Voice</p>
-                <p className="font-medium">{line.usage.voiceMinutesUsed} min</p>
+                <p className="text-sm text-secondary">Voice</p>
+                <p className="text-base text-semibold">{line.usage.voiceMinutesUsed} min</p>
               </div>
               <div>
-                <p className="text-gray-500">SMS</p>
-                <p className="font-medium">{line.usage.smsUsed}</p>
+                <p className="text-sm text-secondary">SMS</p>
+                <p className="text-base text-semibold">{line.usage.smsUsed}</p>
               </div>
             </div>
           </div>
@@ -233,33 +227,30 @@ export function LineDetail() {
       )}
 
       {activeTab === 'sim' && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">SIM Card Information</h2>
-          <dl className="space-y-4">
-            <div className="flex justify-between items-center">
-              <dt className="text-gray-500">SIM Number</dt>
-              <dd className="font-mono text-sm">{line.simNumber}</dd>
+        <div className="card">
+          <h2 className="text-base text-semibold mb-4">SIM Card Information</h2>
+          <div className="detail-list" style={{ gap: '16px' }}>
+            <div className="detail-row">
+              <span className="detail-label">SIM Number</span>
+              <span className="detail-value" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>{line.simNumber}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <dt className="text-gray-500">Status</dt>
-              <dd><SIMStatusBadge status={line.status} /></dd>
+            <div className="detail-row">
+              <span className="detail-label">Status</span>
+              <SIMStatusBadge status={line.status} />
             </div>
-            <div className="flex justify-between items-center">
-              <dt className="text-gray-500">Type</dt>
-              <dd className="text-sm">Physical SIM</dd>
+            <div className="detail-row">
+              <span className="detail-label">Type</span>
+              <span className="detail-value">Physical SIM</span>
             </div>
-          </dl>
-          
+          </div>
+
           {line.status === 'ACTIVE' && (
-            <div className="mt-6 pt-6 border-t border-gray-100">
-              <h3 className="font-medium text-gray-900 mb-3">Danger Zone</h3>
-              <p className="text-sm text-gray-500 mb-3">
+            <div className="mt-6" style={{ paddingTop: '24px', borderTop: '1px solid var(--premium-border)' }}>
+              <h3 className="text-sm text-semibold mb-3">Danger Zone</h3>
+              <p className="text-sm text-secondary mb-3">
                 Blocking this SIM will immediately disconnect all services on this line.
               </p>
-              <button
-                onClick={() => setShowBlockDialog(true)}
-                className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700"
-              >
+              <button className="btn-danger" onClick={() => setShowBlockDialog(true)}>
                 Block SIM
               </button>
             </div>
@@ -268,70 +259,64 @@ export function LineDetail() {
       )}
 
       {activeTab === 'esim' && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">eSIM Management</h2>
-          
-          <div className="flex items-center gap-4 mb-6">
-            <div className={`p-3 rounded-full ${line.esimStatus === 'INSTALLED' as EsimStatus ? 'bg-green-50' : 'bg-gray-50'}`}>
-              <QrCodeIcon className={`h-6 w-6 ${line.esimStatus === 'INSTALLED' as EsimStatus ? 'text-green-600' : 'text-gray-400'}`} />
+        <div className="card">
+          <h2 className="text-base text-semibold mb-4">eSIM Management</h2>
+
+          <div className="row mb-6" style={{ gap: '16px' }}>
+            <div className={`p-3 rounded-full ${(line.esimStatus as EsimStatus) === 'INSTALLED' ? 'bg-success-light' : 'bg-muted'}`}>
+              <QrCodeIcon style={{ width: 24, height: 24, color: (line.esimStatus as EsimStatus) === 'INSTALLED' ? 'var(--premium-success)' : 'var(--premium-text-muted)' }} />
             </div>
             <div>
-              <p className="font-medium text-gray-900">Status: {esimStatusLabels[line.esimStatus as EsimStatus]}</p>
-              <p className="text-sm text-gray-500">
-                {line.esimStatus === 'INSTALLED' as EsimStatus && 'Your eSIM is active and ready to use'}
-                {line.esimStatus === 'AVAILABLE' as EsimStatus && 'You can install an eSIM on this device'}
-                {line.esimStatus === 'NOT_SUPPORTED' as EsimStatus && 'This device does not support eSIM'}
+              <p className="text-base text-semibold">Status: {esimStatusLabels[line.esimStatus as EsimStatus]}</p>
+              <p className="text-sm text-secondary">
+                {(line.esimStatus as EsimStatus) === 'INSTALLED' && 'Your eSIM is active and ready to use'}
+                {(line.esimStatus as EsimStatus) === 'AVAILABLE' && 'You can install an eSIM on this device'}
+                {(line.esimStatus as EsimStatus) === 'NOT_SUPPORTED' && 'This device does not support eSIM'}
               </p>
             </div>
           </div>
 
-          {line.esimStatus === 'INSTALLED' as EsimStatus && (
-            <div className="space-y-3">
-              <button className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Reinstall eSIM
-              </button>
-              <button className="w-full px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">
+          {(line.esimStatus as EsimStatus) === 'INSTALLED' && (
+            <div className="stack" style={{ gap: '12px' }}>
+              <button className="btn-secondary w-full">Reinstall eSIM</button>
+              <button className="btn-danger w-full" style={{ background: 'transparent', color: 'var(--premium-error)', border: '1px solid var(--premium-error)' }}>
                 Remove eSIM
               </button>
             </div>
           )}
 
-          {line.esimStatus === 'AVAILABLE' as EsimStatus && (
-            <div className="space-y-3">
-              <button className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-                Install eSIM
-              </button>
-            </div>
+          {(line.esimStatus as EsimStatus) === 'AVAILABLE' && (
+            <button className="btn-primary w-full">Install eSIM</button>
           )}
         </div>
       )}
 
       {activeTab === 'usage' && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Current Billing Cycle Usage</h2>
-          <div className="space-y-6">
+        <div className="card">
+          <h2 className="text-base text-semibold mb-4">Current Billing Cycle Usage</h2>
+          <div className="stack-gap">
             <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-500">Data</span>
-                <span className="font-medium">
+              <div className="row-between mb-2">
+                <span className="text-sm text-secondary">Data</span>
+                <span className="text-sm text-semibold">
                   {(line.usage.dataUsedMb / 1024).toFixed(2)} GB / {(line.usage.dataLimitMb / 1024).toFixed(0)} GB
                 </span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-3">
+              <div className="progress-bar progress-bar-lg">
                 <div
-                  className="h-3 rounded-full bg-blue-600"
+                  className="progress-fill progress-fill-blue"
                   style={{ width: `${dataPercent}%` }}
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-2xl font-bold text-gray-900">{line.usage.voiceMinutesUsed}</p>
-                <p className="text-sm text-gray-500">Voice Minutes</p>
+            <div className="grid-2" style={{ gap: '16px' }}>
+              <div className="card" style={{ textAlign: 'center', background: 'var(--premium-bg)' }}>
+                <p className="text-2xl text-bold">{line.usage.voiceMinutesUsed}</p>
+                <p className="text-sm text-secondary">Voice Minutes</p>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-2xl font-bold text-gray-900">{line.usage.smsUsed}</p>
-                <p className="text-sm text-gray-500">SMS Messages</p>
+              <div className="card" style={{ textAlign: 'center', background: 'var(--premium-bg)' }}>
+                <p className="text-2xl text-bold">{line.usage.smsUsed}</p>
+                <p className="text-sm text-secondary">SMS Messages</p>
               </div>
             </div>
           </div>
@@ -349,7 +334,7 @@ export function LineDetail() {
         loading={isActionLoading}
         variant="danger"
       >
-        <p className="text-gray-600">
+        <p className="text-sm text-secondary">
           This will immediately disconnect all services on <strong>+351 {line.msisdn}</strong>.
           You can unblock it at any time.
         </p>
@@ -365,7 +350,7 @@ export function LineDetail() {
         confirmDisabled={isActionLoading}
         loading={isActionLoading}
       >
-        <p className="text-gray-600">
+        <p className="text-sm text-secondary">
           This will restore all services on <strong>+351 {line.msisdn}</strong>.
         </p>
       </ConfirmDialog>
@@ -378,17 +363,15 @@ export function LineDetail() {
         title="Rename Line"
         confirmText="Save"
       >
-        <div className="space-y-4">
+        <div className="stack" style={{ gap: '16px' }}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nickname
-            </label>
+            <label className="form-label">Nickname</label>
             <input
               type="text"
               value={newNickname}
               onChange={(e) => setNewNickname(e.target.value)}
               placeholder="e.g., Personal, Work"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="form-input"
             />
           </div>
         </div>

@@ -17,16 +17,8 @@ export function ErrorMessage({
   onRetry,
 }: ErrorMessageProps) {
   return (
-    <div
-      style={{
-        padding: '24px',
-        textAlign: 'center',
-        background: '#fef2f2',
-        border: '1px solid #fecaca',
-        borderRadius: '8px',
-      }}
-    >
-      <Typography variant="h4" style={{ color: '#dc2626', marginBottom: '8px' }}>
+    <div className="card bg-error-light" style={{ textAlign: 'center', borderColor: '#fecaca' }}>
+      <Typography variant="h4" style={{ color: 'var(--premium-error)', marginBottom: '8px' }}>
         {title}
       </Typography>
       <Typography variant="body" color="secondary" style={{ marginBottom: '16px' }}>
@@ -51,12 +43,7 @@ export function NotFound({
   message = "We couldn't find what you're looking for.",
 }: NotFoundProps) {
   return (
-    <div
-      style={{
-        padding: '48px',
-        textAlign: 'center',
-      }}
-    >
+    <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
       <Typography variant="h3" style={{ marginBottom: '8px' }}>
         {title}
       </Typography>
@@ -75,14 +62,9 @@ export function Unauthorized({
   message = 'Please log in to continue.',
 }: UnauthorizedProps) {
   return (
-    <div
-      style={{
-        padding: '48px',
-        textAlign: 'center',
-      }}
-    >
+    <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
       <Typography variant="h3" style={{ marginBottom: '8px' }}>
-        🔒
+        Access Required
       </Typography>
       <Typography variant="body" color="secondary">
         {message}

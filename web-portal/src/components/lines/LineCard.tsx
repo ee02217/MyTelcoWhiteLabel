@@ -11,47 +11,46 @@ interface LineCardProps {
 }
 
 export function LineCard({ line }: LineCardProps) {
-  const statusColors: Record<string, string> = {
-    ACTIVE: 'bg-green-100 text-green-700',
-    SUSPENDED: 'bg-amber-100 text-amber-700',
-    INACTIVE: 'bg-gray-100 text-gray-700',
+  const statusBadge = (status: string) => {
+    if (status === 'ACTIVE') return 'badge badge-success';
+    if (status === 'SUSPENDED') return 'badge badge-warning';
+    return 'badge badge-neutral';
   };
 
   return (
     <Link
       to={`/lines/${line.lineId}`}
-      className="block bg-white rounded-lg border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all"
+      className="card card-hover"
+      style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-full ${
-            line.status === 'ACTIVE' ? 'bg-green-50' : 'bg-gray-50'
-          }`}>
-            <SignalIcon className={`h-6 w-6 ${
-              line.status === 'ACTIVE' ? 'text-green-600' : 'text-gray-400'
-            }`} />
+      <div className="row-between items-start">
+        <div className="row" style={{ gap: '16px' }}>
+          <div className={`p-3 rounded-full ${line.status === 'ACTIVE' ? 'bg-success-light' : 'bg-muted'}`}>
+            <SignalIcon style={{
+              width: 24,
+              height: 24,
+              color: line.status === 'ACTIVE' ? 'var(--premium-success)' : 'var(--premium-text-muted)'
+            }} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-gray-900">
-                +351 {line.msisdn}
-              </h3>
+            <div className="row" style={{ gap: '8px' }}>
+              <h3 className="text-base text-semibold">+351 {line.msisdn}</h3>
               {line.primaryLine && (
-                <StarIcon className="h-4 w-4 text-amber-500" title="Primary line" />
+                <StarIcon style={{ width: 16, height: 16, color: '#f59e0b' }} title="Primary line" />
               )}
             </div>
             {line.nickname && (
-              <p className="text-sm text-gray-500">{line.nickname}</p>
+              <p className="text-sm text-secondary">{line.nickname}</p>
             )}
-            <div className="flex items-center gap-3 mt-1">
-              <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[line.status] || 'bg-gray-100 text-gray-700'}`}>
+            <div className="row mt-1" style={{ gap: '12px' }}>
+              <span className={statusBadge(line.status)}>
                 {line.status.charAt(0) + line.status.slice(1).toLowerCase()}
               </span>
-              <span className="text-sm text-gray-400">{line.plan}</span>
+              <span className="text-sm text-muted">{line.plan}</span>
             </div>
           </div>
         </div>
-        <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+        <ChevronRightIcon style={{ width: 20, height: 20, color: 'var(--premium-text-muted)' }} />
       </div>
     </Link>
   );
