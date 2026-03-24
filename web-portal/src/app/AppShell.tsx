@@ -135,9 +135,9 @@ export function AppShell({
 
       {/* Main content */}
       <div style={{
-        flex: 1,
         marginLeft: sidebarCollapsed ? '72px' : '260px',
-        transition: 'margin-left var(--transition-base)',
+        width: sidebarCollapsed ? 'calc(100% - 72px)' : 'calc(100% - 260px)',
+        transition: 'margin-left var(--transition-base), width var(--transition-base)',
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
