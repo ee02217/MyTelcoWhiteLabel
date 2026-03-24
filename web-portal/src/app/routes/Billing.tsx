@@ -74,6 +74,33 @@ const mockBilling = {
 
 type Tab = 'summary' | 'methods' | 'history';
 
+// Constrained donut chart: explicit SVG dimensions prevent viewport-filling (fix #179)
+function BillingDonutChart({ currentBalance, lastPayment }: { currentBalance: number; lastPayment: number }) {
+  const total = currentBalance + lastPayment || 1;
+  const cx = 64, cy = 64, r = 48, sw = 16;
+  const circ = 2 * Math.PI * r;
+  const dueDash = (currentBalance / total) * circ;
+
+  return (
+    <svg width="128" height="128" viewBox="0 0 128 128" aria-hidden="true" style={{ display: 'block' }}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e5e7eb" strokeWidth={sw} />
+      <circle
+        cx={cx} cy={cy} r={r}
+        fill="none" stroke="#3b82f6" strokeWidth={sw}
+        strokeDasharray={`${dueDash} ${circ}`}
+        transform={`rotate(-90 ${cx} ${cy})`}
+      />
+      <circle
+        cx={cx} cy={cy} r={r}
+        fill="none" stroke="#4ade80" strokeWidth={sw}
+        strokeDasharray={`${circ - dueDash} ${circ}`}
+        strokeDashoffset={-dueDash}
+        transform={`rotate(-90 ${cx} ${cy})`}
+      />
+    </svg>
+  );
+}
+
 export function Billing() {
   const [isLoading] = useState(false);
   const [error] = useState<string | null>(null);
@@ -182,6 +209,29 @@ export function Billing() {
                 {defaultMethod.lastFour}
               </div>
             )}
+          </div>
+
+          {/* Billing Breakdown Chart */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Billing Breakdown</h2>
+            <div className="flex items-center gap-8">
+              <div className="w-32 h-32 flex-shrink-0">
+                <BillingDonutChart
+                  currentBalance={summary.currentBalance}
+                  lastPayment={summary.lastPaymentAmount}
+                />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-3 h-3 rounded-full bg-blue-500 flex-shrink-0" />
+                  <span className="text-gray-600">Amount Due: {formatAmount(summary.currentBalance)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-3 h-3 rounded-full bg-green-400 flex-shrink-0" />
+                  <span className="text-gray-600">Last Payment: {formatAmount(summary.lastPaymentAmount)}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Info */}
