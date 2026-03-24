@@ -866,6 +866,20 @@ img, svg { display: block; max-width: 100%; }
   color: var(--premium-text);
 }
 
+.app-main {
+  margin-left: 260px;
+  width: calc(100% - 260px);
+  transition: margin-left var(--transition-base), width var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-main-collapsed {
+  margin-left: 72px;
+  width: calc(100% - 72px);
+}
+
 .app-content {
   padding: 28px;
 }
@@ -1013,20 +1027,23 @@ img, svg { display: block; max-width: 100%; }
 
 @media (max-width: 1024px) {
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
-  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  /* Keep usage rings in 3 columns even on tablet */
+  .grid-3 { grid-template-columns: repeat(3, 1fr); gap: 16px; }
 
-  .sidebar { width: 72px; }
-  .sidebar .sidebar-nav-item span:not(.sidebar-nav-item-icon),
-  .sidebar .sidebar-logo-text,
-  .sidebar .sidebar-section-label,
-  .sidebar-user-name { display: none; }
+  .sidebar { display: none; }
+  .app-main, .app-main-collapsed {
+    margin-left: 0;
+    width: 100%;
+  }
+  .app-content { padding: 20px; }
+  .app-header  { margin-left: 0; }
 
-  .app-content { margin-left: 72px; }
-  .app-header  { margin-left: 72px; }
+  .dash-hero { padding: 28px 24px; }
+  .dash-hero-name { font-size: 1.5rem; }
 }
 
 @media (max-width: 768px) {
-  .grid-4 { grid-template-columns: 1fr; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: 1fr; }
   .grid-2 { grid-template-columns: 1fr; }
 
@@ -1036,9 +1053,9 @@ img, svg { display: block; max-width: 100%; }
   .app-content { padding: 16px; }
   .app-header  { padding: 0 16px; }
 
-  .sidebar { display: none; }
-  .app-content { margin-left: 0; }
-  .app-header  { margin-left: 0; }
+  .dash-hero { padding: 24px 20px; }
+  .dash-hero-name { font-size: 1.25rem; }
+  .dash-hero-circle { display: none; }
 }
 
 /* ── Reduced motion ──────────────────────────────────────── */

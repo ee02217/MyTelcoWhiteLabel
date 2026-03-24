@@ -134,14 +134,7 @@ export function AppShell({
       </aside>
 
       {/* Main content */}
-      <div style={{
-        marginLeft: sidebarCollapsed ? '72px' : '260px',
-        width: sidebarCollapsed ? 'calc(100% - 72px)' : 'calc(100% - 260px)',
-        transition: 'margin-left var(--transition-base), width var(--transition-base)',
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-      }}>
+      <div className={`app-main ${sidebarCollapsed ? 'app-main-collapsed' : ''}`}>
         {/* Header */}
         <header className="app-header">
           <span className="app-header-title">{pageTitle}</span>
