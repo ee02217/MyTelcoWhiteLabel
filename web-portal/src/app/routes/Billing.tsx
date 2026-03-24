@@ -5,8 +5,8 @@ import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import {
-  CreditCardIcon,
   BanknotesIcon,
+  CreditCardIcon,
   ClockIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
@@ -86,16 +86,20 @@ function BillingDonutChart({ currentBalance, lastPayment }: { currentBalance: nu
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e5e7eb" strokeWidth={sw} />
       <circle
         cx={cx} cy={cy} r={r}
-        fill="none" stroke="#3b82f6" strokeWidth={sw}
+        fill="none" stroke="#6366f1" strokeWidth={sw}
         strokeDasharray={`${dueDash} ${circ}`}
+        strokeLinecap="round"
         transform={`rotate(-90 ${cx} ${cy})`}
+        style={{ transition: 'stroke-dasharray 0.8s ease' }}
       />
       <circle
         cx={cx} cy={cy} r={r}
         fill="none" stroke="#4ade80" strokeWidth={sw}
         strokeDasharray={`${circ - dueDash} ${circ}`}
         strokeDashoffset={-dueDash}
+        strokeLinecap="round"
         transform={`rotate(-90 ${cx} ${cy})`}
+        style={{ transition: 'stroke-dasharray 0.8s ease' }}
       />
     </svg>
   );
@@ -132,9 +136,9 @@ export function Billing() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <LoadingSkeleton className="h-8 w-48" />
-        <LoadingSkeleton className="h-64" />
+      <div className="page">
+        <LoadingSkeleton width="200px" height="32px" />
+        <LoadingSkeleton height="280px" />
       </div>
     );
   }
@@ -153,130 +157,114 @@ export function Billing() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="page">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Billing</h1>
-        <p className="text-gray-500 mt-1">Manage payments and billing information</p>
+      <div className="page-header">
+        <h1 className="page-title">Billing</h1>
+        <p className="page-subtitle">Manage payments and billing information</p>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+      <div className="tab-group">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`tab ${activeTab === tab.id ? 'tab-active' : ''}`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Tab Content */}
       {activeTab === 'summary' && (
-        <div className="space-y-6">
+        <div className="stack-gap">
           {/* Current Balance Card */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
+          <div className="card">
+            <div className="row-between" style={{ flexWrap: 'wrap', gap: '16px' }}>
               <div>
-                <p className="text-sm text-gray-500">Current Balance</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
-                  {formatAmount(summary.currentBalance)}
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-secondary">Current Balance</p>
+                <p className="stat-value stat-value-lg mt-1">{formatAmount(summary.currentBalance)}</p>
+                <p className="text-sm text-secondary mt-1">
                   Due by {formatDate(summary.nextPaymentDueDate)}
                 </p>
               </div>
-              <button
-                onClick={() => setShowPayDialog(true)}
-                className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-              >
+              <button className="btn-primary" onClick={() => setShowPayDialog(true)}>
                 Pay Now
               </button>
             </div>
 
             {summary.autoPayEnabled && (
-              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2 text-sm text-gray-500">
-                <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                Auto-pay enabled on {defaultMethod.cardBrand || 'SEPA'} ••••{' '}
-                {defaultMethod.lastFour}
+              <div className="row mt-4" style={{ paddingTop: '16px', borderTop: '1px solid var(--premium-border)', gap: '8px' }}>
+                <CheckCircleIcon style={{ width: 16, height: 16, color: 'var(--premium-success)' }} />
+                <span className="text-sm text-secondary">
+                  Auto-pay enabled on {defaultMethod.cardBrand || 'SEPA'} •••• {defaultMethod.lastFour}
+                </span>
               </div>
             )}
           </div>
 
           {/* Billing Breakdown Chart */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Billing Breakdown</h2>
-            <div className="flex items-center gap-8">
-              <div className="w-32 h-32 flex-shrink-0">
+          <div className="card">
+            <h2 className="text-lg text-semibold mb-4">Billing Breakdown</h2>
+            <div className="row" style={{ gap: '32px', flexWrap: 'wrap' }}>
+              <div style={{ flexShrink: 0 }}>
                 <BillingDonutChart
                   currentBalance={summary.currentBalance}
                   lastPayment={summary.lastPaymentAmount}
                 />
               </div>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-3 h-3 rounded-full bg-blue-500 flex-shrink-0" />
-                  <span className="text-gray-600">Amount Due: {formatAmount(summary.currentBalance)}</span>
+              <div className="stack-gap">
+                <div className="row" style={{ gap: '8px' }}>
+                  <div style={{ width: 12, height: 12, borderRadius: 'var(--radius-full)', background: '#6366f1', flexShrink: 0 }} />
+                  <span className="text-sm text-secondary">Amount Due: {formatAmount(summary.currentBalance)}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-3 h-3 rounded-full bg-green-400 flex-shrink-0" />
-                  <span className="text-gray-600">Last Payment: {formatAmount(summary.lastPaymentAmount)}</span>
+                <div className="row" style={{ gap: '8px' }}>
+                  <div style={{ width: 12, height: 12, borderRadius: 'var(--radius-full)', background: '#4ade80', flexShrink: 0 }} />
+                  <span className="text-sm text-secondary">Last Payment: {formatAmount(summary.lastPaymentAmount)}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Quick Info */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <BanknotesIcon className="h-5 w-5 text-green-600" />
+          <div className="grid-3">
+            <div className="card card-hover">
+              <div className="row" style={{ gap: '12px' }}>
+                <div className="bg-success-light p-2 rounded">
+                  <BanknotesIcon style={{ width: 20, height: 20, color: 'var(--premium-success)' }} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Last Payment</p>
-                  <p className="font-medium text-gray-900">
-                    {formatAmount(summary.lastPaymentAmount)}
-                  </p>
-                  <p className="text-xs text-gray-400">{formatDate(summary.lastPaymentDate)}</p>
+                  <p className="text-sm text-secondary">Last Payment</p>
+                  <p className="text-base text-semibold">{formatAmount(summary.lastPaymentAmount)}</p>
+                  <p className="text-xs text-muted">{formatDate(summary.lastPaymentDate)}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <CreditCardIcon className="h-5 w-5 text-blue-600" />
+            <div className="card card-hover">
+              <div className="row" style={{ gap: '12px' }}>
+                <div className="bg-info-light p-2 rounded">
+                  <CreditCardIcon style={{ width: 20, height: 20, color: 'var(--premium-info)' }} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Next Due Date</p>
-                  <p className="font-medium text-gray-900">
-                    {formatDate(summary.nextPaymentDueDate)}
-                  </p>
-                  <p className="text-xs text-gray-400">Monthly billing cycle</p>
+                  <p className="text-sm text-secondary">Next Due Date</p>
+                  <p className="text-base text-semibold">{formatDate(summary.nextPaymentDueDate)}</p>
+                  <p className="text-xs text-muted">Monthly billing cycle</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-50 rounded-lg">
-                  <ClockIcon className="h-5 w-5 text-purple-600" />
+            <div className="card card-hover">
+              <div className="row" style={{ gap: '12px' }}>
+                <div className="bg-purple-light p-2 rounded">
+                  <ClockIcon style={{ width: 20, height: 20, color: 'var(--premium-accent)' }} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Auto-Pay</p>
-                  <p className="font-medium text-gray-900">
-                    {summary.autoPayEnabled ? 'Enabled' : 'Disabled'}
-                  </p>
-                  <p className="text-xs text-gray-400">Never miss a payment</p>
+                  <p className="text-sm text-secondary">Auto-Pay</p>
+                  <p className="text-base text-semibold">{summary.autoPayEnabled ? 'Enabled' : 'Disabled'}</p>
+                  <p className="text-xs text-muted">Never miss a payment</p>
                 </div>
               </div>
             </div>
@@ -285,18 +273,15 @@ export function Billing() {
       )}
 
       {activeTab === 'methods' && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-900">Saved Payment Methods</h2>
-            <button
-              onClick={() => setShowAddMethodDialog(true)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
+        <div className="stack-gap">
+          <div className="row-between">
+            <h2 className="text-lg text-semibold">Saved Payment Methods</h2>
+            <button className="btn-secondary" onClick={() => setShowAddMethodDialog(true)}>
               Add Payment Method
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="stack-gap">
             {paymentMethods.map((method, index) => (
               <PaymentMethodCard
                 key={method.paymentMethodId}
@@ -309,8 +294,8 @@ export function Billing() {
       )}
 
       {activeTab === 'history' && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Payment History</h2>
+        <div className="card">
+          <h2 className="text-lg text-semibold mb-4">Payment History</h2>
           <PaymentHistoryList payments={paymentHistory} />
         </div>
       )}
@@ -325,9 +310,9 @@ export function Billing() {
         confirmDisabled={isPaying}
         loading={isPaying}
       >
-        <p className="text-gray-600">
+        <p className="text-sm text-secondary">
           Pay {formatAmount(summary.currentBalance)} using your default payment method{' '}
-          <span className="font-medium">
+          <span className="text-semibold">
             {defaultMethod.cardBrand} •••• {defaultMethod.lastFour}
           </span>
           ?
@@ -343,7 +328,7 @@ export function Billing() {
         confirmText="Add"
         cancelText="Cancel"
       >
-        <p className="text-gray-600">This feature will be available soon.</p>
+        <p className="text-sm text-secondary">This feature will be available soon.</p>
       </ConfirmDialog>
     </div>
   );

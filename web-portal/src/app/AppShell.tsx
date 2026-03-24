@@ -1,30 +1,58 @@
-// App Shell - Main layout with sidebar navigation
+// App Shell - Premium layout with sidebar navigation
 
-import { type ReactNode, useState } from 'react';
-import { Typography } from '../design-system/Typography';
-import { Button } from '../design-system/Button';
+import { type ReactNode, useState, type ComponentType, type SVGProps } from 'react';
+import {
+  HomeIcon,
+  ChartBarIcon,
+  CreditCardIcon,
+  DevicePhoneMobileIcon,
+  GlobeAltIcon,
+  ChatBubbleLeftRightIcon,
+  BellIcon,
+  ShoppingCartIcon,
+  ArchiveBoxIcon,
+  Cog6ToothIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ArrowRightOnRectangleIcon,
+} from '@heroicons/react/24/outline';
+
+type HeroIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 interface NavItem {
   path: string;
   label: string;
-  icon: string;
+  icon: HeroIcon;
 }
 
 const MAIN_NAV: NavItem[] = [
-  { path: '/', label: 'Dashboard', icon: '🏠' },
-  { path: '/usage', label: 'Usage', icon: '📊' },
-  { path: '/billing', label: 'Billing', icon: '💳' },
-  { path: '/lines', label: 'Lines', icon: '📱' },
-  { path: '/roaming', label: 'Roaming', icon: '🌍' },
-  { path: '/support', label: 'Support', icon: '🎧' },
-  { path: '/notifications', label: 'Notifications', icon: '🔔' },
+  { path: '/', label: 'Dashboard', icon: HomeIcon },
+  { path: '/usage', label: 'Usage', icon: ChartBarIcon },
+  { path: '/billing', label: 'Billing', icon: CreditCardIcon },
+  { path: '/lines', label: 'Lines', icon: DevicePhoneMobileIcon },
+  { path: '/roaming', label: 'Roaming', icon: GlobeAltIcon },
+  { path: '/support', label: 'Support', icon: ChatBubbleLeftRightIcon },
+  { path: '/notifications', label: 'Notifications', icon: BellIcon },
 ];
 
 const SECONDARY_NAV: NavItem[] = [
-  { path: '/catalog', label: 'Catalog', icon: '🛒' },
-  { path: '/orders', label: 'Orders', icon: '📦' },
-  { path: '/settings', label: 'Settings', icon: '⚙️' },
+  { path: '/catalog', label: 'Catalog', icon: ShoppingCartIcon },
+  { path: '/orders', label: 'Orders', icon: ArchiveBoxIcon },
+  { path: '/settings', label: 'Settings', icon: Cog6ToothIcon },
 ];
+
+const PAGE_TITLES: Record<string, string> = {
+  '/': 'Dashboard',
+  '/usage': 'Usage Details',
+  '/billing': 'Billing',
+  '/lines': 'My Lines',
+  '/roaming': 'Roaming',
+  '/support': 'Support',
+  '/notifications': 'Notifications',
+  '/catalog': 'Catalog',
+  '/orders': 'Orders',
+  '/settings': 'Settings',
+};
 
 interface AppShellProps {
   children: ReactNode;
@@ -39,68 +67,46 @@ export function AppShell({
   children,
   currentPath,
   onNavigate,
-  notificationCount = 0,
+  notificationCount = 3,
   userName = 'Customer',
   onLogout,
 }: AppShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const pageTitle = PAGE_TITLES[currentPath] || (currentPath.startsWith('/lines/') ? 'Line Detail' : 'MyTelco');
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--premium-bg)' }}>
       {/* Sidebar */}
-      <aside
-        style={{
-          width: sidebarCollapsed ? '64px' : '240px',
-          background: '#1a1a2e',
-          color: 'white',
-          display: 'flex',
-          flexDirection: 'column',
-          transition: 'width 0.2s ease',
-          position: 'fixed',
-          height: '100vh',
-          overflow: 'hidden',
-        }}
-      >
+      <aside className={`sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         {/* Logo */}
-        <div
-          style={{
-            padding: sidebarCollapsed ? '16px' : '16px 20px',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: sidebarCollapsed ? 'center' : 'space-between',
-          }}
-        >
-          {!sidebarCollapsed && (
-            <Typography variant="h4" style={{ color: 'white' }}>
-              MyTelco
-            </Typography>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
+        <div className="sidebar-logo">
+          {!sidebarCollapsed && <span className="sidebar-logo-text">MyTelco</span>}
+          <button
+            className="btn-icon-only"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            style={{ color: 'white', minWidth: 'auto', padding: '4px 8px' }}
+            style={{ color: 'rgba(255,255,255,.6)', width: '32px', height: '32px' }}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {sidebarCollapsed ? '→' : '←'}
-          </Button>
+            {sidebarCollapsed ? (
+              <ChevronRightIcon style={{ width: 18, height: 18 }} />
+            ) : (
+              <ChevronLeftIcon style={{ width: 18, height: 18 }} />
+            )}
+          </button>
         </div>
 
-        {/* Main Navigation */}
-        <nav style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
+        {/* Navigation */}
+        <nav className="sidebar-nav">
+          {!sidebarCollapsed && <div className="sidebar-section-label">Main</div>}
           <NavSection
             items={MAIN_NAV}
             currentPath={currentPath}
             onNavigate={onNavigate}
             collapsed={sidebarCollapsed}
           />
-          <div
-            style={{
-              height: '1px',
-              background: 'rgba(255,255,255,0.1)',
-              margin: '8px 16px',
-            }}
-          />
+          <div className="sidebar-divider" />
+          {!sidebarCollapsed && <div className="sidebar-section-label">More</div>}
           <NavSection
             items={SECONDARY_NAV}
             currentPath={currentPath}
@@ -110,42 +116,17 @@ export function AppShell({
         </nav>
 
         {/* User section */}
-        <div
-          style={{
-            padding: '12px 16px',
-            borderTop: '1px solid rgba(255,255,255,0.1)',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                background: '#6366f1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '12px',
-                fontWeight: 'bold',
-              }}
-            >
+        <div className="sidebar-user">
+          <div className="row" style={{ gap: '10px' }}>
+            <div className="sidebar-avatar">
               {userName.charAt(0).toUpperCase()}
             </div>
             {!sidebarCollapsed && (
               <div style={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  variant="small"
-                  style={{ color: 'white', fontWeight: 500 }}
-                >
+                <div style={{ color: 'white', fontSize: '0.875rem', fontWeight: 600 }} className="truncate">
                   {userName}
-                </Typography>
+                </div>
+                <div style={{ color: 'rgba(255,255,255,.4)', fontSize: '0.75rem' }}>Customer</div>
               </div>
             )}
           </div>
@@ -153,67 +134,41 @@ export function AppShell({
       </aside>
 
       {/* Main content */}
-      <main
-        style={{
-          flex: 1,
-          marginLeft: sidebarCollapsed ? '64px' : '240px',
-          transition: 'margin-left 0.2s ease',
-        }}
-      >
+      <div style={{
+        flex: 1,
+        marginLeft: sidebarCollapsed ? '72px' : '260px',
+        transition: 'margin-left var(--transition-base)',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+      }}>
         {/* Header */}
-        <header
-          style={{
-            background: 'white',
-            padding: '12px 24px',
-            borderBottom: '1px solid #e5e7eb',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: '16px',
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-          }}
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onNavigate('/notifications')}
-            style={{ position: 'relative' }}
-          >
-            🔔
-            {notificationCount > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-4px',
-                  right: '-4px',
-                  background: '#ef4444',
-                  color: 'white',
-                  fontSize: '10px',
-                  fontWeight: 'bold',
-                  borderRadius: '10px',
-                  padding: '2px 5px',
-                  minWidth: '18px',
-                  textAlign: 'center',
-                }}
-              >
-                {notificationCount}
-              </span>
+        <header className="app-header">
+          <span className="app-header-title">{pageTitle}</span>
+          <div className="row" style={{ gap: '8px' }}>
+            <button
+              className="btn-icon-only relative"
+              onClick={() => onNavigate('/notifications')}
+              aria-label="Notifications"
+            >
+              <BellIcon style={{ width: 20, height: 20 }} />
+              {notificationCount > 0 && (
+                <span className="notification-badge">{notificationCount}</span>
+              )}
+            </button>
+            {onLogout && (
+              <button className="btn-icon-only" onClick={onLogout} aria-label="Logout" title="Logout">
+                <ArrowRightOnRectangleIcon style={{ width: 20, height: 20 }} />
+              </button>
             )}
-          </Button>
-          {onLogout && (
-            <Button variant="ghost" size="sm" onClick={onLogout}>
-              Logout
-            </Button>
-          )}
+          </div>
         </header>
 
         {/* Page content */}
-        <div style={{ padding: '24px' }}>
+        <main className="app-content" style={{ flex: 1 }}>
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
@@ -227,43 +182,20 @@ interface NavSectionProps {
 
 function NavSection({ items, currentPath, onNavigate, collapsed }: NavSectionProps) {
   return (
-    <div>
+    <div className="stack" style={{ gap: '2px' }}>
       {items.map((item) => {
         const isActive = currentPath === item.path;
+        const Icon = item.icon;
         return (
           <button
             key={item.path}
             onClick={() => onNavigate(item.path)}
-            style={{
-              width: '100%',
-              padding: collapsed ? '12px' : '12px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              background: isActive ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
-              border: 'none',
-              color: isActive ? '#a5b4fc' : 'rgba(255,255,255,0.7)',
-              cursor: 'pointer',
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.background = 'transparent';
-              }
-            }}
+            className={`sidebar-nav-item ${isActive ? 'sidebar-nav-item-active' : ''}`}
+            style={collapsed ? { justifyContent: 'center', padding: '10px' } : undefined}
+            title={collapsed ? item.label : undefined}
           >
-            <span style={{ fontSize: '18px' }}>{item.icon}</span>
-            {!collapsed && (
-              <Typography variant="body" style={{ color: 'inherit' }}>
-                {item.label}
-              </Typography>
-            )}
+            <Icon style={{ width: 20, height: 20, flexShrink: 0 }} />
+            {!collapsed && <span>{item.label}</span>}
           </button>
         );
       })}

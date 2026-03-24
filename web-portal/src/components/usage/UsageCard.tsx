@@ -9,65 +9,68 @@ interface UsageCardProps {
   color: 'blue' | 'green' | 'purple';
 }
 
+const colorMap = {
+  blue: {
+    fill: 'progress-fill-blue',
+    bg: 'bg-info-light',
+    text: 'text-info',
+  },
+  green: {
+    fill: 'progress-fill-green',
+    bg: 'bg-success-light',
+    text: 'text-success',
+  },
+  purple: {
+    fill: 'progress-fill-purple',
+    bg: 'bg-purple-light',
+    text: 'text-primary',
+  },
+};
+
 export function UsageCard({ title, icon, used, limit, unit, color }: UsageCardProps) {
   const percentage = Math.min((used / limit) * 100, 100);
   const isNearLimit = percentage > 80;
   const isOverLimit = used > limit;
 
-  const colorClasses = {
-    blue: {
-      bar: 'bg-blue-600',
-      text: 'text-blue-600',
-      bg: 'bg-blue-50',
-    },
-    green: {
-      bar: 'bg-green-600',
-      text: 'text-green-600',
-      bg: 'bg-green-50',
-    },
-    purple: {
-      bar: 'bg-purple-600',
-      text: 'text-purple-600',
-      bg: 'bg-purple-50',
-    },
-  };
-
-  const colors = colorClasses[color];
+  const colors = colorMap[color];
+  const fillClass = isOverLimit
+    ? 'progress-fill-red'
+    : isNearLimit
+    ? 'progress-fill-amber'
+    : colors.fill;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className={`p-2 rounded-lg ${colors.bg}`}>
+    <div className="card card-hover">
+      <div className="row mb-4" style={{ gap: '10px' }}>
+        <div className={`${colors.bg} p-2 rounded`}>
           <span className={colors.text}>{icon}</span>
         </div>
-        <h3 className="font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-base text-semibold">{title}</h3>
       </div>
 
       <div className="mb-2">
-        <span className={`text-2xl font-bold ${isOverLimit ? 'text-red-600' : 'text-gray-900'}`}>
+        <span className={`text-2xl text-bold ${isOverLimit ? 'text-error' : ''}`}>
           {used.toLocaleString()}
         </span>
-        <span className="text-gray-500 ml-1">/ {limit.toLocaleString()} {unit}</span>
+        <span className="text-sm text-muted ml-2">/ {limit.toLocaleString()} {unit}</span>
       </div>
 
-      <div className="w-full bg-gray-100 rounded-full h-2">
+      <div className="progress-bar">
         <div
-          className={`h-2 rounded-full transition-all ${
-            isOverLimit ? 'bg-red-500' : isNearLimit ? 'bg-amber-500' : colors.bar
-          }`}
+          className={`progress-fill ${fillClass}`}
           style={{ width: `${percentage}%` }}
         />
       </div>
 
       {isNearLimit && !isOverLimit && (
-        <p className="text-xs text-amber-600 mt-2">
-          Approaching limit - consider upgrading
+        <p className="text-xs text-warning mt-2">
+          Approaching limit — consider upgrading
         </p>
       )}
 
       {isOverLimit && (
-        <p className="text-xs text-red-600 mt-2">
-          Over limit - out-of-cycle charges may apply
+        <p className="text-xs text-error mt-2">
+          Over limit — out-of-cycle charges may apply
         </p>
       )}
     </div>

@@ -7,6 +7,7 @@ import {
   CircleStackIcon,
   PhoneIcon,
   ChatBubbleLeftRightIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
 // Mock data - will be replaced by API call
@@ -67,12 +68,12 @@ export function Usage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <LoadingSkeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <LoadingSkeleton className="h-48" />
-          <LoadingSkeleton className="h-48" />
-          <LoadingSkeleton className="h-48" />
+      <div className="page">
+        <LoadingSkeleton width="200px" height="32px" />
+        <div className="grid-3">
+          <LoadingSkeleton height="200px" />
+          <LoadingSkeleton height="200px" />
+          <LoadingSkeleton height="200px" />
         </div>
       </div>
     );
@@ -92,22 +93,22 @@ export function Usage() {
     });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="page">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Usage Details</h1>
-          <p className="text-gray-500 mt-1">
-            {formatDate(billingCycle.start)} - {formatDate(billingCycle.end)}
-            <span className="ml-2 text-blue-600">
-              {billingCycle.daysRemaining} days remaining
-            </span>
-          </p>
-        </div>
-        <div className="flex gap-2">
+      <div className="page-header">
+        <div className="page-header-row">
+          <div>
+            <h1 className="page-title">Usage Details</h1>
+            <p className="page-subtitle">
+              {formatDate(billingCycle.start)} - {formatDate(billingCycle.end)}
+              <span className="text-info ml-2">
+                {billingCycle.daysRemaining} days remaining
+              </span>
+            </p>
+          </div>
           <select
             value={selectedCycle}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="form-select"
           >
             <option value="current">Mar 1 - Mar 31, 2026</option>
             <option value="prev">Feb 1 - Feb 28, 2026</option>
@@ -116,10 +117,10 @@ export function Usage() {
       </div>
 
       {/* Usage Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid-3">
         <UsageCard
           title="Data"
-          icon={<CircleStackIcon className="h-5 w-5" />}
+          icon={<CircleStackIcon style={{ width: 20, height: 20 }} />}
           used={data.used}
           limit={data.limit}
           unit="GB"
@@ -127,7 +128,7 @@ export function Usage() {
         />
         <UsageCard
           title="Voice"
-          icon={<PhoneIcon className="h-5 w-5" />}
+          icon={<PhoneIcon style={{ width: 20, height: 20 }} />}
           used={voice.used}
           limit={voice.limit}
           unit="min"
@@ -135,7 +136,7 @@ export function Usage() {
         />
         <UsageCard
           title="SMS"
-          icon={<ChatBubbleLeftRightIcon className="h-5 w-5" />}
+          icon={<ChatBubbleLeftRightIcon style={{ width: 20, height: 20 }} />}
           used={sms.used}
           limit={sms.limit}
           unit="msg"
@@ -151,63 +152,61 @@ export function Usage() {
       />
 
       {/* Details */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Usage Breakdown</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="card">
+        <h2 className="text-lg text-semibold mb-4">Usage Breakdown</h2>
+        <div className="grid-2">
           <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Data Details</h3>
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Daily average</dt>
-                <dd className="font-medium">{data.dailyAverage.toFixed(2)} GB</dd>
+            <h3 className="text-sm text-medium text-secondary mb-2">Data Details</h3>
+            <div className="detail-list">
+              <div className="detail-row">
+                <span className="detail-label">Daily average</span>
+                <span className="detail-value">{data.dailyAverage.toFixed(2)} GB</span>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Peak usage day</dt>
-                <dd className="font-medium">
+              <div className="detail-row">
+                <span className="detail-label">Peak usage day</span>
+                <span className="detail-value">
                   {formatDate(data.peakDay.date)} ({data.peakDay.used} GB)
-                </dd>
+                </span>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Remaining</dt>
-                <dd className="font-medium text-green-600">
+              <div className="detail-row">
+                <span className="detail-label">Remaining</span>
+                <span className="detail-value text-success">
                   {(data.limit - data.used).toFixed(1)} GB
-                </dd>
+                </span>
               </div>
-            </dl>
+            </div>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Voice Details</h3>
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-500">International calls</dt>
-                <dd className="font-medium">{voice.international} min</dd>
+            <h3 className="text-sm text-medium text-secondary mb-2">Voice Details</h3>
+            <div className="detail-list">
+              <div className="detail-row">
+                <span className="detail-label">International calls</span>
+                <span className="detail-value">{voice.international} min</span>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Domestic calls</dt>
-                <dd className="font-medium">{voice.used - voice.international} min</dd>
+              <div className="detail-row">
+                <span className="detail-label">Domestic calls</span>
+                <span className="detail-value">{voice.used - voice.international} min</span>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Remaining</dt>
-                <dd className="font-medium text-green-600">
-                  {(voice.limit - voice.used)} min
-                </dd>
+              <div className="detail-row">
+                <span className="detail-label">Remaining</span>
+                <span className="detail-value text-success">
+                  {voice.limit - voice.used} min
+                </span>
               </div>
-            </dl>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Warning Banner */}
       {data.used / data.limit > 0.8 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
+        <div className="banner-warning">
+          <ExclamationTriangleIcon style={{ width: 20, height: 20, color: '#d97706', flexShrink: 0 }} />
           <div>
-            <h3 className="font-medium text-amber-800">You're approaching your data limit</h3>
-            <p className="text-sm text-amber-700 mt-1">
+            <h3 className="text-sm text-semibold" style={{ color: '#92400e' }}>
+              You're approaching your data limit
+            </h3>
+            <p className="text-sm mt-1" style={{ color: '#a16207' }}>
               You've used {((data.used / data.limit) * 100).toFixed(0)}% of your {data.limit} GB data allowance.
               Consider upgrading to avoid out-of-cycle charges.
             </p>

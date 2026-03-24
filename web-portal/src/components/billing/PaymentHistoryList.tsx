@@ -18,32 +18,29 @@ export function PaymentHistoryList({ payments }: PaymentHistoryListProps) {
       currency: 'EUR',
     }).format(amount / 100);
 
+  const statusBadge = (status: PaymentRecord['status']) => {
+    if (status === 'completed') return 'badge badge-success';
+    if (status === 'pending') return 'badge badge-warning';
+    return 'badge badge-error';
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="stack">
       {payments.map((payment) => (
         <div
           key={payment.id}
-          className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+          className="row-between py-3"
+          style={{ borderBottom: '1px solid #f1f5f9' }}
         >
           <div>
-            <p className="font-medium text-gray-900">
-              {formatAmount(payment.amount)}
-            </p>
-            <p className="text-sm text-gray-500">{formatDate(payment.date)}</p>
+            <p className="text-base text-semibold">{formatAmount(payment.amount)}</p>
+            <p className="text-sm text-secondary">{formatDate(payment.date)}</p>
             {payment.description && (
-              <p className="text-xs text-gray-400">{payment.description}</p>
+              <p className="text-xs text-muted">{payment.description}</p>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <span
-              className={`px-2 py-1 text-xs font-medium rounded ${
-                payment.status === 'completed'
-                  ? 'bg-green-100 text-green-700'
-                  : payment.status === 'pending'
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-red-100 text-red-700'
-              }`}
-            >
+          <div className="row" style={{ gap: '12px' }}>
+            <span className={statusBadge(payment.status)}>
               {payment.status}
             </span>
             {payment.receiptUrl && (
@@ -51,7 +48,7 @@ export function PaymentHistoryList({ payments }: PaymentHistoryListProps) {
                 href={payment.receiptUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-sm text-primary"
               >
                 Receipt
               </a>

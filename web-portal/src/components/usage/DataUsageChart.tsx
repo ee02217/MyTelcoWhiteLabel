@@ -19,29 +19,36 @@ export function DataUsageChart({ dataUsed, dataLimit, dailyData }: DataUsageChar
   }, [dataUsed, dataLimit, dailyData]);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-900">Daily Usage</h3>
-        <span className={`text-sm ${isOverLimit ? 'text-red-600' : isNearLimit ? 'text-amber-600' : 'text-gray-500'}`}>
+    <div className="card">
+      <div className="row-between mb-4">
+        <h3 className="text-base text-semibold">Daily Usage</h3>
+        <span className={`text-sm ${isOverLimit ? 'text-error' : isNearLimit ? 'text-warning' : 'text-muted'}`}>
           {percentage.toFixed(1)}% of limit
         </span>
       </div>
-      
-      <div className="h-40 flex items-end gap-1">
+
+      <div style={{ height: '160px', display: 'flex', alignItems: 'flex-end', gap: '3px' }}>
         {dailyData.map((day, i) => {
           const height = (day.used / maxUsed) * 100;
           const isToday = i === dailyData.length - 1;
           return (
-            <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
-              <div className="w-full bg-gray-100 rounded-t relative" style={{ height: '140px' }}>
+            <div key={day.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <div style={{ width: '100%', height: '140px', background: '#f1f5f9', borderRadius: '4px 4px 0 0', position: 'relative' }}>
                 <div
-                  className={`absolute bottom-0 w-full rounded-t transition-all ${
-                    isToday ? 'bg-blue-600' : 'bg-blue-300'
-                  }`}
-                  style={{ height: `${height}%` }}
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    width: '100%',
+                    borderRadius: '4px 4px 0 0',
+                    height: `${height}%`,
+                    background: isToday
+                      ? 'linear-gradient(180deg, #6366f1, #818cf8)'
+                      : 'linear-gradient(180deg, #c7d2fe, #e0e7ff)',
+                    transition: 'height 0.3s ease',
+                  }}
                 />
               </div>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-muted">
                 {new Date(day.date).getDate()}
               </span>
             </div>

@@ -31,36 +31,15 @@ export function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          maxWidth: '450px',
-          width: '90%',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="dialog-overlay" onClick={onClose}>
+      <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
         <Typography variant="h4" style={{ marginBottom: '12px' }}>
           {title}
         </Typography>
         <div style={{ marginBottom: '24px' }}>
           {children}
         </div>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+        <div className="row justify-end" style={{ gap: '12px' }}>
           <Button variant="ghost" size="sm" onClick={onClose}>
             {cancelText}
           </Button>
@@ -69,7 +48,7 @@ export function ConfirmDialog({
             size="sm"
             onClick={onConfirm}
             disabled={loading || confirmDisabled}
-            style={variant === 'danger' ? { backgroundColor: '#dc2626', color: 'white', borderColor: '#dc2626' } : undefined}
+            style={variant === 'danger' ? { backgroundColor: 'var(--premium-error)', color: 'white', borderColor: 'var(--premium-error)' } : undefined}
           >
             {loading ? 'Loading...' : confirmText}
           </Button>

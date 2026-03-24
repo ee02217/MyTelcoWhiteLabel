@@ -44,12 +44,12 @@ export function Lines() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
-        <LoadingSkeleton className="h-8 w-48" />
-        <div className="space-y-4">
-          <LoadingSkeleton className="h-24" />
-          <LoadingSkeleton className="h-24" />
-          <LoadingSkeleton className="h-24" />
+      <div className="page">
+        <LoadingSkeleton width="200px" height="32px" />
+        <div className="stack-gap">
+          <LoadingSkeleton height="96px" />
+          <LoadingSkeleton height="96px" />
+          <LoadingSkeleton height="96px" />
         </div>
       </div>
     );
@@ -64,26 +64,28 @@ export function Lines() {
   const otherLines = lines.filter((l) => l.status !== 'ACTIVE');
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="page">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Lines</h1>
-          <p className="text-gray-500 mt-1">
-            {activeLines.length} active line{activeLines.length !== 1 ? 's' : ''}
-          </p>
+      <div className="page-header">
+        <div className="page-header-row">
+          <div>
+            <h1 className="page-title">My Lines</h1>
+            <p className="page-subtitle">
+              {activeLines.length} active line{activeLines.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <button className="btn-primary">
+            <PlusIcon style={{ width: 20, height: 20 }} />
+            Add New Line
+          </button>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
-          <PlusIcon className="h-5 w-5" />
-          Add New Line
-        </button>
       </div>
 
       {/* Lines List */}
-      <div className="space-y-4">
+      <div className="stack-gap">
         {/* Primary Line Section */}
         <div>
-          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
+          <h2 className="text-xs text-semibold text-muted mb-3" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Primary Line
           </h2>
           <LineCard line={lines.find((l) => l.primaryLine) || lines[0]} />
@@ -92,10 +94,10 @@ export function Lines() {
         {/* Other Lines */}
         {otherLines.length > 0 && (
           <div>
-            <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
+            <h2 className="text-xs text-semibold text-muted mb-3" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Other Lines
             </h2>
-            <div className="space-y-3">
+            <div className="stack" style={{ gap: '12px' }}>
               {otherLines.map((line) => (
                 <LineCard key={line.lineId} line={line} />
               ))}
@@ -104,20 +106,17 @@ export function Lines() {
         )}
       </div>
 
-      {/* Info Card — WifiIcon constrained to h-8 w-8 to prevent SVG overflow (fix #180) */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <WifiIcon className="h-8 w-8 text-blue-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-medium text-blue-900">Need help with your lines?</h3>
-            <p className="text-sm text-blue-700 mt-1">
-              Contact support to add new lines, change plans, or manage your existing
-              services.
-            </p>
-            <button className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700">
-              Contact Support →
-            </button>
-          </div>
+      {/* Info Card */}
+      <div className="banner-info">
+        <WifiIcon style={{ width: 24, height: 24, color: 'var(--premium-info)', flexShrink: 0, marginTop: '2px' }} />
+        <div>
+          <h3 className="text-sm text-semibold" style={{ color: '#1e3a5f' }}>Need help with your lines?</h3>
+          <p className="text-sm mt-1" style={{ color: '#1d4ed8' }}>
+            Contact support to add new lines, change plans, or manage your existing services.
+          </p>
+          <button className="btn-ghost mt-3 text-sm" style={{ padding: 0 }}>
+            Contact Support
+          </button>
         </div>
       </div>
     </div>

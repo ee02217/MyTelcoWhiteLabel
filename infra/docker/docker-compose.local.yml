@@ -230,6 +230,8 @@ services:
         VITE_OIDC_REDIRECT_URI: ${WEB_OIDC_REDIRECT_URI_DOCKER:-http://localhost:3000/callback}
         VITE_OIDC_POST_LOGOUT_REDIRECT_URI: ${WEB_OIDC_POST_LOGOUT_REDIRECT_URI_DOCKER:-http://localhost:3000}
         VITE_OIDC_SCOPES: ${WEB_OIDC_SCOPES:-"openid roles"}
+        VITE_DEV_MODE: ${WEB_DEV_MODE:-true}
+        VITE_USE_MOCK_DATA: ${WEB_USE_MOCK_DATA:-true}
     container_name: mytelco-web-portal
     environment:
       API_UPSTREAM: ${WEB_PORTAL_API_UPSTREAM:-http://kong:8000}
