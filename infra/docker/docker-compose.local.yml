@@ -133,6 +133,8 @@ services:
       # Cookie configuration - use None+Secure for cross-origin compatibility
       APP_AUTH_COOKIE_SAMESITE: ${APP_AUTH_COOKIE_SAMESITE:-None}
       APP_AUTH_COOKIE_SECURE: ${APP_AUTH_COOKIE_SECURE:-true}
+      # CORS allowed origins - include LAN IP so browser requests from 192.168.x.x work
+      APP_SECURITY_CORS_ALLOWED_ORIGINS: ${APP_SECURITY_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://192.168.1.109:3000}
     volumes:
       - ../../platform-config:/app/platform-config:ro
     ports:
