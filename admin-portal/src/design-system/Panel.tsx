@@ -14,6 +14,8 @@ export function Panel({ title, subtitle, actions, children, style }: PanelProps)
   return (
     <Card padding="md" shadow="md" style={style}>
       <div
+        role="region"
+        aria-label={title}
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}
       >
         <div style={{ display: 'grid', gap: 4 }}>

@@ -1,7 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, Typography, Button, Badge } from '../../design-system';
-
-const API_BASE = '/api/v1/admin/analytics';
+import {
+  fetchAnalyticsOverview,
+  fetchAnalyticsRevenue,
+  fetchAnalyticsUsers,
+  fetchAnalyticsUsage,
+  useMockData,
+} from '../../services/api-client';
 
 interface OverviewData {
   totalUsers: number;
@@ -21,87 +27,123 @@ interface RevenueDataPoint {
   cancellations: number;
 }
 
+interface PlanStat {
+  name: string;
+  count: number;
+}
+
+interface HourUsage {
+  hour: number;
+  mbUsed: number;
+}
+
+interface CountryStat {
+  country: string;
+  users: number;
+}
+
+interface UserAnalytics {
+  topPlans: PlanStat[];
+  usage: { dataUsageByHour: HourUsage[] };
+  topCountries: CountryStat[];
+}
+
+const MOCK_OVERVIEW: OverviewData = {
+  totalUsers: 12458,
+  activeUsers: 8234,
+  totalRevenue: 456789.5,
+  arpu: 36.72,
+  churnRate: 2.3,
+  newUsersThisMonth: 342,
+  revenueGrowth: 12.5,
+  userGrowth: 8.2,
+};
+
+const generateMockRevenue = (): RevenueDataPoint[] => {
+  const data: RevenueDataPoint[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    data.push({
+      date: d.toISOString().split('T')[0],
+      revenue: Math.floor(Math.random() * 50000) + 10000,
+      newSubscriptions: Math.floor(Math.random() * 50) + 10,
+      cancellations: Math.floor(Math.random() * 10) + 1,
+    });
+  }
+  return data;
+};
+
+const MOCK_USER_ANALYTICS: UserAnalytics = {
+  topPlans: [
+    { name: 'Premium 50GB', count: 5123 },
+    { name: 'Basic 10GB', count: 4231 },
+    { name: 'Unlimited', count: 3104 },
+  ],
+  usage: {
+    dataUsageByHour: Array.from({ length: 24 }, (_, h) => ({
+      hour: h,
+      mbUsed: Math.random() * 3000,
+    })),
+  },
+  topCountries: [
+    { country: 'Portugal', users: 5234 },
+    { country: 'Spain', users: 3123 },
+    { country: 'UK', users: 2101 },
+  ],
+};
+
 export function AnalyticsPanel() {
-  const [overview, setOverview] = useState<OverviewData | null>(null);
-  const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
-  const [userAnalytics, setUserAnalytics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [activeMetric, setActiveMetric] = useState<'revenue' | 'users' | 'usage'>('revenue');
-  const [refreshKey, setRefreshKey] = useState(0);
+  const isMock = useMockData();
+  const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
 
-  // Dev mode mock data
-  const useMockData = true;
+  const {
+    data: overview,
+    isLoading: overviewLoading,
+    refetch: refetchOverview,
+  } = useQuery({
+    queryKey: ['analytics', 'overview'],
+    queryFn: () => (isMock ? Promise.resolve(MOCK_OVERVIEW) : fetchAnalyticsOverview()),
+  });
 
-  useEffect(() => {
-    if (useMockData) {
-      // Mock data for demo
-      setOverview({
-        totalUsers: 12458,
-        activeUsers: 8234,
-        totalRevenue: 456789.50,
-        arpu: 36.72,
-        churnRate: 2.3,
-        newUsersThisMonth: 342,
-        revenueGrowth: 12.5,
-        userGrowth: 8.2
-      });
-      // Generate mock revenue data
-      const mockRevenue = [];
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        mockRevenue.push({
-          date: d.toISOString().split('T')[0],
-          revenue: Math.floor(Math.random() * 50000) + 10000,
-          newSubscriptions: Math.floor(Math.random() * 50) + 10,
-          cancellations: Math.floor(Math.random() * 10) + 1
-        });
-      }
-      setRevenueData(mockRevenue);
-      setUserAnalytics({
-        topPlans: [
-          { name: 'Premium 50GB', count: 5123 },
-          { name: 'Basic 10GB', count: 4231 },
-          { name: 'Unlimited', count: 3104 }
-        ],
-        usage: {
-          dataUsageByHour: Array.from({ length: 24 }, (_, h) => ({ hour: h, mbUsed: Math.random() * 3000 }))
-        },
-        topCountries: [
-          { country: 'Portugal', users: 5234 },
-          { country: 'Spain', users: 3123 },
-          { country: 'UK', users: 2101 }
-        ]
-      });
-      setLoading(false);
-      return;
-    }
+  const {
+    data: revenueData = [],
+    isLoading: revenueLoading,
+    refetch: refetchRevenue,
+  } = useQuery<RevenueDataPoint[]>({
+    queryKey: ['analytics', 'revenue', days],
+    queryFn: () => (isMock ? Promise.resolve(generateMockRevenue()) : fetchAnalyticsRevenue(days)),
+  });
 
-    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
-    Promise.all([
-      fetch(API_BASE + '/overview').then(r => r.json()),
-      fetch(API_BASE + '/revenue?days=' + days).then(r => r.json()),
-      fetch(API_BASE + '/users?days=' + days).then(r => r.json()),
-      fetch(API_BASE + '/usage').then(r => r.json())
-    ]).then(([overviewData, revenue, users, usage]) => {
-      setOverview(overviewData);
-      setRevenueData(revenue);
-      setUserAnalytics({ ...users, usage });
-      setLoading(false);
-    });
-  }, [dateRange, refreshKey, useMockData]);
+  const {
+    data: userAnalytics,
+    isLoading: usersLoading,
+    refetch: refetchUsers,
+  } = useQuery<UserAnalytics>({
+    queryKey: ['analytics', 'users', days],
+    queryFn: () =>
+      isMock
+        ? Promise.resolve(MOCK_USER_ANALYTICS)
+        : Promise.all([fetchAnalyticsUsers(days), fetchAnalyticsUsage()]).then(
+            ([users, usage]) => ({ ...users, usage })
+          ),
+  });
+
+  const loading = overviewLoading || revenueLoading || usersLoading;
 
   const handleRefresh = () => {
-    setLoading(true);
-    setRefreshKey(k => k + 1);
+    refetchOverview();
+    refetchRevenue();
+    refetchUsers();
   };
 
   const chartMax = useMemo(() => {
     if (activeMetric === 'revenue') {
-      return Math.max(...revenueData.map(d => d.revenue), 1);
+      return Math.max(...revenueData.map((d) => d.revenue), 1);
     }
-    return Math.max(...revenueData.map(d => d.newSubscriptions + d.cancellations), 1);
+    return Math.max(...revenueData.map((d) => d.newSubscriptions + d.cancellations), 1);
   }, [revenueData, activeMetric]);
 
   const formatCurrency = (val: number) => {
@@ -120,12 +162,6 @@ export function AnalyticsPanel() {
     if (val > 0) return '#27ae60';
     if (val < 0) return '#e74c3c';
     return '#666';
-  };
-
-  const handleExport = async (format: string) => {
-    const res = await fetch(API_BASE + '/export?format=' + format);
-    const data = await res.json();
-    alert('Preparing export: ' + data.url + '\n(This would download in production)');
   };
 
   if (loading) {
@@ -150,9 +186,8 @@ export function AnalyticsPanel() {
           </Typography>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {/* Date Range Selector */}
           <div style={{ display: 'flex', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
-            {(['7d', '30d', '90d'] as const).map(range => (
+            {(['7d', '30d', '90d'] as const).map((range) => (
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
@@ -162,15 +197,14 @@ export function AnalyticsPanel() {
                   backgroundColor: dateRange === range ? '#3498db' : '#fff',
                   color: dateRange === range ? '#fff' : '#333',
                   cursor: 'pointer',
-                  fontSize: '13px'
+                  fontSize: '13px',
                 }}
               >
                 {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
               </button>
             ))}
           </div>
-          <Button variant="secondary" onClick={handleRefresh}>↻ Refresh</Button>
-          <Button variant="primary" onClick={() => handleExport('csv')}>Export</Button>
+          <Button variant="secondary" onClick={handleRefresh}>Refresh</Button>
         </div>
       </div>
 
@@ -191,7 +225,7 @@ export function AnalyticsPanel() {
           <Typography variant="caption" style={{ opacity: 0.9 }}>Active Users</Typography>
           <Typography variant="h2" style={{ color: '#fff' }}>{formatNumber(overview?.activeUsers || 0)}</Typography>
           <Typography variant="caption" style={{ opacity: 0.8 }}>
-            {((overview?.activeUsers || 0) / (overview?.totalUsers || 1) * 100).toFixed(1)}% of total
+            {(((overview?.activeUsers || 0) / (overview?.totalUsers || 1)) * 100).toFixed(1)}% of total
           </Typography>
         </Card>
 
@@ -231,12 +265,11 @@ export function AnalyticsPanel() {
 
       {/* Charts Row */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '24px' }}>
-        {/* Main Chart */}
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <Typography variant="h3">Performance Trend</Typography>
             <div style={{ display: 'flex', gap: '4px' }}>
-              {(['revenue', 'users', 'usage'] as const).map(metric => (
+              {(['revenue', 'users', 'usage'] as const).map((metric) => (
                 <button
                   key={metric}
                   onClick={() => setActiveMetric(metric)}
@@ -248,7 +281,7 @@ export function AnalyticsPanel() {
                     color: activeMetric === metric ? '#fff' : '#666',
                     cursor: 'pointer',
                     fontSize: '12px',
-                    textTransform: 'capitalize'
+                    textTransform: 'capitalize',
                   }}
                 >
                   {metric}
@@ -257,12 +290,12 @@ export function AnalyticsPanel() {
             </div>
           </div>
 
-          {/* Bar Chart */}
           <div style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '2px', padding: '0 8px' }}>
             {revenueData.slice(-14).map((point, i) => {
-              const height = activeMetric === 'revenue' 
-                ? (point.revenue / chartMax) * 100
-                : ((point.newSubscriptions + point.cancellations) / chartMax) * 100;
+              const height =
+                activeMetric === 'revenue'
+                  ? (point.revenue / chartMax) * 100
+                  : ((point.newSubscriptions + point.cancellations) / chartMax) * 100;
               return (
                 <div
                   key={i}
@@ -271,8 +304,7 @@ export function AnalyticsPanel() {
                     height: `${Math.max(height, 2)}%`,
                     backgroundColor: activeMetric === 'revenue' ? '#3498db' : '#9b59b6',
                     borderRadius: '3px 3px 0 0',
-                    position: 'relative',
-                    transition: 'height 0.3s ease'
+                    transition: 'height 0.3s ease',
                   }}
                   title={`${point.date}: ${activeMetric === 'revenue' ? formatCurrency(point.revenue) : point.newSubscriptions + ' subs'}`}
                 />
@@ -280,7 +312,6 @@ export function AnalyticsPanel() {
             })}
           </div>
 
-          {/* Chart Legend */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', padding: '0 8px' }}>
             <Typography variant="caption" color="secondary">
               {revenueData[revenueData.length - 14]?.date}
@@ -291,10 +322,9 @@ export function AnalyticsPanel() {
           </div>
         </Card>
 
-        {/* Top Stats */}
         <Card>
           <Typography variant="h3" style={{ marginBottom: '12px' }}>Top Plans</Typography>
-          {userAnalytics?.topPlans?.map((plan: any, i: number) => (
+          {userAnalytics?.topPlans?.map((plan: PlanStat, i: number) => (
             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: i < 2 ? '1px solid #eee' : 'none' }}>
               <div>
                 <Typography variant="body">{plan.name}</Typography>
@@ -318,11 +348,10 @@ export function AnalyticsPanel() {
 
       {/* Secondary Row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        {/* Usage by Hour */}
         <Card>
           <Typography variant="h3" style={{ marginBottom: '12px' }}>Usage by Hour</Typography>
           <div style={{ height: '120px', display: 'flex', alignItems: 'flex-end', gap: '1px' }}>
-            {userAnalytics?.usage?.dataUsageByHour?.map((point: any, i: number) => (
+            {userAnalytics?.usage?.dataUsageByHour?.map((point: HourUsage, i: number) => (
               <div
                 key={i}
                 style={{
@@ -330,7 +359,7 @@ export function AnalyticsPanel() {
                   height: `${(point.mbUsed / 3000) * 100}%`,
                   backgroundColor: point.hour >= 18 || point.hour <= 9 ? '#e74c3c' : '#3498db',
                   opacity: 0.7,
-                  minHeight: '2px'
+                  minHeight: '2px',
                 }}
                 title={`${point.hour}:00 - ${point.mbUsed.toFixed(0)} MB`}
               />
@@ -341,10 +370,9 @@ export function AnalyticsPanel() {
           </Typography>
         </Card>
 
-        {/* Geographic Distribution */}
         <Card>
           <Typography variant="h3" style={{ marginBottom: '12px' }}>Top Countries</Typography>
-          {userAnalytics?.topCountries?.map((country: any, i: number) => (
+          {userAnalytics?.topCountries?.map((country: CountryStat, i: number) => (
             <div key={i} style={{ marginBottom: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <Typography variant="body">{country.country}</Typography>
@@ -356,7 +384,7 @@ export function AnalyticsPanel() {
                     height: '100%',
                     width: `${(country.users / (userAnalytics?.topCountries?.[0]?.users || 1)) * 100}%`,
                     backgroundColor: ['#3498db', '#9b59b6', '#e74c3c'][i] || '#666',
-                    borderRadius: '4px'
+                    borderRadius: '4px',
                   }}
                 />
               </div>
@@ -364,18 +392,6 @@ export function AnalyticsPanel() {
           ))}
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card style={{ marginTop: '16px' }}>
-        <Typography variant="h3" style={{ marginBottom: '12px' }}>Quick Reports</Typography>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <Button variant="outline" size="sm">📊 Revenue Report</Button>
-          <Button variant="outline" size="sm">👥 User Growth Report</Button>
-          <Button variant="outline" size="sm">📈 Usage Analysis</Button>
-          <Button variant="outline" size="sm">💰 Churn Analysis</Button>
-          <Button variant="outline" size="sm">🌍 Geographic Report</Button>
-        </div>
-      </Card>
     </div>
   );
 }
