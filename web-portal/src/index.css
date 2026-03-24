@@ -111,8 +111,16 @@ img, svg { display: block; max-width: 100%; }
 .page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
   animation: fadeIn var(--transition-slow) ease;
+  width: 100%;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--premium-text);
+  letter-spacing: -0.01em;
 }
 
 .page-header {
@@ -727,15 +735,14 @@ img, svg { display: block; max-width: 100%; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px;
-  border-radius: var(--radius-md);
-  background: var(--premium-bg);
+  gap: 6px;
+  padding: 24px 16px;
+  border-radius: var(--radius-lg);
+  background: white;
   border: 1px solid var(--premium-border);
   cursor: pointer;
   transition: all var(--transition-fast);
   text-align: center;
-  min-width: 100px;
 }
 
 .quick-action:hover {
@@ -744,15 +751,9 @@ img, svg { display: block; max-width: 100%; }
   transform: translateY(-2px);
 }
 
-.quick-action svg {
-  width: 24px;
-  height: 24px;
-  color: var(--premium-primary);
-}
-
 .quick-action span {
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--premium-text);
 }
 
@@ -889,6 +890,92 @@ img, svg { display: block; max-width: 100%; }
 .usage-ring-value {
   font-size: 0.75rem;
   color: var(--premium-text-muted);
+}
+
+/* ── Dashboard hero ──────────────────────────────────────── */
+
+.dash-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1e293b 0%, #4338ca 50%, #7c3aed 100%);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  color: white;
+}
+
+.dash-hero-greeting {
+  font-size: 0.9rem;
+  opacity: 0.75;
+  font-weight: 500;
+  margin: 0;
+}
+
+.dash-hero-name {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 4px 0 0;
+  letter-spacing: -0.03em;
+}
+
+.dash-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,.15);
+  backdrop-filter: blur(4px);
+  color: white;
+  border-radius: var(--radius-full);
+  padding: 5px 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.dash-hero-circle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.dash-hero-circle-1 {
+  width: 260px; height: 260px;
+  top: -80px; right: -60px;
+  background: rgba(255,255,255,.07);
+}
+
+.dash-hero-circle-2 {
+  width: 180px; height: 180px;
+  bottom: -50px; right: 120px;
+  background: rgba(255,255,255,.05);
+}
+
+.dash-hero-circle-3 {
+  width: 100px; height: 100px;
+  top: 20px; right: 200px;
+  background: rgba(255,255,255,.04);
+}
+
+/* ── Quick-action icon circle ────────────────────────────── */
+
+.quick-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(99,102,241,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  transition: background var(--transition-fast);
+}
+
+.quick-action-icon svg {
+  width: 22px;
+  height: 22px;
+  color: var(--premium-primary);
+}
+
+.quick-action:hover .quick-action-icon {
+  background: rgba(99,102,241,.15);
 }
 
 /* ── Animations ──────────────────────────────────────────── */
