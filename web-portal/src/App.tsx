@@ -9,6 +9,12 @@ import { Usage } from './app/routes/Usage';
 import { Billing } from './app/routes/Billing';
 import { Lines } from './app/routes/Lines';
 import { LineDetail } from './app/routes/LineDetail';
+import { Roaming } from './app/routes/Roaming';
+import { Support } from './app/routes/Support';
+import { Notifications } from './app/routes/Notifications';
+import { Catalog } from './app/routes/Catalog';
+import { Orders } from './app/routes/Orders';
+import { Settings } from './app/routes/Settings';
 import {
   completeLoginIfCallback,
   loginWithCredentials,
@@ -71,7 +77,7 @@ function App() {
   const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoginError('');
-    
+
     try {
       const newSession = await loginWithCredentials(username, password);
       setSession(newSession);
@@ -120,7 +126,7 @@ function App() {
             <Typography variant="body" color="secondary" style={{ marginBottom: '24px', textAlign: 'center' }}>
               Sign in to manage your account
             </Typography>
-            
+
             {isLoggingIn ? (
               <form onSubmit={handleLoginSubmit}>
                 <Field
@@ -141,24 +147,24 @@ function App() {
                   required
                   style={{ marginBottom: '16px' }}
                 />
-                
+
                 {loginError && (
                   <Typography variant="body" style={{ marginBottom: '16px', color: '#d32f2f' }}>
                     {loginError}
                   </Typography>
                 )}
-                
+
                 <div style={{ display: 'flex', gap: '12px' }}>
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
+                  <Button
+                    type="button"
+                    variant="secondary"
                     onClick={() => setIsLoggingIn(false)}
                     style={{ flex: 1 }}
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     style={{ flex: 1 }}
                   >
                     Sign In
@@ -225,32 +231,68 @@ function App() {
 
     // Usage
     if (route === '/usage') {
-      return <Usage />;
+      return <Usage authedFetch={authedFetch} />;
     }
 
     // Billing
     if (route === '/billing') {
-      return <Billing />;
+      return <Billing authedFetch={authedFetch} />;
     }
 
     // Lines list
     if (route === '/lines') {
-      return <Lines />;
+      return <Lines authedFetch={authedFetch} onNavigate={navigateTo} />;
     }
 
     // Line detail
     if (route.startsWith('/lines/')) {
-      return <LineDetail />;
+      return <LineDetail authedFetch={authedFetch} />;
     }
 
-    // Placeholder for other routes
+    // Roaming
+    if (route === '/roaming') {
+      return <Roaming authedFetch={authedFetch} />;
+    }
+
+    // Support
+    if (route === '/support') {
+      return <Support authedFetch={authedFetch} />;
+    }
+
+    // Notifications
+    if (route === '/notifications') {
+      return <Notifications authedFetch={authedFetch} />;
+    }
+
+    // Catalog
+    if (route === '/catalog') {
+      return <Catalog authedFetch={authedFetch} onNavigate={navigateTo} />;
+    }
+
+    // Orders
+    if (route === '/orders') {
+      return <Orders authedFetch={authedFetch} onNavigate={navigateTo} />;
+    }
+
+    // Settings
+    if (route === '/settings') {
+      return (
+        <Settings
+          authedFetch={authedFetch}
+          onLogout={handleLogout}
+          userName={session.subject || 'Customer'}
+        />
+      );
+    }
+
+    // Fallback for unknown routes
     return (
       <Card padding="lg" shadow="md">
         <Typography variant="h4" style={{ marginBottom: '16px' }}>
-          {route} - Coming Soon
+          Page Not Found
         </Typography>
         <Typography variant="body" color="secondary">
-          This page is under construction. Check back soon!
+          The page you are looking for does not exist.
         </Typography>
       </Card>
     );

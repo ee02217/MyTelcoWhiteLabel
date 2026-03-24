@@ -15,8 +15,6 @@ import {
 } from '@heroicons/react/24/outline';
 import type { DashboardResponse } from '../../types/api';
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK_DATA === 'true';
-
 const MOCK_DASHBOARD: DashboardResponse = {
   accountSummary: {
     accountStatus: 'ACTIVE',
@@ -51,12 +49,12 @@ interface DashboardProps {
 }
 
 export function Dashboard({ authedFetch, onNavigate }: DashboardProps) {
-  const [dashboard, setDashboard] = useState<DashboardResponse | null>(USE_MOCK ? MOCK_DASHBOARD : null);
-  const [loading, setLoading] = useState(!USE_MOCK);
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!USE_MOCK) loadDashboard();
+    loadDashboard();
   }, []);
 
   const loadDashboard = async () => {

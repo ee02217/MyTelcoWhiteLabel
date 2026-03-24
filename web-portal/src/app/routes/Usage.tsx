@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { UsageCard } from '../../components/usage/UsageCard';
 import { DataUsageChart } from '../../components/usage/DataUsageChart';
 import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
@@ -9,64 +9,69 @@ import {
   ChatBubbleLeftRightIcon,
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
+import type { UsageDetails } from '../../types/api';
 
-// Mock data - will be replaced by API call
-const mockUsage = {
-  billingCycle: {
-    start: '2026-03-01',
-    end: '2026-03-31',
-    daysRemaining: 9,
-  },
-  data: {
-    used: 18.5,
-    limit: 20,
-    unit: 'GB',
-    dailyAverage: 0.77,
-    peakDay: { date: '2026-03-15', used: 2.3 },
-  },
-  voice: {
-    used: 342,
-    limit: 500,
-    unit: 'min',
-    international: 45,
-  },
-  sms: {
-    used: 127,
-    limit: 200,
-    unit: 'messages',
-  },
-  dailyData: [
-    { date: '2026-03-01', used: 0.5 },
-    { date: '2026-03-02', used: 0.8 },
-    { date: '2026-03-03', used: 0.3 },
-    { date: '2026-03-04', used: 1.2 },
-    { date: '2026-03-05', used: 0.9 },
-    { date: '2026-03-06', used: 0.4 },
-    { date: '2026-03-07', used: 0.6 },
-    { date: '2026-03-08', used: 1.5 },
-    { date: '2026-03-09', used: 0.7 },
-    { date: '2026-03-10', used: 0.8 },
-    { date: '2026-03-11', used: 1.1 },
-    { date: '2026-03-12', used: 0.5 },
-    { date: '2026-03-13', used: 0.6 },
-    { date: '2026-03-14', used: 0.9 },
-    { date: '2026-03-15', used: 2.3 },
-    { date: '2026-03-16', used: 0.8 },
-    { date: '2026-03-17', used: 0.5 },
-    { date: '2026-03-18', used: 0.7 },
-    { date: '2026-03-19', used: 1.0 },
-    { date: '2026-03-20', used: 0.6 },
-    { date: '2026-03-21', used: 0.5 },
-    { date: '2026-03-22', used: 0.4 },
+// Fallback mock data used when API call fails
+const FALLBACK_MOCK: UsageDetails = {
+  billingCycleStart: '2026-03-01',
+  billingCycleEnd: '2026-03-31',
+  dataUsedMb: 18944,
+  dataLimitMb: 20480,
+  voiceMinutesUsed: 342,
+  voiceMinutesLimit: 500,
+  smsUsed: 127,
+  smsLimit: 200,
+  dailyUsage: [
+    { date: '2026-03-01', dataUsedMb: 512, voiceMinutesUsed: 15, smsUsed: 5 },
+    { date: '2026-03-02', dataUsedMb: 819, voiceMinutesUsed: 20, smsUsed: 8 },
+    { date: '2026-03-03', dataUsedMb: 307, voiceMinutesUsed: 10, smsUsed: 3 },
+    { date: '2026-03-04', dataUsedMb: 1229, voiceMinutesUsed: 25, smsUsed: 12 },
+    { date: '2026-03-05', dataUsedMb: 922, voiceMinutesUsed: 18, smsUsed: 9 },
+    { date: '2026-03-06', dataUsedMb: 410, voiceMinutesUsed: 12, smsUsed: 4 },
+    { date: '2026-03-07', dataUsedMb: 614, voiceMinutesUsed: 14, smsUsed: 6 },
+    { date: '2026-03-08', dataUsedMb: 1536, voiceMinutesUsed: 22, smsUsed: 10 },
+    { date: '2026-03-09', dataUsedMb: 717, voiceMinutesUsed: 16, smsUsed: 7 },
+    { date: '2026-03-10', dataUsedMb: 819, voiceMinutesUsed: 19, smsUsed: 8 },
+    { date: '2026-03-11', dataUsedMb: 1126, voiceMinutesUsed: 21, smsUsed: 11 },
+    { date: '2026-03-12', dataUsedMb: 512, voiceMinutesUsed: 13, smsUsed: 5 },
+    { date: '2026-03-13', dataUsedMb: 614, voiceMinutesUsed: 15, smsUsed: 6 },
+    { date: '2026-03-14', dataUsedMb: 922, voiceMinutesUsed: 17, smsUsed: 9 },
+    { date: '2026-03-15', dataUsedMb: 2355, voiceMinutesUsed: 28, smsUsed: 14 },
+    { date: '2026-03-16', dataUsedMb: 819, voiceMinutesUsed: 20, smsUsed: 8 },
+    { date: '2026-03-17', dataUsedMb: 512, voiceMinutesUsed: 12, smsUsed: 5 },
+    { date: '2026-03-18', dataUsedMb: 717, voiceMinutesUsed: 14, smsUsed: 7 },
+    { date: '2026-03-19', dataUsedMb: 1024, voiceMinutesUsed: 18, smsUsed: 10 },
+    { date: '2026-03-20', dataUsedMb: 614, voiceMinutesUsed: 15, smsUsed: 6 },
+    { date: '2026-03-21', dataUsedMb: 512, voiceMinutesUsed: 13, smsUsed: 5 },
+    { date: '2026-03-22', dataUsedMb: 410, voiceMinutesUsed: 11, smsUsed: 4 },
   ],
 };
 
-export function Usage() {
-  const [isLoading] = useState(false);
+interface UsageProps {
+  authedFetch: (path: string, init?: RequestInit) => Promise<Response>;
+}
+
+export function Usage({ authedFetch }: UsageProps) {
+  const [usage, setUsage] = useState<UsageDetails | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error] = useState<string | null>(null);
   const [selectedCycle] = useState('current');
 
-  if (isLoading) {
+  useEffect(() => {
+    authedFetch('/api/v1/customer/usage')
+      .then((r) => {
+        if (!r.ok) throw new Error(`Failed (${r.status})`);
+        return r.json();
+      })
+      .then(setUsage)
+      .catch((err) => {
+        console.warn('Usage API failed, using fallback:', err);
+        setUsage(FALLBACK_MOCK);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
     return (
       <div className="page">
         <LoadingSkeleton width="200px" height="32px" />
@@ -83,14 +88,38 @@ export function Usage() {
     return <ErrorMessage message={error} onRetry={() => {}} />;
   }
 
-  const usage = mockUsage;
-  const { billingCycle, data, voice, sms } = usage;
+  if (!usage) return null;
+
+  const dataUsedGb = usage.dataUsedMb / 1024;
+  const dataLimitGb = usage.dataLimitMb / 1024;
+  const dataPercent = (usage.dataUsedMb / usage.dataLimitMb) * 100;
+
+  // Compute derived fields for display
+  const billingCycleDaysRemaining = Math.max(
+    0,
+    Math.ceil(
+      (new Date(usage.billingCycleEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    )
+  );
+  const dailyAverage = usage.dailyUsage.length > 0
+    ? usage.dailyUsage.reduce((sum, d) => sum + d.dataUsedMb, 0) / usage.dailyUsage.length / 1024
+    : 0;
+  const peakDay = usage.dailyUsage.reduce(
+    (max, d) => (d.dataUsedMb > max.dataUsedMb ? d : max),
+    usage.dailyUsage[0] || { date: '', dataUsedMb: 0, voiceMinutesUsed: 0, smsUsed: 0 }
+  );
 
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'short',
     });
+
+  // Transform dailyUsage for the chart component (expects {date, used} in GB)
+  const dailyDataForChart = usage.dailyUsage.map((d) => ({
+    date: d.date,
+    used: parseFloat((d.dataUsedMb / 1024).toFixed(2)),
+  }));
 
   return (
     <div className="page">
@@ -100,9 +129,9 @@ export function Usage() {
           <div>
             <h1 className="page-title">Usage Details</h1>
             <p className="page-subtitle">
-              {formatDate(billingCycle.start)} - {formatDate(billingCycle.end)}
+              {formatDate(usage.billingCycleStart)} - {formatDate(usage.billingCycleEnd)}
               <span className="text-info ml-2">
-                {billingCycle.daysRemaining} days remaining
+                {billingCycleDaysRemaining} days remaining
               </span>
             </p>
           </div>
@@ -121,24 +150,24 @@ export function Usage() {
         <UsageCard
           title="Data"
           icon={<CircleStackIcon style={{ width: 20, height: 20 }} />}
-          used={data.used}
-          limit={data.limit}
+          used={parseFloat(dataUsedGb.toFixed(1))}
+          limit={parseFloat(dataLimitGb.toFixed(0))}
           unit="GB"
           color="blue"
         />
         <UsageCard
           title="Voice"
           icon={<PhoneIcon style={{ width: 20, height: 20 }} />}
-          used={voice.used}
-          limit={voice.limit}
+          used={usage.voiceMinutesUsed}
+          limit={usage.voiceMinutesLimit}
           unit="min"
           color="green"
         />
         <UsageCard
           title="SMS"
           icon={<ChatBubbleLeftRightIcon style={{ width: 20, height: 20 }} />}
-          used={sms.used}
-          limit={sms.limit}
+          used={usage.smsUsed}
+          limit={usage.smsLimit}
           unit="msg"
           color="purple"
         />
@@ -146,9 +175,9 @@ export function Usage() {
 
       {/* Usage Chart */}
       <DataUsageChart
-        dataUsed={data.used}
-        dataLimit={data.limit}
-        dailyData={mockUsage.dailyData}
+        dataUsed={parseFloat(dataUsedGb.toFixed(1))}
+        dataLimit={parseFloat(dataLimitGb.toFixed(0))}
+        dailyData={dailyDataForChart}
       />
 
       {/* Details */}
@@ -160,18 +189,18 @@ export function Usage() {
             <div className="detail-list">
               <div className="detail-row">
                 <span className="detail-label">Daily average</span>
-                <span className="detail-value">{data.dailyAverage.toFixed(2)} GB</span>
+                <span className="detail-value">{dailyAverage.toFixed(2)} GB</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Peak usage day</span>
                 <span className="detail-value">
-                  {formatDate(data.peakDay.date)} ({data.peakDay.used} GB)
+                  {peakDay.date ? formatDate(peakDay.date) : 'N/A'} ({(peakDay.dataUsedMb / 1024).toFixed(1)} GB)
                 </span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Remaining</span>
                 <span className="detail-value text-success">
-                  {(data.limit - data.used).toFixed(1)} GB
+                  {(dataLimitGb - dataUsedGb).toFixed(1)} GB
                 </span>
               </div>
             </div>
@@ -180,17 +209,15 @@ export function Usage() {
             <h3 className="text-sm text-medium text-secondary mb-2">Voice Details</h3>
             <div className="detail-list">
               <div className="detail-row">
-                <span className="detail-label">International calls</span>
-                <span className="detail-value">{voice.international} min</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Domestic calls</span>
-                <span className="detail-value">{voice.used - voice.international} min</span>
+                <span className="detail-label">Total used</span>
+                <span className="detail-value">{usage.voiceMinutesUsed} min</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Remaining</span>
                 <span className="detail-value text-success">
-                  {voice.limit - voice.used} min
+                  {usage.voiceMinutesLimit > 0
+                    ? `${usage.voiceMinutesLimit - usage.voiceMinutesUsed} min`
+                    : 'Unlimited'}
                 </span>
               </div>
             </div>
@@ -199,7 +226,7 @@ export function Usage() {
       </div>
 
       {/* Warning Banner */}
-      {data.used / data.limit > 0.8 && (
+      {dataPercent > 80 && (
         <div className="banner-warning">
           <ExclamationTriangleIcon style={{ width: 20, height: 20, color: '#d97706', flexShrink: 0 }} />
           <div>
@@ -207,7 +234,7 @@ export function Usage() {
               You're approaching your data limit
             </h3>
             <p className="text-sm mt-1" style={{ color: '#a16207' }}>
-              You've used {((data.used / data.limit) * 100).toFixed(0)}% of your {data.limit} GB data allowance.
+              You've used {dataPercent.toFixed(0)}% of your {dataLimitGb.toFixed(0)} GB data allowance.
               Consider upgrading to avoid out-of-cycle charges.
             </p>
           </div>

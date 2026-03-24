@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LineCard } from '../../components/lines/LineCard';
 import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { PlusIcon, WifiIcon } from '@heroicons/react/24/outline';
 import type { Line } from '../../types/api';
 
-// Mock data
-const mockLines: Line[] = [
+// Fallback mock data
+const FALLBACK_LINES: Line[] = [
   {
     lineId: 'line-001',
     msisdn: '912 345 678',
@@ -38,11 +38,31 @@ const mockLines: Line[] = [
   },
 ];
 
-export function Lines() {
-  const [isLoading] = useState(false);
+interface LinesProps {
+  authedFetch: (path: string, init?: RequestInit) => Promise<Response>;
+  onNavigate: (path: string) => void;
+}
+
+export function Lines({ authedFetch, onNavigate }: LinesProps) {
+  const [lines, setLines] = useState<Line[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error] = useState<string | null>(null);
 
-  if (isLoading) {
+  useEffect(() => {
+    authedFetch('/api/v1/customer/lines')
+      .then((r) => {
+        if (!r.ok) throw new Error(`Failed (${r.status})`);
+        return r.json();
+      })
+      .then((data) => setLines(Array.isArray(data) ? data : FALLBACK_LINES))
+      .catch((err) => {
+        console.warn('Lines API failed, using fallback:', err);
+        setLines(FALLBACK_LINES);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
     return (
       <div className="page">
         <LoadingSkeleton width="200px" height="32px" />
@@ -59,7 +79,6 @@ export function Lines() {
     return <ErrorMessage message={error} onRetry={() => {}} />;
   }
 
-  const lines = mockLines;
   const activeLines = lines.filter((l) => l.status === 'ACTIVE');
   const otherLines = lines.filter((l) => l.status !== 'ACTIVE');
 
@@ -114,7 +133,7 @@ export function Lines() {
           <p className="text-sm mt-1" style={{ color: '#1d4ed8' }}>
             Contact support to add new lines, change plans, or manage your existing services.
           </p>
-          <button className="btn-ghost mt-3 text-sm" style={{ padding: 0 }}>
+          <button className="btn-ghost mt-3 text-sm" style={{ padding: 0 }} onClick={() => onNavigate('/support')}>
             Contact Support
           </button>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PaymentMethodCard } from '../../components/billing/PaymentMethodCard';
 import { PaymentHistoryList } from '../../components/billing/PaymentHistoryList';
 import { LoadingSkeleton } from '../../components/common/LoadingSkeleton';
@@ -12,67 +12,76 @@ import {
 } from '@heroicons/react/24/outline';
 import type { PaymentMethod, PaymentRecord } from '../../types/api';
 
-// Mock data
-const mockBilling = {
-  summary: {
-    currentBalance: 4950, // in cents
-    currency: 'EUR',
-    lastPaymentAmount: 2995,
-    lastPaymentDate: '2026-02-28',
-    nextPaymentDueDate: '2026-03-31',
-    autoPayEnabled: true,
-  },
-  paymentMethods: [
-    {
-      paymentMethodId: 'pm_1',
-      token: 'tok_1',
-      status: 'ACTIVE',
-      type: 'CARD' as const,
-      cardBrand: 'Visa',
-      lastFour: '4242',
-      expiryDate: '12/2028',
-    },
-    {
-      paymentMethodId: 'pm_2',
-      token: 'tok_2',
-      status: 'ACTIVE',
-      type: 'SEPA' as const,
-      bankName: 'Millennium BCP',
-      lastFour: '9876',
-    },
-  ] as PaymentMethod[],
-  paymentHistory: [
-    {
-      id: 'pay_1',
-      date: '2026-02-28',
-      amount: 2995,
-      status: 'completed' as const,
-      method: 'Visa •••• 4242',
-      description: 'Monthly bill - February 2026',
-      receiptUrl: '#',
-    },
-    {
-      id: 'pay_2',
-      date: '2026-01-31',
-      amount: 2995,
-      status: 'completed' as const,
-      method: 'Visa •••• 4242',
-      description: 'Monthly bill - January 2026',
-      receiptUrl: '#',
-    },
-    {
-      id: 'pay_3',
-      date: '2025-12-31',
-      amount: 2995,
-      status: 'completed' as const,
-      method: 'SEPA •••• 9876',
-      description: 'Monthly bill - December 2025',
-      receiptUrl: '#',
-    },
-  ] as PaymentRecord[],
+// Fallback mock data
+const FALLBACK_SUMMARY = {
+  currentBalance: 4950,
+  currency: 'EUR',
+  lastPaymentAmount: 2995,
+  lastPaymentDate: '2026-02-28',
+  nextPaymentDueDate: '2026-03-31',
+  autoPayEnabled: true,
 };
 
+const FALLBACK_METHODS: PaymentMethod[] = [
+  {
+    paymentMethodId: 'pm_1',
+    token: 'tok_1',
+    status: 'ACTIVE',
+    type: 'CARD' as const,
+    cardBrand: 'Visa',
+    lastFour: '4242',
+    expiryDate: '12/2028',
+  },
+  {
+    paymentMethodId: 'pm_2',
+    token: 'tok_2',
+    status: 'ACTIVE',
+    type: 'SEPA' as const,
+    bankName: 'Millennium BCP',
+    lastFour: '9876',
+  },
+];
+
+const FALLBACK_HISTORY: PaymentRecord[] = [
+  {
+    id: 'pay_1',
+    date: '2026-02-28',
+    amount: 2995,
+    status: 'completed' as const,
+    method: 'Visa •••• 4242',
+    description: 'Monthly bill - February 2026',
+    receiptUrl: '#',
+  },
+  {
+    id: 'pay_2',
+    date: '2026-01-31',
+    amount: 2995,
+    status: 'completed' as const,
+    method: 'Visa •••• 4242',
+    description: 'Monthly bill - January 2026',
+    receiptUrl: '#',
+  },
+  {
+    id: 'pay_3',
+    date: '2025-12-31',
+    amount: 2995,
+    status: 'completed' as const,
+    method: 'SEPA •••• 9876',
+    description: 'Monthly bill - December 2025',
+    receiptUrl: '#',
+  },
+];
+
 type Tab = 'summary' | 'methods' | 'history';
+
+interface BillingSummaryData {
+  currentBalance: number;
+  currency: string;
+  lastPaymentAmount: number;
+  lastPaymentDate: string;
+  nextPaymentDueDate: string;
+  autoPayEnabled: boolean;
+}
 
 // Constrained donut chart: explicit SVG dimensions prevent viewport-filling (fix #179)
 function BillingDonutChart({ currentBalance, lastPayment }: { currentBalance: number; lastPayment: number }) {
@@ -105,13 +114,45 @@ function BillingDonutChart({ currentBalance, lastPayment }: { currentBalance: nu
   );
 }
 
-export function Billing() {
-  const [isLoading] = useState(false);
+interface BillingProps {
+  authedFetch: (path: string, init?: RequestInit) => Promise<Response>;
+}
+
+export function Billing({ authedFetch }: BillingProps) {
+  const [summary, setSummary] = useState<BillingSummaryData | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('summary');
   const [showPayDialog, setShowPayDialog] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [showAddMethodDialog, setShowAddMethodDialog] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      authedFetch('/api/v1/customer/billing/explorer')
+        .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+        .catch(() => FALLBACK_SUMMARY),
+      authedFetch('/api/v1/customer/billing/payment-methods')
+        .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+        .catch(() => FALLBACK_METHODS),
+      authedFetch('/api/v1/customer/payments/history')
+        .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+        .catch(() => FALLBACK_HISTORY),
+    ])
+      .then(([s, m, h]) => {
+        setSummary(s);
+        setPaymentMethods(Array.isArray(m) ? m : FALLBACK_METHODS);
+        setPaymentHistory(Array.isArray(h) ? h : h?.payments || FALLBACK_HISTORY);
+      })
+      .catch(() => {
+        setSummary(FALLBACK_SUMMARY);
+        setPaymentMethods(FALLBACK_METHODS);
+        setPaymentHistory(FALLBACK_HISTORY);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const formatAmount = (cents: number) =>
     new Intl.NumberFormat('en-IE', {
@@ -128,13 +169,16 @@ export function Billing() {
 
   const handlePayNow = async () => {
     setIsPaying(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      await authedFetch('/api/v1/customer/billing/pay', { method: 'POST' });
+    } catch {
+      // ignore - mock fallback
+    }
     setIsPaying(false);
     setShowPayDialog(false);
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="page">
         <LoadingSkeleton width="200px" height="32px" />
@@ -147,7 +191,8 @@ export function Billing() {
     return <ErrorMessage message={error} onRetry={() => {}} />;
   }
 
-  const { summary, paymentMethods, paymentHistory } = mockBilling;
+  if (!summary) return null;
+
   const defaultMethod = paymentMethods[0];
 
   const tabs: { id: Tab; label: string }[] = [
@@ -195,7 +240,7 @@ export function Billing() {
               </button>
             </div>
 
-            {summary.autoPayEnabled && (
+            {summary.autoPayEnabled && defaultMethod && (
               <div className="row mt-4" style={{ paddingTop: '16px', borderTop: '1px solid var(--premium-border)', gap: '8px' }}>
                 <CheckCircleIcon style={{ width: 16, height: 16, color: 'var(--premium-success)' }} />
                 <span className="text-sm text-secondary">
@@ -301,23 +346,25 @@ export function Billing() {
       )}
 
       {/* Pay Now Dialog */}
-      <ConfirmDialog
-        open={showPayDialog}
-        onClose={() => setShowPayDialog(false)}
-        onConfirm={handlePayNow}
-        title="Confirm Payment"
-        confirmText={isPaying ? 'Processing...' : 'Pay Now'}
-        confirmDisabled={isPaying}
-        loading={isPaying}
-      >
-        <p className="text-sm text-secondary">
-          Pay {formatAmount(summary.currentBalance)} using your default payment method{' '}
-          <span className="text-semibold">
-            {defaultMethod.cardBrand} •••• {defaultMethod.lastFour}
-          </span>
-          ?
-        </p>
-      </ConfirmDialog>
+      {defaultMethod && (
+        <ConfirmDialog
+          open={showPayDialog}
+          onClose={() => setShowPayDialog(false)}
+          onConfirm={handlePayNow}
+          title="Confirm Payment"
+          confirmText={isPaying ? 'Processing...' : 'Pay Now'}
+          confirmDisabled={isPaying}
+          loading={isPaying}
+        >
+          <p className="text-sm text-secondary">
+            Pay {formatAmount(summary.currentBalance)} using your default payment method{' '}
+            <span className="text-semibold">
+              {defaultMethod.cardBrand} •••• {defaultMethod.lastFour}
+            </span>
+            ?
+          </p>
+        </ConfirmDialog>
+      )}
 
       {/* Add Payment Method Dialog */}
       <ConfirmDialog

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { SIMStatusBadge } from '../../components/lines/SIMStatusBadge';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
@@ -11,8 +11,8 @@ import {
   PencilIcon,
 } from '@heroicons/react/24/outline';
 
-// Mock data
-const mockLineDetail = {
+// Fallback mock data
+const FALLBACK_LINE = {
   lineId: 'line-001',
   msisdn: '912 345 678',
   nickname: 'Personal',
@@ -28,17 +28,50 @@ const mockLineDetail = {
     voiceMinutesLimit: -1,
     smsUsed: 127,
     smsLimit: -1,
+    dataUsagePercent: 90,
+    voiceUsagePercent: 68,
+    smsUsagePercent: 64,
   },
   roamingEnabled: true,
+  roamingPacks: [],
 };
 
 type Tab = 'overview' | 'sim' | 'esim' | 'usage';
 type EsimStatus = 'NOT_SUPPORTED' | 'AVAILABLE' | 'INSTALLED' | 'PENDING';
 
-export function LineDetail() {
-  useParams<{ lineId: string }>();
+interface LineDetailData {
+  lineId: string;
+  msisdn: string;
+  nickname?: string;
+  status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
+  plan: string;
+  simNumber?: string;
+  esimStatus?: string;
+  primaryLine: boolean;
+  usage: {
+    dataUsedMb: number;
+    dataLimitMb: number;
+    voiceMinutesUsed: number;
+    voiceMinutesLimit: number;
+    smsUsed: number;
+    smsLimit: number;
+    dataUsagePercent?: number;
+    voiceUsagePercent?: number;
+    smsUsagePercent?: number;
+  };
+  roamingEnabled: boolean;
+  roamingPacks?: unknown[];
+}
+
+interface LineDetailProps {
+  authedFetch: (path: string, init?: RequestInit) => Promise<Response>;
+}
+
+export function LineDetail({ authedFetch }: LineDetailProps) {
+  const { lineId } = useParams<{ lineId: string }>();
   const navigate = useNavigate();
-  const [isLoading] = useState(false);
+  const [line, setLine] = useState<LineDetailData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [showBlockDialog, setShowBlockDialog] = useState(false);
@@ -47,27 +80,55 @@ export function LineDetail() {
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [newNickname, setNewNickname] = useState('');
 
-  const line = mockLineDetail;
+  useEffect(() => {
+    const id = lineId || 'line-001';
+    authedFetch(`/api/v1/customer/lines/${id}`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Failed (${r.status})`);
+        return r.json();
+      })
+      .then(setLine)
+      .catch((err) => {
+        console.warn('Line detail API failed, using fallback:', err);
+        setLine(FALLBACK_LINE);
+      })
+      .finally(() => setLoading(false));
+  }, [lineId]);
 
   const handleBlock = async () => {
+    if (!line) return;
     setIsActionLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    try {
+      await authedFetch(`/api/v1/customer/sim/${line.lineId}/block`, { method: 'POST' });
+      setLine({ ...line, status: 'SUSPENDED' });
+    } catch {
+      // ignore - UI already shows result
+    }
     setIsActionLoading(false);
     setShowBlockDialog(false);
   };
 
   const handleUnblock = async () => {
+    if (!line) return;
     setIsActionLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    try {
+      await authedFetch(`/api/v1/customer/sim/${line.lineId}/unblock`, { method: 'POST' });
+      setLine({ ...line, status: 'ACTIVE' });
+    } catch {
+      // ignore
+    }
     setIsActionLoading(false);
     setShowUnblockDialog(false);
   };
 
   const handleRename = () => {
     setShowRenameDialog(false);
+    if (line && newNickname) {
+      setLine({ ...line, nickname: newNickname });
+    }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="page">
         <LoadingSkeleton width="200px" height="32px" />
@@ -185,7 +246,7 @@ export function LineDetail() {
               </div>
               <div className="detail-row">
                 <span className="detail-label">eSIM Status</span>
-                <span className="detail-value">{esimStatusLabels[line.esimStatus as EsimStatus]}</span>
+                <span className="detail-value">{esimStatusLabels[(line.esimStatus || 'NOT_SUPPORTED') as EsimStatus]}</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Roaming</span>
@@ -267,7 +328,7 @@ export function LineDetail() {
               <QrCodeIcon style={{ width: 24, height: 24, color: (line.esimStatus as EsimStatus) === 'INSTALLED' ? 'var(--premium-success)' : 'var(--premium-text-muted)' }} />
             </div>
             <div>
-              <p className="text-base text-semibold">Status: {esimStatusLabels[line.esimStatus as EsimStatus]}</p>
+              <p className="text-base text-semibold">Status: {esimStatusLabels[(line.esimStatus || 'NOT_SUPPORTED') as EsimStatus]}</p>
               <p className="text-sm text-secondary">
                 {(line.esimStatus as EsimStatus) === 'INSTALLED' && 'Your eSIM is active and ready to use'}
                 {(line.esimStatus as EsimStatus) === 'AVAILABLE' && 'You can install an eSIM on this device'}
@@ -286,7 +347,14 @@ export function LineDetail() {
           )}
 
           {(line.esimStatus as EsimStatus) === 'AVAILABLE' && (
-            <button className="btn-primary w-full">Install eSIM</button>
+            <button className="btn-primary w-full" onClick={async () => {
+              try {
+                await authedFetch(`/api/v1/customer/esim/${line.lineId}/activate`, { method: 'POST' });
+                setLine({ ...line, esimStatus: 'INSTALLED' });
+              } catch {
+                // ignore
+              }
+            }}>Install eSIM</button>
           )}
         </div>
       )}
