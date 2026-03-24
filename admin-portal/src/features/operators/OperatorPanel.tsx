@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Field, Panel, Typography } from '../../design-system';
 import { fetchOperators, fetchOperatorDetails, patchProfile, patchUserRoles } from '../../services/api-client';
@@ -21,9 +21,10 @@ type Props = {
   onOperatorChange: (ctx: OperatorContext) => void;
   onError: (message: string) => void;
   onStatus: (message: string) => void;
+  rightColumn?: React.ReactNode;
 };
 
-export function OperatorPanel({ onOperatorChange, onError, onStatus }: Props) {
+export function OperatorPanel({ onOperatorChange, onError, onStatus, rightColumn }: Props) {
   const [selectedOperatorId, setSelectedOperatorId] = useState('');
   const queryClient = useQueryClient();
 
@@ -278,8 +279,10 @@ export function OperatorPanel({ onOperatorChange, onError, onStatus }: Props) {
           )}
         </Panel>
 
-        {/* Placeholder for content/offers (rendered by parent) */}
-        <div id="operator-right-column" />
+        {/* Right column: content/offers passed from parent */}
+        <div style={styles.rightColumn}>
+          {rightColumn}
+        </div>
       </div>
 
       {/* Users and roles panel */}
