@@ -23,3 +23,22 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Responsive: stack the 3-column dashboard grid on tablets */
+@media (max-width: 1024px) {
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Responsive: single column on mobile */
+@media (max-width: 768px) {
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stack analytics charts */
+  .admin-charts-row {
+    grid-template-columns: 1fr !important;
+  }
+}

@@ -11,7 +11,7 @@ export interface FieldProps {
 
 export function Field({ label, helper, required = false, style, children }: FieldProps) {
   return (
-    <div style={{ display: 'grid', gap: 6, ...style }}>
+    <div role="group" aria-label={label} style={{ display: 'grid', gap: 6, ...style }}>
       <Typography variant="caption" color="secondary" style={{ fontWeight: 600 }}>
         {label}
         {required ? ' *' : ''}
