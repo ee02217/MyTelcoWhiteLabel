@@ -1,8 +1,7 @@
 import { useEffect, useState, createContext, useContext } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Badge, Button, Panel, Typography } from '../design-system';
+import { Badge, Button, Typography } from '../design-system';
 import { isDevMode } from '../services/api-client';
-import { styles } from '../shared-styles';
 import {
   beginLogin,
   completeLoginIfCallback,
@@ -42,47 +41,17 @@ const NAV_ITEMS: { to: string; label: string }[] = [
 const navLinkStyle = (isActive: boolean): React.CSSProperties => ({
   display: 'inline-flex',
   alignItems: 'center',
-  padding: '6px 14px',
+  padding: '8px 16px',
   borderRadius: 'var(--radius-sm)',
   fontSize: 14,
-  fontWeight: 500,
+  fontWeight: isActive ? 600 : 500,
   textDecoration: 'none',
   cursor: 'pointer',
   transition: 'background 0.15s, color 0.15s',
-  background: isActive ? 'var(--color-primary-500)' : 'var(--color-background-secondary)',
-  color: isActive ? '#fff' : 'var(--color-text-primary)',
-  border: isActive ? 'none' : '1px solid var(--color-border-default)',
+  background: isActive ? 'var(--color-primary-500)' : 'transparent',
+  color: isActive ? '#fff' : 'var(--color-text-secondary)',
+  border: 'none',
 });
-
-function SessionRoleBadges() {
-  const { session } = useContext(SessionContext);
-  if (!session?.accessToken) return null;
-
-  // Decode JWT to show roles
-  try {
-    const parts = session.accessToken.split('.');
-    if (parts.length === 3) {
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-      const roles: string[] = payload?.realm_access?.roles ?? [];
-      const username: string = payload?.preferred_username ?? '';
-      if (roles.length > 0 || username) {
-        return (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            {username && <Badge variant="neutral">User: {username}</Badge>}
-            {roles
-              .filter((r) => !r.startsWith('default-roles'))
-              .map((role) => (
-                <Badge key={role} variant="info">{role}</Badge>
-              ))}
-          </div>
-        );
-      }
-    }
-  } catch {
-    // Dev mode token won't decode — that's fine
-  }
-  return null;
-}
 
 export function AdminLayout() {
   const DEV_MODE = isDevMode();
@@ -97,10 +66,6 @@ export function AdminLayout() {
   });
   const [status, setStatus] = useState('Idle');
   const [error, setError] = useState<string | null>(null);
-
-  const expiresIn = session
-    ? Math.max(0, session.expiresAt - Math.floor(Date.now() / 1000))
-    : 'n/a';
 
   useEffect(() => {
     if (DEV_MODE) return;
@@ -119,49 +84,58 @@ export function AdminLayout() {
 
   return (
     <SessionContext.Provider value={{ session, status, error, setStatus, setError }}>
-      <div style={styles.container}>
-        <Typography variant="h2">MyTelco Admin Portal</Typography>
-
-        {/* Navigation */}
-        <nav aria-label="Main navigation" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-          {NAV_ITEMS.map(({ to, label }) => (
-            <NavLink key={to} to={to} end={to === '/'} style={({ isActive }) => navLinkStyle(isActive)}>
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <Typography variant="body" color="secondary">
-          Operator metadata management (backend-first): profile, channel flags, users/roles and
-          audit.
-        </Typography>
-
-        {/* Session Panel */}
-        <Panel
-          title="Session"
-          subtitle="Admin OIDC authentication and data refresh controls"
-          actions={
-            <Badge variant={session ? 'success' : 'warning'}>
-              {session ? 'Authenticated' : 'Not logged in'}
-            </Badge>
-          }
-        >
-          <div style={styles.row}>
-            <Badge variant="info">Status: {status}</Badge>
-            <Badge variant="neutral">Access token expires in: {expiresIn}</Badge>
+      <div style={{
+        minHeight: '100vh',
+        background: 'var(--color-background-primary)',
+        color: 'var(--color-text-primary)',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        {/* Top header bar */}
+        <header style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 24px',
+          borderBottom: '1px solid var(--color-border-default)',
+          background: 'var(--color-background-primary)',
+          flexWrap: 'wrap',
+          gap: 12,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            <Typography variant="h4" style={{ margin: 0, whiteSpace: 'nowrap' }}>
+              MyTelco Admin
+            </Typography>
+            <nav aria-label="Main navigation" style={{ display: 'flex', gap: 4 }}>
+              {NAV_ITEMS.map(({ to, label }) => (
+                <NavLink key={to} to={to} end={to === '/'} style={({ isActive }) => navLinkStyle(isActive)}>
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
           </div>
-          {session && <SessionRoleBadges />}
 
-          <div style={styles.row}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {error && (
+              <Badge variant="danger">
+                {error}
+              </Badge>
+            )}
+            {status !== 'Idle' && (
+              <Badge variant="info" style={{ maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {status}
+              </Badge>
+            )}
             {!session && (
               <Button size="sm" onClick={() => beginLogin().catch((err) => setError(String(err)))}>
-                Login (Admin)
+                Login
               </Button>
             )}
             {session && (
               <>
                 <Button
                   size="sm"
+                  variant="outline"
                   onClick={() => {
                     if (DEV_MODE) {
                       setSession({ ...session, expiresAt: 9999999999 });
@@ -176,7 +150,7 @@ export function AdminLayout() {
                     }
                   }}
                 >
-                  Refresh session
+                  Refresh
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => logout(session)}>
                   Logout
@@ -184,16 +158,32 @@ export function AdminLayout() {
               </>
             )}
           </div>
+        </header>
 
-          {error && (
-            <Badge variant="danger" style={{ width: 'fit-content' }}>
-              Error: {error}
-            </Badge>
+        {/* Main content */}
+        <main style={{
+          flex: 1,
+          padding: 'var(--spacing-6)',
+          display: 'grid',
+          gap: 'var(--spacing-4)',
+          alignContent: 'start',
+        }}>
+          {session ? (
+            <Outlet />
+          ) : (
+            <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+              <Typography variant="h3">Welcome to MyTelco Admin</Typography>
+              <Typography variant="body" color="secondary" style={{ marginTop: 8 }}>
+                Please log in to manage operators, users, and platform settings.
+              </Typography>
+              <div style={{ marginTop: 24 }}>
+                <Button onClick={() => beginLogin().catch((err) => setError(String(err)))}>
+                  Login with Keycloak
+                </Button>
+              </div>
+            </div>
           )}
-        </Panel>
-
-        {/* Route content — only render when authenticated */}
-        {session && <Outlet />}
+        </main>
       </div>
     </SessionContext.Provider>
   );
