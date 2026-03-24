@@ -130,3 +130,6 @@ app:
   security:
     # Local-only option (off by default). When enabled, security is bypassed via DevSecurityConfig.
     dev-mode: ${APP_SECURITY_DEV_MODE:false}
+    cors:
+      # Comma-separated list of allowed CORS origins. Override via APP_SECURITY_CORS_ALLOWED_ORIGINS.
+      allowed-origins: ${APP_SECURITY_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
