@@ -130,9 +130,11 @@ services:
       SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS: ${SPRING_KAFKA_PRODUCER_REQUEST_TIMEOUT_MS:-2000}
       SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS: ${SPRING_KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS:-5000}
       CASE_BFF_BASE_URL: ${CASE_BFF_BASE_URL:-http://case-bff:8083}
-      # Cookie configuration - use None+Secure for cross-origin compatibility
-      APP_AUTH_COOKIE_SAMESITE: ${APP_AUTH_COOKIE_SAMESITE:-None}
-      APP_AUTH_COOKIE_SECURE: ${APP_AUTH_COOKIE_SECURE:-true}
+      # Cookie configuration - Lax/non-secure for local HTTP development
+      # (SameSite=None+Secure was removed: the portal now uses relative paths via nginx
+      #  so cookies are same-origin and do not need cross-site/Secure semantics over HTTP)
+      APP_AUTH_COOKIE_SAMESITE: ${APP_AUTH_COOKIE_SAMESITE:-Lax}
+      APP_AUTH_COOKIE_SECURE: ${APP_AUTH_COOKIE_SECURE:-false}
       # CORS allowed origins - include LAN IP so browser requests from 192.168.x.x work
       APP_SECURITY_CORS_ALLOWED_ORIGINS: ${APP_SECURITY_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://192.168.1.109:3000}
     volumes:

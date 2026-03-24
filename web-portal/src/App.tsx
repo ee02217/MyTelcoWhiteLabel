@@ -1,6 +1,7 @@
 // New App.tsx - Production-ready with AppShell
 
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button, Card, DesignSystemProvider, Field, Typography } from './design-system';
 import { AppShell } from './app/AppShell';
 import { Dashboard } from './app/routes/Dashboard';
@@ -16,10 +17,9 @@ import {
   type OidcSession,
 } from './auth-oidc';
 
-type AppRoute = string;
-
 function App() {
-  const [route, setRoute] = useState<AppRoute>('/');
+  const navigate = useNavigate();
+  const [route, setRoute] = useState<string>(window.location.pathname);
   const [session, setSession] = useState<OidcSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [loginError, setLoginError] = useState('');
@@ -43,16 +43,13 @@ function App() {
   }, []);
 
   const navigateTo = (nextRoute: string) => {
-    // Update URL without reload
-    window.history.pushState({}, '', nextRoute);
+    navigate(nextRoute);
     setRoute(nextRoute);
   };
 
-  // Handle browser back/forward
+  // Keep route state in sync with browser back/forward navigation
   useEffect(() => {
-    const handlePopState = () => {
-      setRoute(window.location.pathname);
-    };
+    const handlePopState = () => setRoute(window.location.pathname);
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
