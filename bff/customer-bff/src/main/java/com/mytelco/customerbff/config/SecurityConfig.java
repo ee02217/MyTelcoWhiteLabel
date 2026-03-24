@@ -40,10 +40,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @ConditionalOnProperty(name = "app.security.dev-mode", havingValue = "false", matchIfMissing = true)
 public class SecurityConfig {
 
+    @Value("${app.security.cors.allowed-origins:http://localhost:3000,http://localhost:3001}")
+    private List<String> corsAllowedOrigins;
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:3001"));
+        configuration.setAllowedOrigins(corsAllowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Operator-ID", "X-Request-ID"));
         configuration.setExposedHeaders(List.of("X-RateLimit-Remaining", "X-RateLimit-Reset"));
