@@ -86,6 +86,11 @@ public class SecurityConfig {
                     response.setContentType("application/json");
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.getWriter().write("{\"authenticated\":false,\"error\":\"Unauthorized\"}");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setContentType("application/json");
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.getWriter().write("{\"error\":\"Forbidden\"}");
                 }));
 
         return http.build();
@@ -140,6 +145,13 @@ public class SecurityConfig {
         DefaultBearerTokenResolver headerResolver = new DefaultBearerTokenResolver();
         // Keep default behavior for Authorization header.
         return request -> {
+            // Auth endpoints are permitAll — skip token extraction entirely.
+            // This prevents stale cookies from triggering JWT validation on login/logout.
+            String requestURI = request.getRequestURI();
+            if (requestURI != null && requestURI.startsWith("/api/v1/auth/")) {
+                return null;
+            }
+
             String token = headerResolver.resolve(request);
             if (token != null && !token.isBlank()) {
                 return token;
