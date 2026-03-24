@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Field, Panel, Typography } from '../../design-system';
-import { fetchOperators, fetchOperatorDetails, patchProfile, patchUserRoles } from '../../services/api-client';
+import { fetchOperators, fetchOperatorDetails, patchProfile, patchUserRoles, useMockData } from '../../services/api-client';
 import { styles } from '../../shared-styles';
 import type {
   OperatorSummaryResponse,
@@ -9,6 +9,7 @@ import type {
   ContentSummaryResponse,
   OfferSummaryResponse,
 } from '../../types';
+import type { OperatorDetails } from '../../services/api-client';
 
 export type OperatorContext = {
   operatorId: string;
@@ -24,15 +25,79 @@ type Props = {
   rightColumn?: React.ReactNode;
 };
 
+const MOCK_OPERATORS: OperatorSummaryResponse[] = [
+  {
+    operatorId: 'telco-pt',
+    name: 'Telco Portugal',
+    version: 3,
+    updatedAt: '2026-03-20T14:30:00Z',
+    locales: ['pt-PT', 'en-GB'],
+    channelCount: 3,
+    journeyCount: 5,
+    userCount: 12,
+  },
+  {
+    operatorId: 'telco-es',
+    name: 'Telco Spain',
+    version: 1,
+    updatedAt: '2026-03-18T10:00:00Z',
+    locales: ['es-ES', 'en-GB'],
+    channelCount: 2,
+    journeyCount: 3,
+    userCount: 8,
+  },
+];
+
+const MOCK_DETAILS: OperatorDetails = {
+  profile: {
+    operatorId: 'telco-pt',
+    name: 'Telco Portugal',
+    branding: {
+      logoLight: '/logos/telco-pt-light.svg',
+      logoDark: '/logos/telco-pt-dark.svg',
+      favicon: '/favicon-telco-pt.ico',
+      primaryColor: '#0073e6',
+      secondaryColor: '#00b386',
+    },
+    featuresByChannel: {
+      web: { dashboard: true, billing: true, usage: true, roaming: false, support: true },
+      mobile: { dashboard: true, billing: true, usage: true, roaming: true, support: false },
+    },
+    locales: ['pt-PT', 'en-GB'],
+    journeyCount: 5,
+    version: 3,
+    updatedAt: '2026-03-20T14:30:00Z',
+  },
+  users: [
+    { userId: 'u-001', displayName: 'Ana Silva', email: 'ana.silva@telco-pt.com', roles: ['ADMIN', 'SUPPORT'], enabled: true, updatedAt: '2026-03-19T09:00:00Z' },
+    { userId: 'u-002', displayName: 'Carlos Mendes', email: 'carlos.m@telco-pt.com', roles: ['SUPPORT'], enabled: true, updatedAt: '2026-03-15T11:30:00Z' },
+    { userId: 'u-003', displayName: 'Maria Santos', email: 'maria.s@telco-pt.com', roles: ['ADMIN'], enabled: false, updatedAt: '2026-02-28T16:00:00Z' },
+  ],
+  audit: [
+    { operatorId: 'telco-pt', scope: 'profile', targetId: 'telco-pt', action: 'UPDATE', actor: 'ana.silva@telco-pt.com', version: 3, timestamp: '2026-03-20T14:30:00Z', changes: { name: 'Telco Portugal' } },
+    { operatorId: 'telco-pt', scope: 'user', targetId: 'u-003', action: 'DISABLE', actor: 'ana.silva@telco-pt.com', version: 2, timestamp: '2026-02-28T16:00:00Z', changes: { enabled: false } },
+    { operatorId: 'telco-pt', scope: 'flags', targetId: 'web/roaming', action: 'UPDATE', actor: 'carlos.m@telco-pt.com', version: 1, timestamp: '2026-02-20T10:15:00Z', changes: { roaming: false } },
+  ],
+  contentItems: [
+    { contentId: 'welcome-banner', locales: [{ locale: 'pt-PT', version: 2, state: 'PUBLISHED', updatedAt: '2026-03-18', author: 'ana.silva', reviewer: 'carlos.m' }, { locale: 'en-GB', version: 1, state: 'DRAFT', updatedAt: '2026-03-10', author: 'ana.silva', reviewer: null }] },
+    { contentId: 'faq-billing', locales: [{ locale: 'pt-PT', version: 1, state: 'REVIEW', updatedAt: '2026-03-15', author: 'carlos.m', reviewer: 'ana.silva' }] },
+  ],
+  offers: [
+    { offerId: 'summer-unlimited', version: 2, state: 'PUBLISHED', name: 'Summer Unlimited', visibleChannels: ['web', 'mobile'], eligibilityRules: { minTenure: 6 }, author: 'ana.silva', reviewer: 'carlos.m', updatedAt: '2026-03-19T12:00:00Z' },
+    { offerId: 'family-bundle', version: 1, state: 'DRAFT', name: 'Family Bundle', visibleChannels: ['web'], eligibilityRules: {}, author: 'carlos.m', reviewer: null, updatedAt: '2026-03-10T08:00:00Z' },
+  ],
+};
+
 export function OperatorPanel({ onOperatorChange, onError, onStatus, rightColumn }: Props) {
   const [selectedOperatorId, setSelectedOperatorId] = useState('');
   const queryClient = useQueryClient();
+  const isMock = useMockData();
 
   // --- Queries ---
 
   const { data: operators = [] } = useQuery<OperatorSummaryResponse[]>({
     queryKey: ['operators'],
-    queryFn: fetchOperators,
+    queryFn: () => (isMock ? Promise.resolve(MOCK_OPERATORS) : fetchOperators()),
   });
 
   // Auto-select first operator
@@ -44,7 +109,7 @@ export function OperatorPanel({ onOperatorChange, onError, onStatus, rightColumn
 
   const { data: details } = useQuery({
     queryKey: ['operators', selectedOperatorId, 'details'],
-    queryFn: () => fetchOperatorDetails(selectedOperatorId),
+    queryFn: () => (isMock ? Promise.resolve(MOCK_DETAILS) : fetchOperatorDetails(selectedOperatorId)),
     enabled: !!selectedOperatorId,
   });
 
